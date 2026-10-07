@@ -16,8 +16,12 @@ npm run dev      # http://localhost:3000
 | `/sign-in` | Universal Sign In |
 | `/forgot-password` | Forgot Password |
 | `/reset-password` | Reset Password |
+| `/dashboard` | Admin Dashboard |
+| `/user-management` | Placeholder (design pending) |
 
-Flow: Sign In → "Forgot password?" → Proceed → Reset Password → Proceed → success modal → Login → Sign In. The Proceed steps always succeed until the backend (reset email, token) is wired up.
+Sign In → Dashboard; the sidebar's Logout returns to Sign In.
+
+Password flow: Sign In → "Forgot password?" → Proceed → Reset Password → Proceed → success modal → Login → Sign In. The Proceed steps always succeed until the backend (reset email, token) is wired up.
 
 `/` redirects to `/sign-in` for now.
 
@@ -29,7 +33,9 @@ Flow: Sign In → "Forgot password?" → Proceed → Reset Password → Proceed 
 - `components/auth/ForgotPasswordForm.tsx` — the forgot-password card
 - `components/auth/ResetPasswordForm.tsx` — the reset-password card
 - `components/auth/SuccessModal.tsx` — reusable success dialog (shown after a password reset)
-- `components/icons/` — inline SVG icons
+- `app/(app)/` — signed-in routes sharing `components/app/AppShell.tsx` (header, collapsible sidebar)
+- `components/dashboard/` — dashboard widgets; `data.ts` holds the placeholder figures and `GrowthChart.tsx` the area chart
+- `components/icons/`, `components/app/icons.tsx` — inline SVG icons
 - `public/images/` — design assets
 
 Desktop screens render on a 1440 × 1024 artboard scaled to the viewport; below 900px wide they switch to a stacked mobile layout.

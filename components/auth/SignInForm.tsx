@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { EyeIcon, EyeSlashIcon, GoogleIcon } from "@/components/icons";
 import styles from "./SignInForm.module.css";
 
 export default function SignInForm() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -15,7 +17,16 @@ export default function SignInForm() {
         <p className={styles.desc}>Sign in to your account to continue your journey with TalentCona.</p>
       </header>
 
-      <form className={styles.auth} noValidate onSubmit={(e) => e.preventDefault()}>
+      <form
+        className={styles.auth}
+        action="/dashboard"
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault();
+          // Until auth is wired up, any sign-in goes to the dashboard.
+          router.push("/dashboard");
+        }}
+      >
         <div className={styles.field}>
           <label className={styles.label} htmlFor="email">Email</label>
           <div className={styles.input}>

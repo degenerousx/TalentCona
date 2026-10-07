@@ -1,0 +1,433 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ---------- Welcome ---------- */
+.welcomeTitle {
+  margin: 0;
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 36px;
+  color: #0a0a0a;
+  transform: translateY(-2.6px);
+}
+
+.emoji {
+  font-family: var(--font-emoji), "Apple Color Emoji", sans-serif;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.welcomeText {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  color: #4a5565;
+  transform: translateY(-2.2px);
+}
+
+/* ---------- Stat cards ---------- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 23px 24px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: #ffffff;
+  border: 0.89px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.statTop,
+.statBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.statIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+}
+
+.badge,
+.badgeWarning,
+.statLabel,
+.viewLink {
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.badge {
+  color: #00a63e;
+}
+
+.badgeWarning {
+  color: #ff9500;
+}
+
+.statValue {
+  margin: 0;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 32px;
+  color: #101828;
+}
+
+.statLabel {
+  color: #4a5565;
+}
+
+.viewLink {
+  color: #722fff;
+  text-decoration: none;
+}
+
+.viewLink:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Panels ---------- */
+.row {
+  display: flex;
+  gap: 24px;
+  height: 465.71px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24.89px 24.89px 0.89px;
+  background: #ffffff;
+  border: 0.89px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.growth {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity {
+  flex: none;
+  width: 309.33px;
+}
+
+.panelHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panelTitle {
+  margin: 0;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 28px;
+  color: #101828;
+  transform: translateY(-1.22px);
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 20px;
+  color: #4a5565;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.chart {
+  height: 365px;
+  padding: 0.35px 0 0 0.11px;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activityItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.activityIcon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.activityText {
+  margin: 0 0 4px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #101828;
+}
+
+.activityTime {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: #6a7282;
+}
+
+/* ---------- Bottom cards ---------- */
+.bottomRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 32px;
+}
+
+.card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  /* Figma's 24px includes the 0.8px border */
+  padding-bottom: 22.4px;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+.cardReviews {
+  border: 0.8px solid #ffedd4;
+}
+
+.cardPerformance {
+  border: 0.8px solid #cbfbf1;
+}
+
+.cardHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  height: 68px;
+  padding: 24px;
+}
+
+.cardReviews .cardHead {
+  background: linear-gradient(90deg, #fff7ed 0%, #fffbeb 100%);
+}
+
+.cardPerformance .cardHead {
+  background: linear-gradient(90deg, #f0fdfa 0%, #ecfeff 100%);
+}
+
+.cardTitle {
+  margin: 0;
+  transform: translateY(-0.2px);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 16px;
+  color: #0a0a0a;
+}
+
+.reviewList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0 24px;
+  list-style: none;
+}
+
+.review {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 63.19px;
+  padding: 0 12px;
+  border: 1.6px solid #ffedd4;
+  border-radius: 10px;
+}
+
+.reviewInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reviewIcon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.reviewTitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: #0a0a0a;
+}
+
+.reviewMeta {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: #4a5565;
+}
+
+.reviewButton {
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--brand);
+  font: 400 14px/20px var(--font-outfit), sans-serif;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.reviewButton:hover {
+  background: #27227a;
+}
+
+.metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0 24px;
+  list-style: none;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metricHead {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -1.2px;
+  margin-bottom: 1.2px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #0a0a0a;
+}
+
+.track {
+  height: 8px;
+  overflow: hidden;
+  background: #e5e7eb;
+  border-radius: 999px;
+}
+
+.fill {
+  height: 100%;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1199px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .row,
+  .bottomRow {
+    flex-direction: column;
+    height: auto;
+  }
+  .growth,
+  .activity,
+  .card {
+    width: 100%;
+    flex: none;
+  }
+  .activity {
+    padding-bottom: 24px;
+  }
+  .chart {
+    height: auto;
+    padding-bottom: 16px;
+  }
+}
+
+@media (max-width: 599px) {
+  .stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .legend {
+    gap: 12px;
+    font-size: 13px;
+  }
+  .panelHead {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 599px) {
+  .welcomeTitle {
+    font-size: 26px;
+    line-height: 32px;
+  }
+  .stats {
+    gap: 16px;
+  }
+  .reviewList,
+  .metrics {
+    padding: 0 16px;
+  }
+  .cardHead {
+    padding: 24px 16px;
+  }
+  .review {
+    gap: 12px;
+    height: auto;
+    min-height: 63.19px;
+    padding: 10px 12px;
+  }
+  .reviewInfo {
+    min-width: 0;
+  }
+  .reviewButton {
+    flex: none;
+  }
+}

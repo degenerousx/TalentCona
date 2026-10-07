@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Outfit, Noto_Color_Emoji } from "next/font/google";
+import { Outfit, Noto_Color_Emoji, Open_Sans } from "next/font/google";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -14,6 +14,12 @@ const notoEmoji = Noto_Color_Emoji({
   variable: "--font-emoji",
 });
 
+const openSans = Open_Sans({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-open-sans",
+});
+
 export const metadata: Metadata = {
   title: "TalentCona",
   description: "TalentCona — connecting talent with opportunity.",
@@ -21,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${outfit.variable} ${notoEmoji.variable}`}>
+    <html lang="en" className={`${outfit.variable} ${notoEmoji.variable} ${openSans.variable}`}>
       <body>{children}</body>
     </html>
   );
