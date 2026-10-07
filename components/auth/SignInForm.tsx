@@ -53,7 +53,7 @@ export default function SignInForm() {
             <span className={styles.checkBox} aria-hidden="true" />
             <span>Remember me</span>
           </label>
-          <Link className={styles.linkPlain} href="#">Forgot password?</Link>
+          <Link className={styles.linkPlain} href="/forgot-password">Forgot password?</Link>
         </div>
 
         <div className={styles.actions}>

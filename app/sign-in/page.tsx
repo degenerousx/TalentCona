@@ -8,7 +8,11 @@ export const metadata: Metadata = {
 
 export default function SignInPage() {
   return (
-    <AuthShell>
+    <AuthShell
+      illustration={{ src: "/images/signin-illustration.webp", width: 1138, height: 1134 }}
+      cardTop={206.85}
+      cardHeight={701.31}
+    >
       <SignInForm />
     </AuthShell>
   );

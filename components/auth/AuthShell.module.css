@@ -44,7 +44,7 @@
 .art {
   display: block;
   width: 569px;
-  height: 567px;
+  height: auto;
 }
 
 .badge {
@@ -68,9 +68,7 @@
 .card {
   position: absolute;
   right: 63px;
-  top: calc(50% - var(--card-h) / 2 + 45.5px);
   width: 567px;
-  height: var(--card-h);
   padding: 32px;
   display: flex;
   flex-direction: column;
@@ -116,10 +114,10 @@
   .card {
     position: relative;
     right: auto;
-    top: auto;
+    top: auto !important;
     width: 100%;
     max-width: 567px;
-    height: auto;
+    height: auto !important;
     margin: 0 auto;
     padding: 32px 20px;
   }

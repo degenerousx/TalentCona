@@ -14,6 +14,7 @@ npm run dev      # http://localhost:3000
 | Route      | Design            |
 | ---------- | ----------------- |
 | `/sign-in` | Universal Sign In |
+| `/forgot-password` | Forgot Password |
 
 `/` redirects to `/sign-in` for now.
 
@@ -22,6 +23,7 @@ npm run dev      # http://localhost:3000
 - `app/` — routes (`app/sign-in/page.tsx`), root layout and global styles
 - `components/auth/AuthShell.tsx` — shared 1440 × 1024 auth artboard (waves, logo, illustration, badges); reuse it for sign-up / forgot-password screens
 - `components/auth/SignInForm.tsx` — the sign-in card
+- `components/auth/ForgotPasswordForm.tsx` — the forgot-password card
 - `components/icons/` — inline SVG icons
 - `public/images/` — design assets
 

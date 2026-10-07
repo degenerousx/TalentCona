@@ -17,13 +17,27 @@ function Star({ x, y }: { x: number; y: number }) {
  * Shared 1440 × 1024 auth artboard: wave background, logo, illustration and
  * floating badges. Renders the page's card content on the right.
  */
+export type AuthIllustration = {
+  src: string;
+  width: number;
+  height: number;
+};
+
 export default function AuthShell({
   children,
-  cardHeight = 701.31,
+  illustration,
+  cardTop,
+  cardHeight,
 }: {
   children: React.ReactNode;
+  /** Left-column artwork, rendered 569px wide below the logo. */
+  illustration: AuthIllustration;
+  /** Card position on the 1440 × 1024 artboard. */
+  cardTop: number;
+  /** Fixed card height; omit to size the card to its content. */
   cardHeight?: number;
 }) {
+  const artHeight = Math.round((569 / illustration.width) * illustration.height);
   return (
     <ScaledStage className={styles.stage}>
       {/* Top: purple band, light stripe, decorative lines */}
@@ -48,8 +62,8 @@ export default function AuthShell({
           </symbol>
         </defs>
 
-        <path fill="#856EFF" d="M-2000 -2000H3440V253C2600 360 1900 320 1440 253C1250 300 1000 320 800 268C640 225 500 117 360 117C230 117 110 190 0 235C-600 480 -1400 300 -2000 235Z" />
-        <path fill="url(#tc-top-band)" d="M-2000 -2000H3440V242C2600 340 1900 300 1440 242C1250 290 1000 312 800 262C640 222 500 113 360 115C230 117 110 175 0 212C-600 420 -1400 280 -2000 212Z" />
+        <path fill="#856EFF" d="M-2000 -2000H3440V253C2600 360 1900 320 1440 253C1340 310 1200 352 1100 352C1030 352 900 314 800 269C640 225 500 117 360 117C230 117 110 190 0 235C-600 480 -1400 300 -2000 235Z" />
+        <path fill="url(#tc-top-band)" d="M-2000 -2000H3440V242C2600 340 1900 300 1440 242C1330 300 1200 351 1100 351C1030 351 920 320 800 268C640 222 500 113 360 115C230 117 110 175 0 212C-600 420 -1400 280 -2000 212Z" />
 
         <g fill="none" stroke="rgba(255,255,255,.37)" strokeWidth="1">
           <path d="M-20 72C60 66 130 110 190 128C250 146 300 70 352 -4" />
@@ -68,7 +82,7 @@ export default function AuthShell({
       {/* Left column: logo + illustration */}
       <section className={styles.hero}>
         <Image className={styles.logo} src="/images/talentcona-logo.png" alt="TalentCona" width={186} height={72} priority />
-        <Image className={styles.art} src="/images/signin-illustration.webp" alt="" width={569} height={567} priority />
+        <Image className={styles.art} src={illustration.src} alt="" width={569} height={artHeight} priority />
       </section>
 
       {/* Bottom waves sit above the illustration's desk */}
@@ -92,7 +106,7 @@ export default function AuthShell({
         🚀
       </div>
 
-      <section className={styles.card} style={{ "--card-h": `${cardHeight}px` } as React.CSSProperties}>
+      <section className={styles.card} style={{ top: cardTop, height: cardHeight }}>
         {children}
       </section>
     </ScaledStage>
