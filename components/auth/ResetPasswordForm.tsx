@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { EyeOffIcon, EyeOpenIcon } from "@/components/icons";
+import SuccessModal from "./SuccessModal";
 import styles from "./ResetPasswordForm.module.css";
 
 function PasswordField({ id, label, autoComplete }: { id: string; label: string; autoComplete: string }) {
@@ -28,7 +28,7 @@ function PasswordField({ id, label, autoComplete }: { id: string; label: string;
 }
 
 export default function ResetPasswordForm() {
-  const router = useRouter();
+  const [success, setSuccess] = useState(false);
 
   return (
     <div className={styles.inner}>
@@ -39,11 +39,11 @@ export default function ResetPasswordForm() {
 
       <form
         className={styles.form}
-        action="/sign-in"
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          router.push("/sign-in");
+          // Until the reset API exists, every submit succeeds.
+          setSuccess(true);
         }}
       >
         <div className={styles.fields}>
@@ -53,6 +53,14 @@ export default function ResetPasswordForm() {
 
         <button type="submit" className={styles.primary}>Proceed</button>
       </form>
+
+      <SuccessModal
+        open={success}
+        title="Congratulations!"
+        message="Password Reset Successfully"
+        actionLabel="Login"
+        actionHref="/sign-in"
+      />
     </div>
   );
 }

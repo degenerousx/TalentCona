@@ -1,0 +1,93 @@
+/*
+ * position: fixed resolves against the scaled artboard on desktop (it has a
+ * transform), so the modal scales with the page. The backdrop extends evenly
+ * past the artboard edges to cover letterboxed areas while staying centred.
+ */
+.backdrop {
+  position: fixed;
+  inset: -100vmax;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(11, 16, 38, 0.4);
+}
+
+.backdrop[hidden] {
+  display: none;
+}
+
+.modal {
+  width: 550px;
+  height: 339px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 13px rgba(0, 0, 0, 0.03), 0 8px 5px rgba(0, 0, 0, 0.08);
+}
+
+.icon {
+  flex: none;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #00c853;
+  border: 7px solid #b9f6ca;
+  border-radius: 999px;
+}
+
+.title {
+  margin: 0;
+  width: 100%;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 130%;
+  text-align: center;
+  color: var(--ink);
+}
+
+.message {
+  margin: 0;
+  font-size: 16px;
+  line-height: 20px;
+  color: #333333;
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 14px 16px;
+  border-radius: 6px;
+  background: var(--brand);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  color: #ffffff;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.action:hover {
+  background: #27227a;
+}
+
+@media (max-width: 899px) {
+  .backdrop {
+    inset: 0;
+    padding: 16px;
+  }
+  .modal {
+    width: 100%;
+    max-width: 550px;
+    height: auto;
+    padding: 40px 24px;
+  }
+}

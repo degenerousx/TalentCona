@@ -17,7 +17,7 @@ npm run dev      # http://localhost:3000
 | `/forgot-password` | Forgot Password |
 | `/reset-password` | Reset Password |
 
-Flow: Sign In → "Forgot password?" → Proceed → Reset Password → Proceed → Sign In. The Proceed steps navigate directly until the backend (reset email, token) is wired up.
+Flow: Sign In → "Forgot password?" → Proceed → Reset Password → Proceed → success modal → Login → Sign In. The Proceed steps always succeed until the backend (reset email, token) is wired up.
 
 `/` redirects to `/sign-in` for now.
 
@@ -28,6 +28,7 @@ Flow: Sign In → "Forgot password?" → Proceed → Reset Password → Proceed 
 - `components/auth/SignInForm.tsx` — the sign-in card
 - `components/auth/ForgotPasswordForm.tsx` — the forgot-password card
 - `components/auth/ResetPasswordForm.tsx` — the reset-password card
+- `components/auth/SuccessModal.tsx` — reusable success dialog (shown after a password reset)
 - `components/icons/` — inline SVG icons
 - `public/images/` — design assets
 
