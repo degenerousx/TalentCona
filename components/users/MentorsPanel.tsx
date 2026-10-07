@@ -44,10 +44,13 @@ const expertiseOf = (list: MentorCandidate[]) => [...new Set(list.flatMap((m) =>
 
 const mentorHref = (id: string) => `/user-management/mentors/${id}`;
 
-/** Mentor name, linking to the profile when one exists. */
-function MentorName({ id, name }: { id: string; name: string }) {
-  return getMentor(id) ? (
-    <Link href={mentorHref(id)} className={`${styles.name} ${styles.nameLink}`}>
+const reviewHref = (id: string) => `/user-management/mentors/review/${id}`;
+
+/** Mentor name, linking to `href` (or the mentor's profile when one exists). */
+function MentorName({ id, name, href }: { id: string; name: string; href?: string }) {
+  const target = href ?? (getMentor(id) ? mentorHref(id) : undefined);
+  return target ? (
+    <Link href={target} className={`${styles.name} ${styles.nameLink}`}>
       {name}
     </Link>
   ) : (
@@ -177,13 +180,15 @@ function CandidateTable({
   admin,
   action,
   onAction,
+  hrefFor,
   empty,
 }: {
   rows: MentorCandidate[];
   admin: boolean;
   action: string;
-  /** Without a handler the button links to the mentor's profile. */
+  /** Without a handler the button links to `hrefFor` (or the mentor's profile). */
   onAction?: (m: MentorCandidate) => void;
+  hrefFor?: (id: string) => string;
   empty: string;
 }) {
   return (
@@ -202,7 +207,7 @@ function CandidateTable({
         {rows.map((m, i) => (
           <tr key={`${m.id}-${i}`}>
             <td>
-              <MentorName id={m.id} name={m.name} />
+              <MentorName id={m.id} name={m.name} href={hrefFor?.(m.id)} />
             </td>
             <td>
               <Tags items={m.expertise} />
@@ -216,7 +221,7 @@ function CandidateTable({
             {admin && <td>{m.adminRating !== undefined ? <Rating value={m.adminRating} admin /> : "—"}</td>}
             <td className={styles.tdAction}>
               {!onAction ? (
-                <Link href={mentorHref(m.id)} className={styles.greenButton}>
+                <Link href={(hrefFor ?? mentorHref)(m.id)} className={styles.greenButton}>
                   {action}
                 </Link>
               ) : (
@@ -297,7 +302,7 @@ export default function MentorsPanel() {
           onQuery={setPendingQ}
           filter={<FilterMenu allLabel="All Expertise" options={expertiseOf(PENDING_MENTORS)} selected={pendingF} onChange={setPendingF} />}
         >
-          <CandidateTable rows={pending} admin={false} action="View" empty="No mentors are waiting for review." />
+          <CandidateTable rows={pending} admin={false} action="View" hrefFor={reviewHref} empty="No mentors are waiting for review." />
         </Section>
 
         <Section
