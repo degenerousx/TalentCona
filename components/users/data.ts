@@ -2,8 +2,51 @@
 
 export type PaymentMethod = "Direct" | "Loan" | "Fundraising";
 
-export type CurrentProgram = { title: string; progress: number };
-export type CompletedProgram = { title: string; score: number; completedOn: string };
+export type Person = { name: string; photo: string };
+
+export type ActivityKind = "submission" | "session" | "payment" | "login" | "message";
+
+export type Activity = {
+  title: string;
+  date: string;
+  time: string;
+  kind: ActivityKind;
+  status: "completed";
+};
+
+type ProgramBase = {
+  id: string;
+  title: string;
+  /** Full program name shown under the student's name on the program page. */
+  programName: string;
+  mentor: Person | null;
+  advisor: Person | null;
+  activity?: Activity[];
+};
+
+export type CurrentProgram = ProgramBase & { progress: number };
+export type CompletedProgram = ProgramBase & { score: number; completedOn: string };
+export type Program = CurrentProgram | CompletedProgram;
+
+const BRANDY: Person = { name: "Brandy Kiehn", photo: "/images/mentor-brandy-kiehn.png" };
+const ROBERTO: Person = { name: "Roberto Marquardt", photo: "/images/advisor-roberto-marquardt.png" };
+
+/** Recent activity from the design, used until per-program activity comes from the API. */
+export const DEFAULT_ACTIVITY: Activity[] = [
+  { title: "Submitted Final Project", date: "2024-03-18", time: "14:30", kind: "submission", status: "completed" },
+  { title: "Attended Mentorship Session", date: "2024-03-17", time: "10:00", kind: "session", status: "completed" },
+  { title: "Payment Received - $500", date: "2024-03-15", time: "09:15", kind: "payment", status: "completed" },
+  { title: "Logged into platform", date: "2024-03-15", time: "08:00", kind: "login", status: "completed" },
+  { title: "Sent message to mentor", date: "2024-03-14", time: "16:45", kind: "message", status: "completed" },
+];
+
+const program = (id: string, title: string, programName = `${title} Program`, mentor: Person | null = BRANDY, advisor: Person | null = ROBERTO) => ({
+  id,
+  title,
+  programName,
+  mentor,
+  advisor,
+});
 
 export type Student = {
   id: string;
@@ -19,6 +62,7 @@ export type Student = {
   instructor: string | null;
   advisor: string | null;
   status: "Active";
+  lastActive: string;
   currentPrograms: CurrentProgram[];
   completedPrograms: CompletedProgram[];
 };
@@ -38,11 +82,12 @@ export const STUDENTS: Student[] = [
     instructor: "Sarah Johnson",
     advisor: "Sarah Johnson",
     status: "Active",
+    lastActive: "2 hours ago",
     currentPrograms: [
-      { title: "Web Development", progress: 67 },
-      { title: "Advanced React & Node.js", progress: 23 },
+      { ...program("web-development", "Web Development", "Full Stack Development Program"), progress: 67 },
+      { ...program("advanced-react-node", "Advanced React & Node.js"), progress: 23 },
     ],
-    completedPrograms: [{ title: "Introduction to Programming", score: 88, completedOn: "12/15/2023" }],
+    completedPrograms: [{ ...program("intro-to-programming", "Introduction to Programming"), score: 88, completedOn: "12/15/2023" }],
   },
   {
     id: "michael-chen",
@@ -58,8 +103,9 @@ export const STUDENTS: Student[] = [
     instructor: "Michael Chen",
     advisor: "Michael Chen",
     status: "Active",
-    currentPrograms: [{ title: "Data Science", progress: 45 }],
-    completedPrograms: [{ title: "Python Fundamentals", score: 92, completedOn: "03/02/2024" }],
+    lastActive: "1 day ago",
+    currentPrograms: [{ ...program("data-science", "Data Science"), progress: 45 }],
+    completedPrograms: [{ ...program("python-fundamentals", "Python Fundamentals"), score: 92, completedOn: "03/02/2024" }],
   },
   {
     id: "adebayo-ojo",
@@ -75,9 +121,10 @@ export const STUDENTS: Student[] = [
     instructor: "Adebayo Ojo",
     advisor: "Adebayo Ojo",
     status: "Active",
+    lastActive: "30 minutes ago",
     currentPrograms: [
-      { title: "Mobile Development", progress: 58 },
-      { title: "UI/UX Design", progress: 34 },
+      { ...program("mobile-development", "Mobile Development"), progress: 58 },
+      { ...program("ui-ux-design", "UI/UX Design"), progress: 34 },
     ],
     completedPrograms: [],
   },
@@ -95,8 +142,9 @@ export const STUDENTS: Student[] = [
     instructor: "Emily Rodriguez",
     advisor: "Michael Chen",
     status: "Active",
-    currentPrograms: [{ title: "Web Development", progress: 81 }],
-    completedPrograms: [{ title: "Introduction to Programming", score: 95, completedOn: "01/20/2024" }],
+    lastActive: "5 hours ago",
+    currentPrograms: [{ ...program("web-development", "Web Development", "Full Stack Development Program"), progress: 81 }],
+    completedPrograms: [{ ...program("intro-to-programming", "Introduction to Programming"), score: 95, completedOn: "01/20/2024" }],
   },
   {
     id: "david-kim",
@@ -112,12 +160,19 @@ export const STUDENTS: Student[] = [
     instructor: null,
     advisor: null,
     status: "Active",
-    currentPrograms: [{ title: "AI/ML", progress: 12 }],
+    lastActive: "3 days ago",
+    currentPrograms: [{ ...program("ai-ml", "AI/ML", "AI & Machine Learning Program", null, null), progress: 12 }],
     completedPrograms: [],
   },
 ];
 
 export const getStudent = (id: string) => STUDENTS.find((s) => s.id === id);
+
+export const programsOf = (student: Student): Program[] => [...student.currentPrograms, ...student.completedPrograms];
+
+export const getProgram = (student: Student, programId: string) => programsOf(student).find((p) => p.id === programId);
+
+export const isCompleted = (p: Program): p is CompletedProgram => "completedOn" in p;
 
 export const initials = (name: string) =>
   name

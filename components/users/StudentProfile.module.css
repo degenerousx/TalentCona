@@ -22,142 +22,6 @@
   color: var(--brand);
 }
 
-/* ---------- Hero ---------- */
-.hero {
-  display: flex;
-  align-items: flex-start;
-  gap: 24px;
-  min-height: 144px;
-  padding: 24px;
-  background: #a29eda;
-  border-radius: 14px;
-}
-
-.avatar {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  background: #ececf0;
-  font-weight: 700;
-  font-size: 30px;
-  line-height: 36px;
-  color: #ffffff;
-}
-
-.identity {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.name {
-  margin: 0;
-  font-weight: 400;
-  font-size: 24px;
-  line-height: 32px;
-  color: #ffffff;
-}
-
-.badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.badgeStatus,
-.badgeOutline {
-  display: inline-flex;
-  align-items: center;
-  height: 21.59px;
-  padding: 2px 8px;
-  border-radius: 8px;
-  font-size: 12px;
-  line-height: 16px;
-  white-space: nowrap;
-  color: #ffffff;
-}
-
-.badgeStatus {
-  background: linear-gradient(90deg, #00c950 0%, #00bc7d 100%);
-}
-
-.badgeOutline {
-  border: 0.8px solid #ffffff;
-}
-
-.contacts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.contacts li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  line-height: 20px;
-  color: #ffffff;
-}
-
-.contacts a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.contacts a:hover {
-  text-decoration: underline;
-}
-
-.actions {
-  display: flex;
-  align-items: flex-start;
-  gap: 24px;
-}
-
-.action {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  height: 41.78px;
-  padding: 0 16px 0 16.89px;
-  background: #ffffff;
-  border: 0.89px solid #d1d5dc;
-  border-radius: 8px;
-  font: 500 16px/24px var(--font-outfit), sans-serif;
-  color: #364153;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.action:hover {
-  background: #f9fafb;
-}
-
-.actionAssign {
-  gap: 7px;
-  height: 38px;
-  padding: 7px 16px;
-}
-
-.actionDanger {
-  border-color: #ffa2a2;
-  color: #c10007;
-}
-
-.actionDanger:hover {
-  background: #fef2f2;
-}
-
 /* ---------- Program enrollments ---------- */
 .card {
   display: flex;
@@ -226,11 +90,14 @@
   text-align: left;
 }
 
-button.program {
+a.program {
+  color: inherit;
+  text-decoration: none;
   cursor: pointer;
+  transition: border-color 0.15s;
 }
 
-button.program:hover:not(.programSelected) {
+a.program:hover:not(.programSelected) {
   border-color: #c4b5fd;
 }
 
@@ -319,20 +186,6 @@ button.program:hover:not(.programSelected) {
 }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 1199px) {
-  .hero {
-    flex-wrap: wrap;
-  }
-  .identity {
-    flex-basis: calc(100% - 120px);
-  }
-  .actions {
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-left: 120px;
-  }
-}
-
 @media (max-width: 899px) {
   .page {
     padding: 32px 16px 64px;
@@ -353,20 +206,6 @@ button.program:hover:not(.programSelected) {
 @media (max-width: 599px) {
   .page {
     padding: 24px 12px 48px;
-  }
-  .hero {
-    padding: 20px;
-  }
-  .avatar {
-    width: 72px;
-    height: 72px;
-    font-size: 24px;
-  }
-  .identity {
-    flex-basis: calc(100% - 96px);
-  }
-  .actions {
-    margin-left: 0;
   }
   .card {
     padding: 20px;
