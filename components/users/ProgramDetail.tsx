@@ -124,7 +124,7 @@ export default function ProgramDetail({ student, program }: { student: Student; 
         </Link>
       </div>
 
-      <StudentHero student={student} subtitle={program.programName} />
+      <StudentHero student={student} subtitle={program.programName} programId={program.id} />
 
       <section className={styles.card} aria-label={`${program.title} details`}>
         <div className={styles.tabs} role="tablist" aria-label="Program details">

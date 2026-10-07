@@ -67,6 +67,15 @@
   border: 0.8px solid #ffffff;
 }
 
+.badgeSuspended {
+  background: #e7000b;
+}
+
+.action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .contacts {
   display: flex;
   flex-wrap: wrap;

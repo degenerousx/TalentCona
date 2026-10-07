@@ -323,3 +323,6 @@ export const initials = (name: string) =>
     .slice(0, 2)
     .map((part) => part[0].toUpperCase())
     .join("");
+
+/** People who can be assigned as instructor or program advisor, until this comes from the API. */
+export const MENTOR_POOL = ["Brandy Kiehn", "Jane Smith", "John Doe", "Roberto Marquardt"];
