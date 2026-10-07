@@ -137,6 +137,25 @@
   background: #f9fafb;
 }
 
+.filters:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.filterCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  background: #302a91;
+  font-size: 12px;
+  line-height: 16px;
+  color: #ffffff;
+}
+
 /* ---------- Table ---------- */
 .tableWrap {
   overflow-x: auto;

@@ -1,6 +1,7 @@
 // Placeholder records from the designs until the users API exists.
 
-export type PaymentMethod = "Direct" | "Loan" | "Fundraising";
+export const PAYMENT_METHODS = ["Direct", "Loan", "Fundraising"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export type Person = { name: string; photo: string };
 
@@ -113,6 +114,9 @@ export const campaignLink = (c: Campaign) => `https://TalentCona.com/fund/${c.sl
 export const campaignStory = (student: Student) =>
   `Hi! I'm ${student.name.split(" ")[0]} and I'm raising funds for my education at TalentCona. I've enrolled in ${student.campaign.programLabel} to build my career. Your support will help me achieve my dreams. Thank you!`;
 
+export const STUDENT_STATUSES = ["Active", "Suspended", "Inactive"] as const;
+export type StudentStatus = (typeof STUDENT_STATUSES)[number];
+
 export type Student = {
   id: string;
   name: string;
@@ -126,7 +130,7 @@ export type Student = {
   hasLaptop: boolean;
   instructor: string | null;
   advisor: string | null;
-  status: "Active";
+  status: StudentStatus;
   lastActive: string;
   engagement: { sessions: number; communities: number };
   loan: Loan;

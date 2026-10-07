@@ -166,6 +166,34 @@ export const AwardIcon = (p: IconProps) => (
 );
 
 /** fluent:people-community-24-regular */
+export const FilterIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+  </Stroke>
+);
+
+export const XIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </Stroke>
+);
+
+/** Chevron used by the filter dropdowns (filled shape, 19.86 × 12.29 in the design). */
+export const ChevronDownBoldIcon = ({ color = "#333333" }: { color?: string }) => (
+  <svg width="19.86" height="12.29" viewBox="0 0 19.86 12.29" fill="none" aria-hidden="true">
+    <path d="M1.6 1.6 9.93 10.2 18.26 1.6" stroke={color} strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+/** boxicons "checkbox" / "checkbox-checked". */
+export const CheckboxIcon = ({ checked = false, color = "#0F172A" }: { checked?: boolean; color?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill={color} aria-hidden="true">
+    <path d="M7 5c-1.103 0-2 .897-2 2v10c0 1.103.897 2 2 2h10c1.103 0 2-.897 2-2V7c0-1.103-.897-2-2-2H7zm0 12V7h10l.002 10H7z" />
+    {checked && <path d="M10.996 12.556 9.7 11.285l-1.4 1.43 2.704 2.647 4.699-4.651-1.406-1.422z" />}
+  </svg>
+);
+
 export const Share2Icon = (p: IconProps) => (
   <Stroke {...p}>
     <circle cx="18" cy="5" r="3" />

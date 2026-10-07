@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FunnelIcon, LaptopIcon, SearchIcon } from "@/components/app/icons";
 import { STUDENTS, type PaymentMethod } from "./data";
+import FilterPanel from "./FilterPanel";
+import { EMPTY_FILTERS, activeFilterCount, applyFilters, filterOptions, type StudentFilters } from "./filters";
 import styles from "./UserManagement.module.css";
 
 const TABS = ["students", "mentors", "partners"] as const;
@@ -20,13 +22,16 @@ function Person({ name }: { name: string | null }) {
   return name ? <span className={styles.person}>{name}</span> : <span className={styles.unassigned}>Unassigned</span>;
 }
 
-function StudentsTable({ query }: { query: string }) {
+const FILTER_OPTIONS = filterOptions(STUDENTS);
+
+function StudentsTable({ query, filters }: { query: string; filters: StudentFilters }) {
   const router = useRouter();
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return STUDENTS;
-    return STUDENTS.filter((s) => [s.name, s.email, s.program].some((v) => v.toLowerCase().includes(q)));
-  }, [query]);
+    const filtered = applyFilters(STUDENTS, filters);
+    if (!q) return filtered;
+    return filtered.filter((s) => [s.name, s.email, s.program].some((v) => v.toLowerCase().includes(q)));
+  }, [query, filters]);
 
   return (
     <div className={styles.tableWrap}>
@@ -84,7 +89,7 @@ function StudentsTable({ query }: { query: string }) {
                 <Person name={s.advisor} />
               </td>
               <td>
-                <span className={`${styles.pill} ${styles.pillGreen}`}>{s.status}</span>
+                <span className={`${styles.pill} ${s.status === "Active" ? styles.pillGreen : styles.pillGray}`}>{s.status}</span>
               </td>
               <td>
                 <Link href={`/user-management/${s.id}`} className={styles.manage} onClick={(e) => e.stopPropagation()}>
@@ -96,7 +101,7 @@ function StudentsTable({ query }: { query: string }) {
           {rows.length === 0 && (
             <tr>
               <td colSpan={9} className={styles.empty}>
-                No students match “{query}”.
+                {query.trim() ? <>No students match “{query}”.</> : "No students match the selected filters."}
               </td>
             </tr>
           )}
@@ -109,6 +114,9 @@ function StudentsTable({ query }: { query: string }) {
 export default function UserManagement() {
   const [tab, setTab] = useState<Tab>("students");
   const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<StudentFilters>(EMPTY_FILTERS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterCount = activeFilterCount(filters);
 
   return (
     <div className={styles.page}>
@@ -151,20 +159,40 @@ export default function UserManagement() {
               aria-label={`Search ${tab}`}
             />
           </label>
-          <button type="button" className={styles.filters}>
+          <button
+            type="button"
+            className={styles.filters}
+            onClick={() => setFiltersOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={filtersOpen}
+            disabled={tab !== "students"}
+          >
             <FunnelIcon />
             <span>Filters</span>
+            {filterCount > 0 && <span className={styles.filterCount}>{filterCount}</span>}
           </button>
         </div>
 
         <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
           {tab === "students" ? (
-            <StudentsTable query={query} />
+            <StudentsTable query={query} filters={filters} />
           ) : (
             <p className={styles.empty}>The {tab} list is coming soon.</p>
           )}
         </div>
       </section>
+
+      {filtersOpen && (
+        <FilterPanel
+          initial={filters}
+          options={FILTER_OPTIONS}
+          onClose={() => setFiltersOpen(false)}
+          onApply={(f) => {
+            setFilters(f);
+            setFiltersOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
