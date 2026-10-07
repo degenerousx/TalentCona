@@ -13,9 +13,9 @@ import {
   RatingStarIcon,
   TrophyIcon,
 } from "@/components/app/icons";
-import { Toast } from "./ActionModals";
 import { RATING_LABELS, applicantInitials, type MentorApplication } from "./mentorApplications";
 import styles from "./MentorReview.module.css";
+import SuccessDialog from "./SuccessDialog";
 
 type Decision = "pending" | "approved" | "rejected";
 
@@ -54,13 +54,13 @@ function TrophyRating({ value, onChange }: { value: number; onChange: (v: number
 export default function MentorReview({ application: a }: { application: MentorApplication }) {
   const [rating, setRating] = useState(a.adminRating);
   const [decision, setDecision] = useState<Decision>("pending");
-  const [toast, setToast] = useState<string | null>(null);
-  const clearToast = useCallback(() => setToast(null), []);
+  const [dialog, setDialog] = useState<string | null>(null);
+  const closeDialog = useCallback(() => setDialog(null), []);
   const badge = DECISION_BADGE[decision];
 
   const decide = (d: Exclude<Decision, "pending">) => {
     setDecision(d);
-    setToast(`${a.name}'s application has been ${d}.`);
+    setDialog(`Mentorship Application ${d === "approved" ? "Approved" : "Rejected"} Successfully !`);
   };
 
   return (
@@ -188,7 +188,7 @@ export default function MentorReview({ application: a }: { application: MentorAp
         </footer>
       </section>
 
-      {toast && <Toast message={toast} onDone={clearToast} />}
+      {dialog && <SuccessDialog title={dialog} onClose={closeDialog} />}
     </div>
   );
 }
