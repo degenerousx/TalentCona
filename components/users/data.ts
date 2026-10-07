@@ -97,6 +97,22 @@ const bank = (date: string, amount: number): LoanPayment => ({ date, amount, met
 
 export const totalPaid = (loan: Loan) => loan.payments.reduce((sum, p) => sum + p.amount, 0);
 
+export type Contribution = { name: string; amount: number; message: string; ago: string };
+export type Campaign = {
+  slug: string;
+  raised: number;
+  goal: number;
+  supporters: number;
+  programLabel: string;
+  laptop: string | null;
+  contributions: Contribution[];
+};
+
+export const campaignLink = (c: Campaign) => `https://TalentCona.com/fund/${c.slug}`;
+
+export const campaignStory = (student: Student) =>
+  `Hi! I'm ${student.name.split(" ")[0]} and I'm raising funds for my education at TalentCona. I've enrolled in ${student.campaign.programLabel} to build my career. Your support will help me achieve my dreams. Thank you!`;
+
 export type Student = {
   id: string;
   name: string;
@@ -114,6 +130,7 @@ export type Student = {
   lastActive: string;
   engagement: { sessions: number; communities: number };
   loan: Loan;
+  campaign: Campaign;
   currentPrograms: CurrentProgram[];
   completedPrograms: CompletedProgram[];
 };
@@ -136,6 +153,19 @@ export const STUDENTS: Student[] = [
     lastActive: "2 hours ago",
     engagement: { sessions: 24, communities: 18 },
     loan: { programFee: 7500, nextPayment: "4/15/2024", payments: [bank("2024-03-15", 500), bank("2024-02-15", 500), bank("2024-01-15", 1500)] },
+    campaign: {
+      slug: "student-mhatbyo5",
+      raised: 1500,
+      goal: 1200,
+      supporters: 2,
+      programLabel: "Front-End Development Program",
+      laptop: "Essential Learner",
+      contributions: [
+        { name: "Sarah M.", amount: 150, message: "So proud of you! 💪", ago: "2 hours ago" },
+        { name: "Uncle James", amount: 200, message: "Good luck with your studies!", ago: "1 hour ago" },
+        { name: "Uncle James", amount: 200, message: "Good luck with your studies!", ago: "1 hour ago" },
+      ],
+    },
     currentPrograms: [
       { ...program("web-development", "Web Development", "Full Stack Development Program"), progress: 67 },
       { ...program("advanced-react-node", "Advanced React & Node.js"), progress: 23 },
@@ -159,6 +189,19 @@ export const STUDENTS: Student[] = [
     lastActive: "1 day ago",
     engagement: { sessions: 15, communities: 9 },
     loan: { programFee: 7500, nextPayment: "4/20/2024", payments: [bank("2024-03-20", 1000), bank("2024-02-20", 1000), bank("2024-01-20", 1000)] },
+    campaign: {
+      slug: "student-q7kd2m9x",
+      raised: 800,
+      goal: 2000,
+      supporters: 3,
+      programLabel: "Data Science Program",
+      laptop: null,
+      contributions: [
+        { name: "Linda C.", amount: 300, message: "Keep going, Michael!", ago: "3 hours ago" },
+        { name: "David W.", amount: 250, message: "Proud of you!", ago: "1 day ago" },
+        { name: "Grace T.", amount: 250, message: "Wishing you success!", ago: "2 days ago" },
+      ],
+    },
     currentPrograms: [{ ...program("data-science", "Data Science"), progress: 45 }],
     completedPrograms: [{ ...program("python-fundamentals", "Python Fundamentals"), score: 92, completedOn: "03/02/2024" }],
   },
@@ -179,6 +222,19 @@ export const STUDENTS: Student[] = [
     lastActive: "30 minutes ago",
     engagement: { sessions: 31, communities: 22 },
     loan: { programFee: 6000, nextPayment: "4/10/2024", payments: [bank("2024-03-10", 1000), bank("2024-02-10", 2000)] },
+    campaign: {
+      slug: "student-a4bz81ow",
+      raised: 1100,
+      goal: 1500,
+      supporters: 4,
+      programLabel: "Mobile Development Program",
+      laptop: "Essential Learner",
+      contributions: [
+        { name: "Tunde O.", amount: 400, message: "You've got this! 🚀", ago: "45 minutes ago" },
+        { name: "Aunty Bisi", amount: 300, message: "God bless your studies.", ago: "5 hours ago" },
+        { name: "Kemi A.", amount: 250, message: "So proud of you!", ago: "1 day ago" },
+      ],
+    },
     currentPrograms: [
       { ...program("mobile-development", "Mobile Development"), progress: 58 },
       { ...program("ui-ux-design", "UI/UX Design"), progress: 34 },
@@ -202,6 +258,18 @@ export const STUDENTS: Student[] = [
     lastActive: "5 hours ago",
     engagement: { sessions: 19, communities: 12 },
     loan: { programFee: 7500, nextPayment: "4/30/2024", payments: [bank("2024-03-30", 2500), bank("2024-01-30", 3000)] },
+    campaign: {
+      slug: "student-e9rx3lpt",
+      raised: 950,
+      goal: 1200,
+      supporters: 2,
+      programLabel: "Front-End Development Program",
+      laptop: "Pro Builder",
+      contributions: [
+        { name: "Maria R.", amount: 500, message: "Go get them, Emily!", ago: "4 hours ago" },
+        { name: "Jake P.", amount: 450, message: "Good luck with your studies!", ago: "2 days ago" },
+      ],
+    },
     currentPrograms: [{ ...program("web-development", "Web Development", "Full Stack Development Program"), progress: 81 }],
     completedPrograms: [{ ...program("intro-to-programming", "Introduction to Programming"), score: 95, completedOn: "01/20/2024" }],
   },
@@ -222,6 +290,15 @@ export const STUDENTS: Student[] = [
     lastActive: "3 days ago",
     engagement: { sessions: 6, communities: 3 },
     loan: { programFee: 8000, nextPayment: "4/1/2024", payments: [bank("2024-03-01", 1000)] },
+    campaign: {
+      slug: "student-dk5w0vn2",
+      raised: 200,
+      goal: 2500,
+      supporters: 1,
+      programLabel: "AI & Machine Learning Program",
+      laptop: "Pro Builder",
+      contributions: [{ name: "Grace K.", amount: 200, message: "Rooting for you!", ago: "6 hours ago" }],
+    },
     currentPrograms: [{ ...program("ai-ml", "AI/ML", "AI & Machine Learning Program", null, null), progress: 12 }],
     completedPrograms: [],
   },

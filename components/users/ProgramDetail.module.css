@@ -85,18 +85,6 @@
   color: #722fff;
 }
 
-.soon {
-  margin: 0;
-  padding: 16px 24px 48px;
-  font-size: 14px;
-  line-height: 20px;
-  color: #6a7282;
-}
-
-.soonTab {
-  text-transform: capitalize;
-}
-
 /* ---------- Overview ---------- */
 .overview {
   display: flex;

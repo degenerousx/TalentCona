@@ -13,6 +13,7 @@ import {
   MessageSquareIcon,
   VideoIcon,
 } from "@/components/app/icons";
+import CampaignPanel from "./CampaignPanel";
 import EngagementPanel from "./EngagementPanel";
 import LoanPanel from "./LoanPanel";
 import PerformancePanel from "./PerformancePanel";
@@ -155,9 +156,7 @@ export default function ProgramDetail({ student, program }: { student: Student; 
             ) : t === "loan" ? (
               <LoanPanel student={student} />
             ) : (
-              <p className={styles.soon}>
-                The <span className={styles.soonTab}>{t}</span> view is coming soon.
-              </p>
+              <CampaignPanel student={student} />
             )}
           </div>
         ))}
