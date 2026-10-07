@@ -1,0 +1,126 @@
+/* 1440 × 1024 artboard, scaled to fit the viewport by ScaledStage */
+.stage {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 1440px;
+  height: 1024px;
+  transform: translate(-50%, -50%) scale(var(--scale, 1));
+  background: linear-gradient(284.84deg, #edeafd -0.5%, #ffffff 95.28%);
+  /* Extends the backdrop when the viewport ratio differs from the artboard */
+  box-shadow: 0 0 0 100vmax #f0edfe;
+  clip-path: inset(-100vmax);
+}
+
+.stage:not([data-scaled]) {
+  visibility: hidden;
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.hero {
+  position: absolute;
+  left: 60px;
+  top: 215px;
+  width: 569px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.logo {
+  display: block;
+  width: 186px;
+  height: 72px;
+}
+
+.art {
+  display: block;
+  width: 569px;
+  height: 567px;
+}
+
+.badge {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border-radius: 100px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.emoji {
+  font-family: var(--font-emoji), "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  font-size: 28px;
+  line-height: 32px;
+}
+
+.card {
+  position: absolute;
+  right: 63px;
+  top: calc(50% - var(--card-h) / 2 + 45.5px);
+  width: 567px;
+  height: var(--card-h);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: 0 4px 8px 3px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Small screens: stacked, unscaled layout */
+@media (max-width: 899px) {
+  .stage,
+  .stage:not([data-scaled]) {
+    position: relative;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    transform: none;
+    padding: 0 16px 48px;
+    box-shadow: none;
+    clip-path: none;
+    overflow: hidden;
+    visibility: visible;
+  }
+  .bgFront,
+  .art,
+  .badge {
+    display: none;
+  }
+  .bgBack {
+    height: 340px;
+    inset: 0 0 auto 0;
+  }
+  .hero {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: auto;
+    padding: 104px 0 28px;
+  }
+  .card {
+    position: relative;
+    right: auto;
+    top: auto;
+    width: 100%;
+    max-width: 567px;
+    height: auto;
+    margin: 0 auto;
+    padding: 32px 20px;
+  }
+}
