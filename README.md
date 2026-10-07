@@ -15,6 +15,9 @@ npm run dev      # http://localhost:3000
 | ---------- | ----------------- |
 | `/sign-in` | Universal Sign In |
 | `/forgot-password` | Forgot Password |
+| `/reset-password` | Reset Password |
+
+Flow: Sign In → "Forgot password?" → Proceed → Reset Password → Proceed → Sign In. The Proceed steps navigate directly until the backend (reset email, token) is wired up.
 
 `/` redirects to `/sign-in` for now.
 
@@ -24,6 +27,7 @@ npm run dev      # http://localhost:3000
 - `components/auth/AuthShell.tsx` — shared 1440 × 1024 auth artboard (waves, logo, illustration, badges); reuse it for sign-up / forgot-password screens
 - `components/auth/SignInForm.tsx` — the sign-in card
 - `components/auth/ForgotPasswordForm.tsx` — the forgot-password card
+- `components/auth/ResetPasswordForm.tsx` — the reset-password card
 - `components/icons/` — inline SVG icons
 - `public/images/` — design assets
 
