@@ -73,6 +73,15 @@ export const DEFAULT_MENTOR_ACTIVITY: MentorActivity[] = [
   { title: "Logged into platform", date: "2024-03-15", time: "08:30", kind: "login", status: "completed" },
 ];
 
+export type Mentee = { name: string; progress: number; lastSession: string };
+
+/** Mentees from the design, used for mentors without their own list. */
+export const DEFAULT_MENTEES: Mentee[] = [
+  { name: "Sarah Johnson", progress: 67, lastSession: "2024-03-17" },
+  { name: "David Kim", progress: 72, lastSession: "2024-03-16" },
+  { name: "Emily Rodriguez", progress: 58, lastSession: "2024-03-15" },
+];
+
 export type MentorProfile = {
   id: string;
   name: string;
@@ -87,7 +96,11 @@ export type MentorProfile = {
   avgSession: string;
   responseTime: string;
   lastActive: string;
+  sessionsCompleted: number;
+  /** Average mentee rating out of 5. */
+  satisfaction: number;
   activity?: MentorActivity[];
+  mentees?: Mentee[];
 };
 
 export const MENTOR_PROFILES: MentorProfile[] = [
@@ -103,6 +116,8 @@ export const MENTOR_PROFILES: MentorProfile[] = [
     avgSession: "45 mins",
     responseTime: "2 hours",
     lastActive: "3 hours ago",
+    sessionsCompleted: 124,
+    satisfaction: 4,
     current: [
       { program: "Web Development", dateAssigned: "12/15/2023", role: "Instructor", mentees: 14 },
       { program: "Advanced React & Node.js", dateAssigned: "12/15/2023", role: "Program Advisor", mentees: 14 },
@@ -123,6 +138,12 @@ export const MENTOR_PROFILES: MentorProfile[] = [
     avgSession: "50 mins",
     responseTime: "1 hour",
     lastActive: "1 day ago",
+    sessionsCompleted: 98,
+    satisfaction: 4.5,
+    mentees: [
+      { name: "Michael Chen", progress: 45, lastSession: "2024-03-18" },
+      { name: "Sarah Johnson", progress: 23, lastSession: "2024-03-14" },
+    ],
     current: [{ program: "Data Science", dateAssigned: "01/10/2024", role: "Instructor", mentees: 14 }],
     history: [{ program: "Python Fundamentals", dateAssigned: "09/04/2023", role: "Program Advisor", mentees: 11, dateUnassigned: "12/20/2023" }],
   },
@@ -138,6 +159,9 @@ export const MENTOR_PROFILES: MentorProfile[] = [
     avgSession: "40 mins",
     responseTime: "3 hours",
     lastActive: "30 minutes ago",
+    sessionsCompleted: 61,
+    satisfaction: 4,
+    mentees: [{ name: "Adebayo Ojo", progress: 58, lastSession: "2024-03-17" }],
     current: [
       { program: "Mobile Development", dateAssigned: "02/01/2024", role: "Instructor", mentees: 5 },
       { program: "UI/UX Design", dateAssigned: "02/01/2024", role: "Program Advisor", mentees: 3 },
@@ -156,6 +180,9 @@ export const MENTOR_PROFILES: MentorProfile[] = [
     avgSession: "60 mins",
     responseTime: "4 hours",
     lastActive: "5 hours ago",
+    sessionsCompleted: 143,
+    satisfaction: 5,
+    mentees: [{ name: "David Kim", progress: 12, lastSession: "2024-03-12" }],
     current: [{ program: "AI/ML", dateAssigned: "11/20/2023", role: "Instructor", mentees: 15 }],
     history: [{ program: "Data Science", dateAssigned: "03/01/2023", role: "Instructor", mentees: 12, dateUnassigned: "10/30/2023" }],
   },

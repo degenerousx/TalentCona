@@ -13,6 +13,7 @@ import {
   VideoIcon,
 } from "@/components/app/icons";
 import MentorHero from "./MentorHero";
+import MentorPerformance from "./MentorPerformance";
 import { DEFAULT_MENTOR_ACTIVITY, type MentorActivityKind, type MentorAssignment, type MentorProfile } from "./mentors";
 import base from "./ProgramDetail.module.css";
 import styles from "./MentorProgram.module.css";
@@ -133,9 +134,7 @@ export default function MentorProgram({ mentor, assignment }: { mentor: MentorPr
           <Overview mentor={mentor} />
         </div>
         <div role="tabpanel" id="panel-performance" aria-labelledby="tab-performance" hidden={tab !== "performance"}>
-          <p className={styles.soon}>
-            Performance for {mentor.name} on {assignment.program} is coming soon.
-          </p>
+          <MentorPerformance mentor={mentor} />
         </div>
       </section>
     </div>

@@ -44,14 +44,6 @@
   white-space: nowrap;
 }
 
-.soon {
-  margin: 0;
-  padding: 16px 24px 48px;
-  font-size: 14px;
-  line-height: 20px;
-  color: #6a7282;
-}
-
 @media (max-width: 1199px) {
   .overview {
     align-items: stretch;
