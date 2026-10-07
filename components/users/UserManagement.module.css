@@ -199,11 +199,24 @@
   border-bottom: 0;
 }
 
+.row {
+  cursor: pointer;
+}
+
+.row:hover td {
+  background: #fafafa;
+}
+
 .name {
   display: block;
   font-size: 16px;
   line-height: 24px;
   color: #101828;
+  text-decoration: none;
+}
+
+.name:hover {
+  color: var(--brand);
 }
 
 .email {

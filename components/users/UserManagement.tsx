@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FunnelIcon, LaptopIcon, SearchIcon } from "@/components/app/icons";
 import { STUDENTS, type PaymentMethod } from "./data";
@@ -20,6 +21,7 @@ function Person({ name }: { name: string | null }) {
 }
 
 function StudentsTable({ query }: { query: string }) {
+  const router = useRouter();
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return STUDENTS;
@@ -55,9 +57,11 @@ function StudentsTable({ query }: { query: string }) {
         </thead>
         <tbody>
           {rows.map((s) => (
-            <tr key={s.email}>
+            <tr key={s.id} className={styles.row} onClick={() => router.push(`/user-management/${s.id}`)}>
               <td>
-                <span className={styles.name}>{s.name}</span>
+                <Link href={`/user-management/${s.id}`} className={styles.name} onClick={(e) => e.stopPropagation()}>
+                  {s.name}
+                </Link>
                 <span className={styles.email}>{s.email}</span>
               </td>
               <td className={styles.tdProgram}>
@@ -83,7 +87,7 @@ function StudentsTable({ query }: { query: string }) {
                 <span className={`${styles.pill} ${styles.pillGreen}`}>{s.status}</span>
               </td>
               <td>
-                <Link href="#" className={styles.manage}>
+                <Link href={`/user-management/${s.id}`} className={styles.manage} onClick={(e) => e.stopPropagation()}>
                   Manage
                 </Link>
               </td>
