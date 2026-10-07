@@ -4,16 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import {
-  AssignCheckboxIcon,
   AwardIcon,
   BriefcaseIcon,
-  CircleAlertIcon,
   ClockIcon,
   LinkIcon,
   SearchIcon,
   StarIcon,
   TrophyIcon,
 } from "@/components/app/icons";
+import { Check, RoleDefinitions } from "./AssignParts";
+import AssignProgramsModal from "./AssignProgramsModal";
 import type { AssignableMentor } from "./assignableMentors";
 import { applicantInitials } from "./mentorApplications";
 import { ASSIGNABLE_PROGRAMS, type MentorRole } from "./mentors";
@@ -26,26 +26,18 @@ const ROLES: MentorRole[] = ["Instructor", "Program Advisor"];
 /** Program id → the roles chosen for it (possibly none yet). */
 type Selection = Record<string, MentorRole[]>;
 
-function Check({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) {
-  return (
-    <>
-      <input type="checkbox" className={styles.srOnly} checked={checked} onChange={onChange} aria-label={label} />
-      <AssignCheckboxIcon checked={checked} />
-    </>
-  );
-}
-
 export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [selection, setSelection] = useState<Selection>({});
+  const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState(false);
+  const closeConfirm = useCallback(() => setConfirming(false), []);
   const finish = useCallback(() => router.push("/user-management#mentors"), [router]);
 
   const q = query.trim().toLowerCase();
   const programs = q ? ASSIGNABLE_PROGRAMS.filter((p) => `${p.title} ${p.track}`.toLowerCase().includes(q)) : ASSIGNABLE_PROGRAMS;
   const chosen = ASSIGNABLE_PROGRAMS.filter((p) => selection[p.id]);
-  const ready = chosen.length > 0 && chosen.every((p) => selection[p.id].length > 0);
 
   const toggleProgram = (id: string) =>
     setSelection(({ [id]: current, ...rest }) => (current ? rest : { ...rest, [id]: [] }));
@@ -146,24 +138,7 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
         </dl>
 
         <div className={styles.assign}>
-          <aside className={styles.roles} aria-labelledby="role-definitions">
-            <span className={styles.rolesIcon}>
-              <CircleAlertIcon size={20} color="#155DFC" strokeWidth={1.57} />
-            </span>
-            <div>
-              <h3 id="role-definitions" className={styles.rolesTitle}>
-                Role Definitions
-              </h3>
-              <ul className={styles.rolesList}>
-                <li>
-                  <b>Instructor:</b> Delivers course content and teaches technical skills
-                </li>
-                <li>
-                  <b>Program Advisor:</b> Guides students through learning journey and provides career mentorship
-                </li>
-              </ul>
-            </div>
-          </aside>
+          <RoleDefinitions />
 
           <label className={styles.search}>
             <span className={styles.searchIcon}>
@@ -222,9 +197,9 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
             <button
               type="button"
               className={styles.assignButton}
-              disabled={!ready}
-              title={ready ? undefined : "Choose a program and a role first"}
-              onClick={() => setDone(true)}
+              disabled={chosen.length === 0}
+              title={chosen.length ? undefined : "Choose a program first"}
+              onClick={() => setConfirming(true)}
             >
               Assign
             </button>
@@ -232,6 +207,18 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
         </footer>
       </section>
 
+      {confirming && (
+        <AssignProgramsModal
+          mentorName={m.name}
+          initial={Object.fromEntries(chosen.map((p) => [p.id, selection[p.id][0] ?? null]))}
+          onCancel={closeConfirm}
+          onConfirm={(confirmed) => {
+            setSelection(Object.fromEntries(Object.entries(confirmed).map(([id, role]) => [id, [role]])));
+            setConfirming(false);
+            setDone(true);
+          }}
+        />
+      )}
       {done && <SuccessDialog title="Mentor Assigned Successfully !" onClose={finish} />}
     </div>
   );

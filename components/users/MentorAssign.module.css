@@ -187,6 +187,11 @@
   border-color: #9810fa;
 }
 
+/* Browsers round the 1.78px border down, so pin the design's height for the open card too. */
+.programOn {
+  min-height: 111.56px;
+}
+
 .programHead {
   display: flex;
   align-items: flex-start;
