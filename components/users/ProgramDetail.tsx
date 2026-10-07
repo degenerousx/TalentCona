@@ -14,6 +14,7 @@ import {
   VideoIcon,
 } from "@/components/app/icons";
 import EngagementPanel from "./EngagementPanel";
+import LoanPanel from "./LoanPanel";
 import PerformancePanel from "./PerformancePanel";
 import StudentHero from "./StudentHero";
 import { DEFAULT_ACTIVITY, type ActivityKind, type Person, type Program, type Student } from "./data";
@@ -151,6 +152,8 @@ export default function ProgramDetail({ student, program }: { student: Student; 
               <PerformancePanel program={program} />
             ) : t === "engagement" ? (
               <EngagementPanel student={student} />
+            ) : t === "loan" ? (
+              <LoanPanel student={student} />
             ) : (
               <p className={styles.soon}>
                 The <span className={styles.soonTab}>{t}</span> view is coming soon.

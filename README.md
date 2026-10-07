@@ -19,7 +19,7 @@ npm run dev      # http://localhost:3000
 | `/dashboard` | Admin Dashboard |
 | `/user-management` | User Management (Students tab; Mentors/Partners pending) |
 | `/user-management/[studentId]` | Student profile (one page per student) |
-| `/user-management/[studentId]/[programId]` | A student's program: Overview, Performance and Engagement tabs (Loan, Campaign pending) |
+| `/user-management/[studentId]/[programId]` | A student's program: Overview, Performance, Engagement and Loan tabs (Campaign pending) |
 | `/financial-ops` | Placeholder (design pending) |
 
 Sign In → Dashboard; the sidebar's Logout returns to Sign In.
@@ -37,7 +37,7 @@ Password flow: Sign In → "Forgot password?" → Proceed → Reset Password →
 - `components/auth/ResetPasswordForm.tsx` — the reset-password card
 - `components/auth/SuccessModal.tsx` — reusable success dialog (shown after a password reset)
 - `app/(app)/` — signed-in routes sharing `components/app/AppShell.tsx` (header, collapsible sidebar)
-- `components/users/` — User Management (tabs, search, students table) `StudentProfile.tsx`, `ProgramDetail.tsx` (with `PerformancePanel.tsx` and `EngagementPanel.tsx`) and the shared `StudentHero.tsx` header; `data.ts` holds placeholder student records
+- `components/users/` — User Management (tabs, search, students table) `StudentProfile.tsx`, `ProgramDetail.tsx` (with `PerformancePanel.tsx`, `EngagementPanel.tsx` and `LoanPanel.tsx`) and the shared `StudentHero.tsx` header; `data.ts` holds placeholder student records
 - `components/dashboard/` — dashboard widgets; `data.ts` holds the placeholder figures and `GrowthChart.tsx` the area chart
 - `components/icons/`, `components/app/icons.tsx` — inline SVG icons
 - `public/images/` — design assets

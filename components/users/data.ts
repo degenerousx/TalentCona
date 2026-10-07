@@ -90,6 +90,13 @@ const program = (id: string, title: string, programName = `${title} Program`, me
   advisor,
 });
 
+export type LoanPayment = { date: string; amount: number; method: string; status: "Completed" };
+export type Loan = { programFee: number; nextPayment: string; payments: LoanPayment[] };
+
+const bank = (date: string, amount: number): LoanPayment => ({ date, amount, method: "Bank Transfer", status: "Completed" });
+
+export const totalPaid = (loan: Loan) => loan.payments.reduce((sum, p) => sum + p.amount, 0);
+
 export type Student = {
   id: string;
   name: string;
@@ -106,6 +113,7 @@ export type Student = {
   status: "Active";
   lastActive: string;
   engagement: { sessions: number; communities: number };
+  loan: Loan;
   currentPrograms: CurrentProgram[];
   completedPrograms: CompletedProgram[];
 };
@@ -127,6 +135,7 @@ export const STUDENTS: Student[] = [
     status: "Active",
     lastActive: "2 hours ago",
     engagement: { sessions: 24, communities: 18 },
+    loan: { programFee: 7500, nextPayment: "4/15/2024", payments: [bank("2024-03-15", 500), bank("2024-02-15", 500), bank("2024-01-15", 1500)] },
     currentPrograms: [
       { ...program("web-development", "Web Development", "Full Stack Development Program"), progress: 67 },
       { ...program("advanced-react-node", "Advanced React & Node.js"), progress: 23 },
@@ -149,6 +158,7 @@ export const STUDENTS: Student[] = [
     status: "Active",
     lastActive: "1 day ago",
     engagement: { sessions: 15, communities: 9 },
+    loan: { programFee: 7500, nextPayment: "4/20/2024", payments: [bank("2024-03-20", 1000), bank("2024-02-20", 1000), bank("2024-01-20", 1000)] },
     currentPrograms: [{ ...program("data-science", "Data Science"), progress: 45 }],
     completedPrograms: [{ ...program("python-fundamentals", "Python Fundamentals"), score: 92, completedOn: "03/02/2024" }],
   },
@@ -168,6 +178,7 @@ export const STUDENTS: Student[] = [
     status: "Active",
     lastActive: "30 minutes ago",
     engagement: { sessions: 31, communities: 22 },
+    loan: { programFee: 6000, nextPayment: "4/10/2024", payments: [bank("2024-03-10", 1000), bank("2024-02-10", 2000)] },
     currentPrograms: [
       { ...program("mobile-development", "Mobile Development"), progress: 58 },
       { ...program("ui-ux-design", "UI/UX Design"), progress: 34 },
@@ -190,6 +201,7 @@ export const STUDENTS: Student[] = [
     status: "Active",
     lastActive: "5 hours ago",
     engagement: { sessions: 19, communities: 12 },
+    loan: { programFee: 7500, nextPayment: "4/30/2024", payments: [bank("2024-03-30", 2500), bank("2024-01-30", 3000)] },
     currentPrograms: [{ ...program("web-development", "Web Development", "Full Stack Development Program"), progress: 81 }],
     completedPrograms: [{ ...program("intro-to-programming", "Introduction to Programming"), score: 95, completedOn: "01/20/2024" }],
   },
@@ -209,6 +221,7 @@ export const STUDENTS: Student[] = [
     status: "Active",
     lastActive: "3 days ago",
     engagement: { sessions: 6, communities: 3 },
+    loan: { programFee: 8000, nextPayment: "4/1/2024", payments: [bank("2024-03-01", 1000)] },
     currentPrograms: [{ ...program("ai-ml", "AI/ML", "AI & Machine Learning Program", null, null), progress: 12 }],
     completedPrograms: [],
   },
