@@ -1,0 +1,477 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Stat cards ---------- */
+.stats {
+  display: flex;
+  gap: 24px;
+  padding: 24px;
+}
+
+.stat {
+  display: flex;
+  flex: 1 1 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  height: 105.76px;
+  padding: 24.89px 24.89px 0.89px;
+  background: #ffffff;
+  border: 0.89px solid #f5f5f7;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.stat > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Vertically centred against the 56px label + value block. */
+.stat svg {
+  flex: none;
+  margin-top: 12px;
+}
+
+.statLabel {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.statValue {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+/* ---------- Sections ---------- */
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 24px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sectionHeader {
+  height: 64px;
+  margin: 0;
+  padding: 24px;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 16px;
+  color: #0a0a0a;
+}
+
+.pending {
+  background: linear-gradient(90deg, #fff7ed 0%, #fffbeb 100%);
+}
+
+.assigned {
+  background: linear-gradient(90deg, #f0fdfa 0%, #ecfeff 100%);
+}
+
+.unassigned {
+  background: #f8fafc;
+}
+
+/* ---------- Toolbar ---------- */
+.toolbar {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  height: 90.67px;
+  padding: 24px 24px 0.89px;
+  border-bottom: 0.89px solid #d1d5dc;
+}
+
+.search {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 41.78px;
+}
+
+.searchIcon {
+  position: absolute;
+  top: 11px;
+  left: 12px;
+  display: flex;
+  pointer-events: none;
+}
+
+.search input {
+  width: 100%;
+  height: 41px;
+  margin-top: 0.45px;
+  padding: 8px 16px 8px 40px;
+  background: #ffffff;
+  border: 0.89px solid #d1d5dc;
+  border-radius: 8px;
+  outline: 0;
+  font: 400 16px/20px var(--font-outfit), sans-serif;
+  color: #3a3a3a;
+}
+
+.search input::placeholder {
+  color: rgba(58, 58, 58, 0.5);
+}
+
+.search input:focus {
+  border-color: #a5a0e0;
+  box-shadow: 0 0 0 3px rgba(48, 42, 145, 0.08);
+}
+
+.filterWrap {
+  position: relative;
+  flex: none;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 146.54px;
+  height: 41.78px;
+  padding: 0 0 0 16px;
+  background: #ffffff;
+  border: 1px solid #d1d5dc;
+  border-radius: 8px;
+  font: 400 16px/24px var(--font-outfit), sans-serif;
+  color: #3a3a3a;
+  cursor: pointer;
+}
+
+.filters:hover {
+  background: #f9fafb;
+}
+
+.filterCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  background: #302a91;
+  font-size: 12px;
+  line-height: 16px;
+  color: #ffffff;
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: max-content;
+  min-width: 146.54px;
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
+}
+
+.allOption {
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: 400 16px/20px var(--font-outfit), sans-serif;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 24px;
+  font-size: 16px;
+  line-height: 20px;
+  color: #64748b;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.allOption:hover,
+.option:hover {
+  color: #302a91;
+}
+
+.option:focus-within svg {
+  border-radius: 4px;
+  outline: 2px solid #a5a0e0;
+  outline-offset: -3px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Tables ---------- */
+.tableWrap {
+  overflow-x: auto;
+}
+
+/* Heights include borders, so totals match the design (176.43px / 360.43px). */
+.table {
+  width: 100%;
+  min-width: 900px;
+  border: 1px solid #d1d5dc;
+  border-top: 0;
+  border-spacing: 0;
+  border-collapse: separate;
+  table-layout: fixed;
+}
+
+.table th {
+  height: 40.43px;
+  padding: 11.21px 24px;
+  background: #f9fafb;
+  border-top: 1px solid #d1d5dc;
+  border-bottom: 1px solid #d1d5dc;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0.6px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #6a7282;
+}
+
+.table td {
+  height: 68px;
+  padding: 0 24px;
+  border-bottom: 0.89px solid #e5e7eb;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+  height: 67px;
+  border-bottom: 0;
+}
+
+.pendingTable th:last-child {
+  width: 111px;
+}
+
+.assignedTable th:last-child {
+  width: 131.74px;
+}
+
+.assignedTable td {
+  height: 76px;
+}
+
+.assignedTable tbody tr:last-child td {
+  height: 75px;
+}
+
+/*
+ * In the design this header row has 199.84px columns and a 111px Actions cell,
+ * while the rows below use 197.84px columns and 121px. These offsets keep each
+ * label where the design puts it.
+ */
+.unassignedTable th:nth-child(2) {
+  padding-left: 26px;
+}
+
+.unassignedTable th:nth-child(3) {
+  padding-left: 28px;
+}
+
+.unassignedTable th:nth-child(4) {
+  padding-left: 30px;
+}
+
+.unassignedTable th:nth-child(5) {
+  padding-left: 32px;
+}
+
+.unassignedTable th:last-child {
+  width: 121px;
+  padding-left: 34px;
+}
+
+.name {
+  display: block;
+  overflow: hidden;
+  font-size: 16px;
+  line-height: 24px;
+  color: #101828;
+  text-overflow: ellipsis;
+  transform: translateY(-2.11px);
+}
+
+.small {
+  display: block;
+  font-size: 14px;
+  line-height: 20px;
+  color: #0a0a0a;
+  transform: translateY(-2px);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag {
+  padding: 4px 8px;
+  background: #dbeafe;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 16px;
+  color: #193cb8;
+}
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #101828;
+}
+
+.rating svg {
+  flex: none;
+}
+
+.greenButton {
+  height: 36px;
+  padding: 8px 16px;
+  background: #00c853;
+  border: 0;
+  border-radius: 8px;
+  font: 500 14px/20px var(--font-outfit), sans-serif;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.greenButton:hover {
+  background: #00b34a;
+}
+
+.table td.tdPrograms {
+  padding-top: 25.55px;
+  padding-bottom: 25.55px;
+}
+
+/* Long lists wrap after ~125px, like "Frontend Dev & / Backend Dev" in the design. */
+.programs {
+  display: block;
+  max-width: 125px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #101828;
+  white-space: normal;
+}
+
+.capacity {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.capAvailable {
+  background: #dcfce7;
+  color: #016630;
+}
+
+.capNear {
+  background: #fef9c2;
+  color: #894b00;
+}
+
+.capFull {
+  background: #ffe2e2;
+  color: #9f0712;
+}
+
+.manage {
+  padding: 0;
+  background: none;
+  border: 0;
+  font: 400 16px/24px var(--font-outfit), sans-serif;
+  color: #302a91;
+  cursor: pointer;
+  transform: translateY(-2.11px);
+}
+
+.manage:hover {
+  text-decoration: underline;
+}
+
+.table td.empty {
+  height: auto;
+  padding: 32px 24px;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  white-space: normal;
+  color: #6a7282;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1199px) {
+  .stats {
+    flex-wrap: wrap;
+  }
+  .stat {
+    flex: 1 1 calc(50% - 12px);
+  }
+}
+
+@media (max-width: 599px) {
+  .stats {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+  .stat {
+    flex: none;
+  }
+  .sectionHeader {
+    padding: 24px 16px;
+  }
+  .toolbar {
+    gap: 12px;
+    height: auto;
+    padding: 16px;
+  }
+  .filters {
+    width: auto;
+    padding: 0 14px;
+  }
+}

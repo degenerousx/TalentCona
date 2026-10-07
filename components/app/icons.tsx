@@ -166,6 +166,21 @@ export const AwardIcon = (p: IconProps) => (
 );
 
 /** fluent:people-community-24-regular */
+export const StarIcon = ({ size = 16, color = "#FDC700" }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color} stroke={color} strokeWidth={2} strokeLinejoin="round" aria-hidden="true">
+    <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
+  </svg>
+);
+
+/** hugeicons "champion" trophy. */
+export const TrophyIcon = ({ size = 16, color = "#A02FFF" }: { size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 17c-1.674 0-3.13 1.265-3.882 3.131-.36.892.156 1.869.84 1.869h6.083c.685 0 1.2-.977.841-1.869C15.13 18.265 13.674 17 12 17" />
+    <path d="M18.5 5h1.202c1.201 0 1.801 0 2.115.377s.183.943-.077 2.074l-.39 1.697C20.766 11.7 18.618 13.84 16 15M5.5 5H4.298c-1.201 0-1.802 0-2.115.377-.313.378-.183.943.078 2.074l.39 1.697C3.234 11.7 5.381 13.84 8 15" />
+    <path d="M12 17c3.02 0 5.565-4.662 6.33-11.01.211-1.754.317-2.632-.243-3.311S16.622 2 14.813 2H9.187c-1.81 0-2.714 0-3.274.679s-.453 1.557-.242 3.31C6.436 12.339 8.98 17 12 17" />
+  </svg>
+);
+
 export const FilterIcon = (p: IconProps) => (
   <Stroke {...p}>
     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />

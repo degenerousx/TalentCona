@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { FunnelIcon, LaptopIcon, SearchIcon } from "@/components/app/icons";
 import { STUDENTS, type PaymentMethod } from "./data";
 import FilterPanel from "./FilterPanel";
+import MentorsPanel from "./MentorsPanel";
 import { EMPTY_FILTERS, activeFilterCount, applyFilters, filterOptions, type StudentFilters } from "./filters";
 import styles from "./UserManagement.module.css";
 
@@ -146,36 +147,40 @@ export default function UserManagement() {
           ))}
         </div>
 
-        <div className={styles.toolbar}>
-          <label className={styles.search}>
-            <span className={styles.searchIcon}>
-              <SearchIcon />
-            </span>
-            <input
-              type="search"
-              placeholder={`Search ${tab}...`}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label={`Search ${tab}`}
-            />
-          </label>
-          <button
-            type="button"
-            className={styles.filters}
-            onClick={() => setFiltersOpen(true)}
-            aria-haspopup="dialog"
-            aria-expanded={filtersOpen}
-            disabled={tab !== "students"}
-          >
-            <FunnelIcon />
-            <span>Filters</span>
-            {filterCount > 0 && <span className={styles.filterCount}>{filterCount}</span>}
-          </button>
-        </div>
+        {tab !== "mentors" && (
+          <div className={styles.toolbar}>
+            <label className={styles.search}>
+              <span className={styles.searchIcon}>
+                <SearchIcon />
+              </span>
+              <input
+                type="search"
+                placeholder={`Search ${tab}...`}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label={`Search ${tab}`}
+              />
+            </label>
+            <button
+              type="button"
+              className={styles.filters}
+              onClick={() => setFiltersOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={filtersOpen}
+              disabled={tab !== "students"}
+            >
+              <FunnelIcon />
+              <span>Filters</span>
+              {filterCount > 0 && <span className={styles.filterCount}>{filterCount}</span>}
+            </button>
+          </div>
+        )}
 
         <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
           {tab === "students" ? (
             <StudentsTable query={query} filters={filters} />
+          ) : tab === "mentors" ? (
+            <MentorsPanel />
           ) : (
             <p className={styles.empty}>The {tab} list is coming soon.</p>
           )}
