@@ -54,12 +54,13 @@
   font: 500 16px/24px var(--font-outfit), sans-serif;
   color: #4a5565;
   text-transform: capitalize;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-/* Button widths from the design */
+/* Button widths from the design; the active tab is always 76.06px wide and its label is centred in it. */
 .tab_overview {
-  width: 76.06px;
+  width: 100.46px;
 }
 .tab_performance {
   width: 100.46px;
@@ -78,7 +79,8 @@
   color: #722fff;
 }
 
-.tabActive {
+.tab[aria-selected="true"] {
+  width: 76.06px;
   border-bottom-color: #722fff;
   color: #722fff;
 }

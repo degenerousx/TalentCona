@@ -13,6 +13,8 @@ import {
   MessageSquareIcon,
   VideoIcon,
 } from "@/components/app/icons";
+import EngagementPanel from "./EngagementPanel";
+import PerformancePanel from "./PerformancePanel";
 import StudentHero from "./StudentHero";
 import { DEFAULT_ACTIVITY, type ActivityKind, type Person, type Program, type Student } from "./data";
 import styles from "./ProgramDetail.module.css";
@@ -132,7 +134,7 @@ export default function ProgramDetail({ student, program }: { student: Student; 
               id={`tab-${t}`}
               aria-selected={tab === t}
               aria-controls={`panel-${t}`}
-              className={`${styles.tab} ${styles[`tab_${t}`]} ${tab === t ? styles.tabActive : ""}`}
+              className={`${styles.tab} ${styles[`tab_${t}`]}`}
               onClick={() => setTab(t)}
             >
               {t}
@@ -140,15 +142,22 @@ export default function ProgramDetail({ student, program }: { student: Student; 
           ))}
         </div>
 
-        <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-          {tab === "overview" ? (
-            <Overview student={student} program={program} />
-          ) : (
-            <p className={styles.soon}>
-              The <span className={styles.soonTab}>{tab}</span> view is coming soon.
-            </p>
-          )}
-        </div>
+        {/* Every panel is rendered and toggled with `hidden`, so the markup works without JS too. */}
+        {TABS.map((t) => (
+          <div key={t} role="tabpanel" id={`panel-${t}`} aria-labelledby={`tab-${t}`} hidden={tab !== t}>
+            {t === "overview" ? (
+              <Overview student={student} program={program} />
+            ) : t === "performance" ? (
+              <PerformancePanel program={program} />
+            ) : t === "engagement" ? (
+              <EngagementPanel student={student} />
+            ) : (
+              <p className={styles.soon}>
+                The <span className={styles.soonTab}>{t}</span> view is coming soon.
+              </p>
+            )}
+          </div>
+        ))}
       </section>
     </div>
   );

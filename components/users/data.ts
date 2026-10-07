@@ -14,6 +14,47 @@ export type Activity = {
   status: "completed";
 };
 
+export type ScoredItem = { title: string; submitted: string; score: number };
+
+export type Performance = {
+  cohort: string;
+  assessments: { done: number; total: number; average: number };
+  assignments: ScoredItem[];
+  miniProjects: { total: number; items: ScoredItem[] };
+  finalProject: { score: number; label: string };
+  overall: number;
+};
+
+/** Performance figures from the design, used until they come from the API. */
+const DESIGN_PERFORMANCE: Omit<Performance, "cohort"> = {
+  assessments: { done: 12, total: 15, average: 88 },
+  assignments: [
+    { title: "HTML/CSS Basics", submitted: "2024-02-10", score: 92 },
+    { title: "JavaScript Functions", submitted: "2024-02-17", score: 88 },
+    { title: "DOM Manipulation", submitted: "2024-02-24", score: 85 },
+    { title: "Async JavaScript", submitted: "2024-03-02", score: 90 },
+    { title: "React Components", submitted: "2024-03-09", score: 87 },
+    { title: "State Management", submitted: "2024-03-16", score: 91 },
+  ],
+  miniProjects: {
+    total: 3,
+    items: [
+      { title: "Todo App", submitted: "2024-02-28", score: 88 },
+      { title: "Weather Dashboard", submitted: "2024-03-14", score: 91 },
+      { title: "E-commerce Cart", submitted: "2024-03-18", score: 88 },
+    ],
+  },
+  finalProject: { score: 94, label: "Capstone Project Evaluation" },
+  overall: 89,
+};
+
+export const performanceOf = (program: Program): Performance =>
+  program.performance ?? { cohort: `${program.title} - Cohort 12`, ...DESIGN_PERFORMANCE };
+
+/** Rounded mean of a list of scores. */
+export const average = (items: ScoredItem[]) =>
+  items.length ? Math.round(items.reduce((sum, i) => sum + i.score, 0) / items.length) : 0;
+
 type ProgramBase = {
   id: string;
   title: string;
@@ -22,6 +63,7 @@ type ProgramBase = {
   mentor: Person | null;
   advisor: Person | null;
   activity?: Activity[];
+  performance?: Performance;
 };
 
 export type CurrentProgram = ProgramBase & { progress: number };
@@ -63,6 +105,7 @@ export type Student = {
   advisor: string | null;
   status: "Active";
   lastActive: string;
+  engagement: { sessions: number; communities: number };
   currentPrograms: CurrentProgram[];
   completedPrograms: CompletedProgram[];
 };
@@ -83,6 +126,7 @@ export const STUDENTS: Student[] = [
     advisor: "Sarah Johnson",
     status: "Active",
     lastActive: "2 hours ago",
+    engagement: { sessions: 24, communities: 18 },
     currentPrograms: [
       { ...program("web-development", "Web Development", "Full Stack Development Program"), progress: 67 },
       { ...program("advanced-react-node", "Advanced React & Node.js"), progress: 23 },
@@ -104,6 +148,7 @@ export const STUDENTS: Student[] = [
     advisor: "Michael Chen",
     status: "Active",
     lastActive: "1 day ago",
+    engagement: { sessions: 15, communities: 9 },
     currentPrograms: [{ ...program("data-science", "Data Science"), progress: 45 }],
     completedPrograms: [{ ...program("python-fundamentals", "Python Fundamentals"), score: 92, completedOn: "03/02/2024" }],
   },
@@ -122,6 +167,7 @@ export const STUDENTS: Student[] = [
     advisor: "Adebayo Ojo",
     status: "Active",
     lastActive: "30 minutes ago",
+    engagement: { sessions: 31, communities: 22 },
     currentPrograms: [
       { ...program("mobile-development", "Mobile Development"), progress: 58 },
       { ...program("ui-ux-design", "UI/UX Design"), progress: 34 },
@@ -143,6 +189,7 @@ export const STUDENTS: Student[] = [
     advisor: "Michael Chen",
     status: "Active",
     lastActive: "5 hours ago",
+    engagement: { sessions: 19, communities: 12 },
     currentPrograms: [{ ...program("web-development", "Web Development", "Full Stack Development Program"), progress: 81 }],
     completedPrograms: [{ ...program("intro-to-programming", "Introduction to Programming"), score: 95, completedOn: "01/20/2024" }],
   },
@@ -161,6 +208,7 @@ export const STUDENTS: Student[] = [
     advisor: null,
     status: "Active",
     lastActive: "3 days ago",
+    engagement: { sessions: 6, communities: 3 },
     currentPrograms: [{ ...program("ai-ml", "AI/ML", "AI & Machine Learning Program", null, null), progress: 12 }],
     completedPrograms: [],
   },
