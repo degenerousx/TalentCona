@@ -9,6 +9,8 @@ export type MentorCandidate = {
   experience: number;
   systemRating: number;
   adminRating?: number;
+  /** When the application was approved (unassigned mentors only). */
+  approved?: string;
 };
 
 export type AssignedMentor = {
@@ -38,8 +40,8 @@ export const ASSIGNED_MENTORS: AssignedMentor[] = [
 ];
 
 export const UNASSIGNED_MENTORS: MentorCandidate[] = [
-  { id: "james-wilson", name: "James Wilson", expertise: ["React", "Node.js"], experience: 8, systemRating: 4, adminRating: 4 },
-  { id: "maria-garcia", name: "Maria Garcia", expertise: ["Python", "Data Science"], experience: 6, systemRating: 4, adminRating: 4 },
+  { id: "james-wilson", name: "James Wilson", expertise: ["React", "Node.js"], experience: 8, systemRating: 4, adminRating: 4, approved: "2 hours ago" },
+  { id: "maria-garcia", name: "Maria Garcia", expertise: ["Python", "Data Science"], experience: 6, systemRating: 4, adminRating: 4, approved: "1 day ago" },
 ];
 
 /** Full at the limit, Near Full within 10% of it (at least one seat), otherwise Available. */
@@ -48,6 +50,20 @@ export function capacityOf(m: AssignedMentor): Capacity {
   if (m.maxMentees - m.mentees <= Math.max(1, Math.round(m.maxMentees * 0.1))) return "Near Full";
   return "Available";
 }
+
+export type AssignableProgram = { id: string; title: string; track: string };
+
+/** Programs an unassigned mentor can be assigned to (from the design). */
+export const ASSIGNABLE_PROGRAMS: AssignableProgram[] = [
+  { id: "frontend-engineering", title: "Frontend Engineering", track: "Web Development" },
+  { id: "backend-development", title: "Backend Development", track: "Web Development" },
+  { id: "data-science", title: "Data Science", track: "Data & AI" },
+  { id: "ux-ui-design", title: "UX/UI Design", track: "Design" },
+  { id: "mobile-development", title: "Mobile Development", track: "Mobile" },
+  { id: "devops-engineering", title: "DevOps Engineering", track: "Infrastructure" },
+];
+
+export const getUnassignedMentor = (id: string) => UNASSIGNED_MENTORS.find((m) => m.id === id);
 
 export const CAPACITIES: Capacity[] = ["Available", "Near Full", "Full"];
 

@@ -238,6 +238,19 @@ export const CheckboxIcon = ({ checked = false, color = "#0F172A" }: { checked?:
   </svg>
 );
 
+/** carbon:checkbox (unchecked) / tabler:checkbox (checked), as in the program assignment cards. */
+export const AssignCheckboxIcon = ({ checked = false }: { checked?: boolean }) =>
+  checked ? (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#302A91" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m9 11 3 3 8-8" />
+      <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" />
+    </svg>
+  ) : (
+    <svg width="24" height="24" viewBox="0 0 32 32" fill="#334155" aria-hidden="true">
+      <path d="M26 4H6a2 2 0 0 0-2 2v20a2 2 0 0 0 2 2h20a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2M6 26V6h20v20Z" />
+    </svg>
+  );
+
 export const Share2Icon = (p: IconProps) => (
   <Stroke {...p}>
     <circle cx="18" cy="5" r="3" />

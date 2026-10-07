@@ -1,0 +1,360 @@
+/* Header, links and expertise come from MentorReview.module.css; this file adds the assignment parts. */
+
+/* ---------- Experience / ratings ---------- */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  margin: 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat dt {
+  height: 15.99px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  color: #9e9e9e;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.stat dd {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.stat dd svg {
+  flex: none;
+}
+
+.statWide {
+  gap: 8px !important;
+  font-weight: 500;
+  color: #3a3a3a;
+}
+
+.stat:nth-child(1) {
+  width: 72px;
+}
+
+.stat:nth-child(2) {
+  width: 90px;
+}
+
+.stat:nth-child(3) {
+  width: 85px;
+}
+
+.score {
+  color: #101828;
+}
+
+/* ---------- Assignment ---------- */
+.assign {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.roles {
+  display: flex;
+  gap: 12px;
+  min-height: 124px;
+  padding: 16px 16px 0;
+  background: #eff6ff;
+  border-radius: 8px;
+}
+
+.rolesIcon {
+  display: flex;
+  flex: none;
+  width: 18.88px;
+  margin-top: 4px;
+}
+
+.rolesIcon svg {
+  width: 18.88px;
+}
+
+.rolesTitle {
+  height: 24px;
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  color: #1c398e;
+  transform: translateY(-2.11px);
+}
+
+.rolesList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 544.24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 20px;
+  color: #193cb8;
+}
+
+.rolesList b {
+  font-weight: 700;
+}
+
+.rolesList li + li {
+  transform: translateY(-1px);
+}
+
+.search {
+  position: relative;
+  display: block;
+  height: 41.78px;
+}
+
+.search input {
+  position: absolute;
+  top: 0.81px;
+  left: 0.11px;
+  width: calc(100% - 0.22px);
+  height: 41px;
+  padding: 8px 16px 8px 40px;
+  background: #ffffff;
+  border: 0.89px solid #d1d5dc;
+  border-radius: 8px;
+  outline: none;
+  font: 400 16px/20px var(--font-outfit), sans-serif;
+  color: #3a3a3a;
+}
+
+.search input::placeholder {
+  color: rgba(58, 58, 58, 0.5);
+}
+
+.search input:focus {
+  border-color: #a5a0e0;
+  box-shadow: 0 0 0 3px rgba(48, 42, 145, 0.08);
+}
+
+.searchIcon {
+  position: absolute;
+  top: 11.7px;
+  left: 12px;
+  z-index: 1;
+  display: flex;
+  pointer-events: none;
+}
+
+/* ---------- Program cards ---------- */
+.programs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.program {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 79.56px;
+  padding: 17.78px 17.78px 14.22px;
+  border: 1.78px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.program:hover {
+  border-color: #d1d5dc;
+}
+
+.programOn,
+.programOn:hover {
+  background: #faf5ff;
+  border-color: #9810fa;
+}
+
+.programHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.programHead svg,
+.roleChoice svg {
+  flex: none;
+}
+
+.programHead:focus-within svg,
+.roleChoice:focus-within svg {
+  border-radius: 4px;
+  outline: 2px solid #a5a0e0;
+  outline-offset: -1px;
+}
+
+.programText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.programTitle {
+  height: 24px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  color: #101828;
+  transform: translateY(-2.11px);
+}
+
+.programTrack {
+  font-size: 14px;
+  line-height: 20px;
+  color: #4a5565;
+}
+
+.roleChoices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-left: 32px;
+}
+
+.roleChoice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #364153;
+  cursor: pointer;
+}
+
+.noMatch {
+  padding: 16px 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: #64748b;
+}
+
+/* ---------- Summary ---------- */
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 84px;
+  padding: 16px 16px 0;
+  background: #f0fdf4;
+  border-radius: 8px;
+}
+
+.summaryTitle {
+  height: 24px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  color: #0d542b;
+  transform: translateY(-2.11px);
+}
+
+.summaryList {
+  margin: 0;
+  padding: 0 0 16px;
+  list-style: none;
+  font-size: 14px;
+  line-height: 20px;
+  color: #016630;
+}
+
+.summaryList b {
+  font-weight: 700;
+}
+
+.summaryMissing,
+.summaryEmpty {
+  font-style: italic;
+  color: #4a5565;
+}
+
+/* ---------- Actions ---------- */
+/* The design's footer is tighter than the review page's (buttons 23px below the rule). */
+.actions {
+  padding: 6px 0 4px;
+}
+
+.later,
+.assignButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  border-radius: 8px;
+  font: 500 16px/24px var(--font-outfit), sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.later {
+  width: 143px;
+  padding: 7px 12px;
+  color: #101828;
+}
+
+.later:hover {
+  background: #f3f4f6;
+}
+
+.assignButton {
+  width: 95px;
+  padding: 7px 24px;
+  background: #00c853;
+  border: 0;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.assignButton:hover:not(:disabled) {
+  background: #00b34a;
+}
+
+.assignButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 599px) {
+  .roles {
+    padding-bottom: 16px;
+  }
+  .later,
+  .assignButton {
+    flex: 1;
+    width: auto;
+  }
+}

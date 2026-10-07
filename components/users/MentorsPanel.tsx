@@ -12,7 +12,6 @@ import {
   TrophyIcon,
   UserCheckIcon,
 } from "@/components/app/icons";
-import { Toast } from "./ActionModals";
 import { AssignedFilterPanel, CandidateFilterPanel } from "./MentorFilterPanel";
 import {
   EMPTY_ASSIGNED_FILTERS,
@@ -53,6 +52,8 @@ const expertiseOf = (list: MentorCandidate[]) => [...new Set(list.flatMap((m) =>
 const mentorHref = (id: string) => `/user-management/mentors/${id}`;
 
 const reviewHref = (id: string) => `/user-management/mentors/review/${id}`;
+
+const assignHref = (id: string) => `/user-management/mentors/assign/${id}`;
 
 /** Mentor name, linking to `href` (or the mentor's profile when one exists). */
 function MentorName({ id, name, href }: { id: string; name: string; href?: string }) {
@@ -139,15 +140,12 @@ function CandidateTable({
   rows,
   admin,
   action,
-  onAction,
   hrefFor,
   empty,
 }: {
   rows: MentorCandidate[];
   admin: boolean;
   action: string;
-  /** Without a handler the button links to `hrefFor` (or the mentor's profile). */
-  onAction?: (m: MentorCandidate) => void;
   hrefFor?: (id: string) => string;
   empty: string;
 }) {
@@ -180,15 +178,9 @@ function CandidateTable({
             </td>
             {admin && <td>{m.adminRating !== undefined ? <Rating value={m.adminRating} admin /> : "—"}</td>}
             <td className={styles.tdAction}>
-              {!onAction ? (
-                <Link href={(hrefFor ?? mentorHref)(m.id)} className={styles.greenButton}>
-                  {action}
-                </Link>
-              ) : (
-                <button type="button" className={styles.greenButton} onClick={() => onAction(m)}>
-                  {action}
-                </button>
-              )}
+              <Link href={(hrefFor ?? mentorHref)(m.id)} className={styles.greenButton}>
+                {action}
+              </Link>
             </td>
           </tr>
         ))}
@@ -205,9 +197,6 @@ function CandidateTable({
 }
 
 export default function MentorsPanel() {
-  const [toast, setToast] = useState<string | null>(null);
-  const clearToast = useCallback(() => setToast(null), []);
-  const soon = (what: string) => setToast(`${what} is coming soon.`);
 
   const [pendingQ, setPendingQ] = useState("");
   const [pendingF, setPendingF] = useState(EMPTY_CANDIDATE_FILTERS);
@@ -324,7 +313,7 @@ export default function MentorsPanel() {
           onQuery={setUnassignedQ}
           filter={<FiltersButton count={candidateFilterCount(unassignedF)} open={drawer === "unassigned"} onOpen={() => setDrawer("unassigned")} />}
         >
-          <CandidateTable rows={unassigned} admin action="Assign" onAction={(m) => soon(`Assigning ${m.name}`)} empty="No unassigned mentors match." />
+          <CandidateTable rows={unassigned} admin action="Assign" hrefFor={assignHref} empty="No unassigned mentors match." />
         </Section>
       </div>
 
@@ -363,7 +352,6 @@ export default function MentorsPanel() {
           }}
         />
       )}
-      {toast && <Toast message={toast} onDone={clearToast} />}
     </div>
   );
 }
