@@ -408,3 +408,31 @@
     max-width: calc(100vw - 48px);
   }
 }
+
+/* ---------- Mentor filter drawers ---------- */
+/* These fit their (shorter) content instead of filling the viewport. */
+.mentors {
+  height: auto;
+  max-height: calc(100dvh - 32px);
+}
+
+.mentors .title {
+  gap: 8px;
+}
+
+.mentors .apply {
+  background: #9810fa;
+}
+
+.mentors .apply:hover {
+  background: #8200db;
+}
+
+.textInput {
+  height: 40.89px;
+  font-size: 16px;
+}
+
+.popoverCompact {
+  min-width: 0;
+}

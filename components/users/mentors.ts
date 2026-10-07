@@ -18,6 +18,8 @@ export type AssignedMentor = {
   mentees: number;
   maxMentees: number;
   averageRating: number;
+  /** ISO date the mentor's application was approved. */
+  dateApproved: string;
 };
 
 /** Headline counts from the design (the whole mentor pool, not just the rows below). */
@@ -29,10 +31,10 @@ export const PENDING_MENTORS: MentorCandidate[] = [
 ];
 
 export const ASSIGNED_MENTORS: AssignedMentor[] = [
-  { id: "james-wilson", name: "James Wilson", programs: "Frontend Dev & Backend Dev", mentees: 12, maxMentees: 15, averageRating: 4 },
-  { id: "maria-garcia", name: "Maria Garcia", programs: "Data Science", mentees: 14, maxMentees: 15, averageRating: 4 },
-  { id: "ahmed-hassan", name: "Ahmed Hassan", programs: "Mobile Dev & UI/UX", mentees: 8, maxMentees: 15, averageRating: 4 },
-  { id: "lisa-chang", name: "Lisa Chang", programs: "AI/ML", mentees: 15, maxMentees: 15, averageRating: 4 },
+  { id: "james-wilson", name: "James Wilson", programs: "Frontend Dev & Backend Dev", mentees: 12, maxMentees: 15, averageRating: 4, dateApproved: "2023-12-15" },
+  { id: "maria-garcia", name: "Maria Garcia", programs: "Data Science", mentees: 14, maxMentees: 15, averageRating: 4, dateApproved: "2024-01-10" },
+  { id: "ahmed-hassan", name: "Ahmed Hassan", programs: "Mobile Dev & UI/UX", mentees: 8, maxMentees: 15, averageRating: 4, dateApproved: "2024-02-01" },
+  { id: "lisa-chang", name: "Lisa Chang", programs: "AI/ML", mentees: 15, maxMentees: 15, averageRating: 4, dateApproved: "2023-11-20" },
 ];
 
 export const UNASSIGNED_MENTORS: MentorCandidate[] = [

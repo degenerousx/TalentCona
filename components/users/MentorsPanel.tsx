@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
   AwardIcon,
-  CheckboxIcon,
   ClockIcon,
   FunnelIcon,
   GraduationCapIcon,
@@ -14,9 +13,18 @@ import {
   UserCheckIcon,
 } from "@/components/app/icons";
 import { Toast } from "./ActionModals";
+import { AssignedFilterPanel, CandidateFilterPanel } from "./MentorFilterPanel";
+import {
+  EMPTY_ASSIGNED_FILTERS,
+  EMPTY_CANDIDATE_FILTERS,
+  applyAssignedFilters,
+  applyCandidateFilters,
+  assignedFilterCount,
+  candidateFilterCount,
+  programOptions,
+} from "./mentorFilters";
 import {
   ASSIGNED_MENTORS,
-  CAPACITIES,
   MENTOR_STATS,
   PENDING_MENTORS,
   UNASSIGNED_MENTORS,
@@ -79,62 +87,14 @@ function Tags({ items }: { items: string[] }) {
   );
 }
 
-/** Filters button with a checkbox list, styled like the student filter lists. */
-function FilterMenu({
-  allLabel,
-  options,
-  selected,
-  onChange,
-}: {
-  allLabel: string;
-  options: string[];
-  selected: string[];
-  onChange: (next: string[]) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
+/** Opens the section's filter drawer; shows how many filters are active. */
+function FiltersButton({ count, open, onOpen }: { count: number; open: boolean; onOpen: () => void }) {
   return (
-    <div ref={ref} className={styles.filterWrap}>
-      <button type="button" className={styles.filters} aria-haspopup="true" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        <FunnelIcon />
-        <span>Filters</span>
-        {selected.length > 0 && <span className={styles.filterCount}>{selected.length}</span>}
-      </button>
-      {open && (
-        <div className={styles.popover} role="group" aria-label={allLabel}>
-          <button type="button" className={styles.allOption} onClick={() => onChange([])}>
-            {allLabel}
-          </button>
-          {options.map((o) => (
-            <label key={o} className={styles.option}>
-              <input
-                type="checkbox"
-                className={styles.srOnly}
-                checked={selected.includes(o)}
-                onChange={() => onChange(selected.includes(o) ? selected.filter((s) => s !== o) : [...selected, o])}
-              />
-              <CheckboxIcon checked={selected.includes(o)} />
-              <span>{o}</span>
-            </label>
-          ))}
-        </div>
-      )}
-    </div>
+    <button type="button" className={styles.filters} aria-haspopup="dialog" aria-expanded={open} onClick={onOpen}>
+      <FunnelIcon />
+      <span>Filters</span>
+      {count > 0 && <span className={styles.filterCount}>{count}</span>}
+    </button>
   );
 }
 
@@ -250,31 +210,24 @@ export default function MentorsPanel() {
   const soon = (what: string) => setToast(`${what} is coming soon.`);
 
   const [pendingQ, setPendingQ] = useState("");
-  const [pendingF, setPendingF] = useState<string[]>([]);
+  const [pendingF, setPendingF] = useState(EMPTY_CANDIDATE_FILTERS);
   const [assignedQ, setAssignedQ] = useState("");
-  const [assignedF, setAssignedF] = useState<string[]>([]);
+  const [assignedF, setAssignedF] = useState(EMPTY_ASSIGNED_FILTERS);
   const [unassignedQ, setUnassignedQ] = useState("");
-  const [unassignedF, setUnassignedF] = useState<string[]>([]);
+  const [unassignedF, setUnassignedF] = useState(EMPTY_CANDIDATE_FILTERS);
+  const [drawer, setDrawer] = useState<"pending" | "assigned" | "unassigned" | null>(null);
+  const closeDrawer = useCallback(() => setDrawer(null), []);
 
   const pending = useMemo(
-    () =>
-      PENDING_MENTORS.filter(
-        (m) => matches(pendingQ, m.name, ...m.expertise) && (!pendingF.length || m.expertise.some((e) => pendingF.includes(e))),
-      ),
+    () => applyCandidateFilters(PENDING_MENTORS, pendingF).filter((m) => matches(pendingQ, m.name, ...m.expertise)),
     [pendingQ, pendingF],
   );
   const assigned = useMemo(
-    () =>
-      ASSIGNED_MENTORS.filter(
-        (m) => matches(assignedQ, m.name, m.programs) && (!assignedF.length || assignedF.includes(capacityOf(m))),
-      ),
+    () => applyAssignedFilters(ASSIGNED_MENTORS, assignedF).filter((m) => matches(assignedQ, m.name, m.programs)),
     [assignedQ, assignedF],
   );
   const unassigned = useMemo(
-    () =>
-      UNASSIGNED_MENTORS.filter(
-        (m) => matches(unassignedQ, m.name, ...m.expertise) && (!unassignedF.length || m.expertise.some((e) => unassignedF.includes(e))),
-      ),
+    () => applyCandidateFilters(UNASSIGNED_MENTORS, unassignedF).filter((m) => matches(unassignedQ, m.name, ...m.expertise)),
     [unassignedQ, unassignedF],
   );
 
@@ -300,7 +253,7 @@ export default function MentorsPanel() {
           tone="pending"
           query={pendingQ}
           onQuery={setPendingQ}
-          filter={<FilterMenu allLabel="All Expertise" options={expertiseOf(PENDING_MENTORS)} selected={pendingF} onChange={setPendingF} />}
+          filter={<FiltersButton count={candidateFilterCount(pendingF)} open={drawer === "pending"} onOpen={() => setDrawer("pending")} />}
         >
           <CandidateTable rows={pending} admin={false} action="View" hrefFor={reviewHref} empty="No mentors are waiting for review." />
         </Section>
@@ -310,7 +263,7 @@ export default function MentorsPanel() {
           tone="assigned"
           query={assignedQ}
           onQuery={setAssignedQ}
-          filter={<FilterMenu allLabel="All Capacities" options={CAPACITIES} selected={assignedF} onChange={setAssignedF} />}
+          filter={<FiltersButton count={assignedFilterCount(assignedF)} open={drawer === "assigned"} onOpen={() => setDrawer("assigned")} />}
         >
           <table className={`${styles.table} ${styles.assignedTable}`}>
             <thead>
@@ -369,12 +322,47 @@ export default function MentorsPanel() {
           tone="unassigned"
           query={unassignedQ}
           onQuery={setUnassignedQ}
-          filter={<FilterMenu allLabel="All Expertise" options={expertiseOf(UNASSIGNED_MENTORS)} selected={unassignedF} onChange={setUnassignedF} />}
+          filter={<FiltersButton count={candidateFilterCount(unassignedF)} open={drawer === "unassigned"} onOpen={() => setDrawer("unassigned")} />}
         >
           <CandidateTable rows={unassigned} admin action="Assign" onAction={(m) => soon(`Assigning ${m.name}`)} empty="No unassigned mentors match." />
         </Section>
       </div>
 
+      {drawer === "pending" && (
+        <CandidateFilterPanel
+          initial={pendingF}
+          expertise={expertiseOf(PENDING_MENTORS)}
+          withAdminRating={false}
+          onClose={closeDrawer}
+          onApply={(f) => {
+            setPendingF(f);
+            closeDrawer();
+          }}
+        />
+      )}
+      {drawer === "assigned" && (
+        <AssignedFilterPanel
+          initial={assignedF}
+          programs={programOptions(ASSIGNED_MENTORS)}
+          onClose={closeDrawer}
+          onApply={(f) => {
+            setAssignedF(f);
+            closeDrawer();
+          }}
+        />
+      )}
+      {drawer === "unassigned" && (
+        <CandidateFilterPanel
+          initial={unassignedF}
+          expertise={expertiseOf(UNASSIGNED_MENTORS)}
+          withAdminRating
+          onClose={closeDrawer}
+          onApply={(f) => {
+            setUnassignedF(f);
+            closeDrawer();
+          }}
+        />
+      )}
       {toast && <Toast message={toast} onDone={clearToast} />}
     </div>
   );
