@@ -19,7 +19,7 @@ npm run dev      # http://localhost:3000
 | `/dashboard` | Admin Dashboard |
 | `/user-management` | User Management (Students tab with search and the Filter drawer; Mentors tab with stats and the Pending / Assigned / Unassigned tables; Partners tab with search and partner cards) |
 | `/user-management/[studentId]` | Student profile (one page per student) |
-| `/user-management/mentors/review/[applicationId]` | Mentor Details for a pending application: profile, expertise, system rating, reviewer trophy rating, Reject / Approve (each opens a success dialog, `SuccessDialog.tsx`) |
+| `/user-management/mentors/review/[applicationId]` | Mentor Details for a pending application: profile, expertise, system rating, reviewer trophy rating, Reject (asks for feedback first, `RejectDialog.tsx`) / Approve, each followed by a success dialog (`SuccessDialog.tsx`) |
 | `/user-management/mentors/[mentorId]` | A mentor's profile: header with Edit Role / Notify / Suspend and the Programs Assigned card |
 | `/user-management/mentors/[mentorId]/[programId]` | A mentor's program: Overview (recent activity, expertise, avg session, response time, last active) and Performance (sessions, avg duration, response time, satisfaction, current mentees) tabs |
 | `/user-management/[studentId]/[programId]` | A student's program: Overview, Performance, Engagement, Loan and Campaign tabs |

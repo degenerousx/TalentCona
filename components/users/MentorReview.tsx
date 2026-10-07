@@ -15,6 +15,7 @@ import {
 } from "@/components/app/icons";
 import { RATING_LABELS, applicantInitials, type MentorApplication } from "./mentorApplications";
 import styles from "./MentorReview.module.css";
+import RejectDialog from "./RejectDialog";
 import SuccessDialog from "./SuccessDialog";
 
 type Decision = "pending" | "approved" | "rejected";
@@ -55,7 +56,10 @@ export default function MentorReview({ application: a }: { application: MentorAp
   const [rating, setRating] = useState(a.adminRating);
   const [decision, setDecision] = useState<Decision>("pending");
   const [dialog, setDialog] = useState<string | null>(null);
+  const [rejecting, setRejecting] = useState(false);
+  const [feedback, setFeedback] = useState("");
   const closeDialog = useCallback(() => setDialog(null), []);
+  const closeReject = useCallback(() => setRejecting(false), []);
   const badge = DECISION_BADGE[decision];
 
   const decide = (d: Exclude<Decision, "pending">) => {
@@ -169,7 +173,7 @@ export default function MentorReview({ application: a }: { application: MentorAp
         <footer className={styles.footer}>
           {decision === "pending" ? (
             <div className={styles.actions}>
-              <button type="button" className={styles.reject} onClick={() => decide("rejected")}>
+              <button type="button" className={styles.reject} onClick={() => setRejecting(true)}>
                 <CircleXIcon size={16} color="#F44336" strokeWidth={1.67} />
                 Reject
               </button>
@@ -188,6 +192,17 @@ export default function MentorReview({ application: a }: { application: MentorAp
         </footer>
       </section>
 
+      {rejecting && (
+        <RejectDialog
+          initial={feedback}
+          onClose={closeReject}
+          onSubmit={(text) => {
+            setFeedback(text);
+            setRejecting(false);
+            decide("rejected");
+          }}
+        />
+      )}
       {dialog && <SuccessDialog title={dialog} onClose={closeDialog} />}
     </div>
   );
