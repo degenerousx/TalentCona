@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FunnelIcon, LaptopIcon, SearchIcon } from "@/components/app/icons";
 import { STUDENTS, type PaymentMethod } from "./data";
 import FilterPanel from "./FilterPanel";
@@ -119,6 +119,12 @@ export default function UserManagement() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterCount = activeFilterCount(filters);
 
+  // The tab lives in the URL hash (e.g. #mentors) so Back from a profile returns to it.
+  useEffect(() => {
+    const fromHash = window.location.hash.slice(1) as Tab;
+    if (TABS.includes(fromHash)) setTab(fromHash);
+  }, []);
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -140,6 +146,7 @@ export default function UserManagement() {
               onClick={() => {
                 setTab(t);
                 setQuery("");
+                window.history.replaceState(null, "", t === "students" ? window.location.pathname : `#${t}`);
               }}
             >
               {t}

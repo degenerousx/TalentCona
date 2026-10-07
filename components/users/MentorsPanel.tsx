@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AwardIcon,
@@ -20,6 +21,7 @@ import {
   PENDING_MENTORS,
   UNASSIGNED_MENTORS,
   capacityOf,
+  getMentor,
   type Capacity,
   type MentorCandidate,
 } from "./mentors";
@@ -39,6 +41,19 @@ const CAPACITY_CLASS: Record<Capacity, string> = {
 };
 
 const expertiseOf = (list: MentorCandidate[]) => [...new Set(list.flatMap((m) => m.expertise))].sort((a, b) => a.localeCompare(b));
+
+const mentorHref = (id: string) => `/user-management/mentors/${id}`;
+
+/** Mentor name, linking to the profile when one exists. */
+function MentorName({ id, name }: { id: string; name: string }) {
+  return getMentor(id) ? (
+    <Link href={mentorHref(id)} className={`${styles.name} ${styles.nameLink}`}>
+      {name}
+    </Link>
+  ) : (
+    <span className={styles.name}>{name}</span>
+  );
+}
 
 function Rating({ value, admin = false }: { value: number; admin?: boolean }) {
   return (
@@ -167,7 +182,8 @@ function CandidateTable({
   rows: MentorCandidate[];
   admin: boolean;
   action: string;
-  onAction: (m: MentorCandidate) => void;
+  /** Without a handler the button links to the mentor's profile. */
+  onAction?: (m: MentorCandidate) => void;
   empty: string;
 }) {
   return (
@@ -186,7 +202,7 @@ function CandidateTable({
         {rows.map((m, i) => (
           <tr key={`${m.id}-${i}`}>
             <td>
-              <span className={styles.name}>{m.name}</span>
+              <MentorName id={m.id} name={m.name} />
             </td>
             <td>
               <Tags items={m.expertise} />
@@ -199,9 +215,15 @@ function CandidateTable({
             </td>
             {admin && <td>{m.adminRating !== undefined ? <Rating value={m.adminRating} admin /> : "—"}</td>}
             <td className={styles.tdAction}>
-              <button type="button" className={styles.greenButton} onClick={() => onAction(m)}>
-                {action}
-              </button>
+              {!onAction ? (
+                <Link href={mentorHref(m.id)} className={styles.greenButton}>
+                  {action}
+                </Link>
+              ) : (
+                <button type="button" className={styles.greenButton} onClick={() => onAction(m)}>
+                  {action}
+                </button>
+              )}
             </td>
           </tr>
         ))}
@@ -275,7 +297,7 @@ export default function MentorsPanel() {
           onQuery={setPendingQ}
           filter={<FilterMenu allLabel="All Expertise" options={expertiseOf(PENDING_MENTORS)} selected={pendingF} onChange={setPendingF} />}
         >
-          <CandidateTable rows={pending} admin={false} action="View" onAction={(m) => soon(`Reviewing ${m.name}`)} empty="No mentors are waiting for review." />
+          <CandidateTable rows={pending} admin={false} action="View" empty="No mentors are waiting for review." />
         </Section>
 
         <Section
@@ -302,7 +324,7 @@ export default function MentorsPanel() {
                 return (
                   <tr key={m.id}>
                     <td>
-                      <span className={styles.name}>{m.name}</span>
+                      <MentorName id={m.id} name={m.name} />
                     </td>
                     <td className={styles.tdPrograms}>
                       <span className={styles.programs}>{m.programs}</span>
@@ -319,9 +341,9 @@ export default function MentorsPanel() {
                       <span className={`${styles.capacity} ${CAPACITY_CLASS[cap]}`}>{cap}</span>
                     </td>
                     <td>
-                      <button type="button" className={styles.manage} onClick={() => soon(`Managing ${m.name}`)}>
+                      <Link href={mentorHref(m.id)} className={styles.manage}>
                         Manage
-                      </button>
+                      </Link>
                     </td>
                   </tr>
                 );
