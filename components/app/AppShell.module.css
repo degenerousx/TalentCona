@@ -14,13 +14,10 @@
   border-bottom: 1px solid #ebebeb;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  width: 264px;
-  height: 61px;
-  padding-left: 5.67px;
-  padding-top: 1.3px;
+.logo {
+  display: block;
+  width: 124px;
+  height: 48px;
 }
 
 .actions {
@@ -50,10 +47,10 @@
   align-items: flex-start;
 }
 
+/* Each page sets its own padding; the designs use different content offsets. */
 .main {
   flex: 1;
   min-width: 0;
-  padding: 58px 41px 143px 19px;
 }
 
 /* ---------- Sidebar ---------- */
@@ -152,18 +149,12 @@
   .header {
     padding: 11px 16px;
   }
-  .brand {
-    width: auto;
-  }
   .sidebar {
     width: 98px;
   }
   .sidebar .navLabel,
   .toggle {
     display: none;
-  }
-  .main {
-    padding: 32px 16px 64px;
   }
 }
 
@@ -177,8 +168,5 @@
     justify-content: center;
     height: 48px;
     padding: 12px;
-  }
-  .main {
-    padding: 24px 12px 48px;
   }
 }

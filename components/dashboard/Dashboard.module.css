@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+  padding: 58px 41px 143px 19px;
 }
 
 /* ---------- Welcome ---------- */
@@ -365,6 +366,12 @@
 }
 
 /* ---------- Responsive ---------- */
+@media (max-width: 899px) {
+  .dashboard {
+    padding: 32px 16px 64px;
+  }
+}
+
 @media (max-width: 1199px) {
   .stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -390,6 +397,9 @@
 }
 
 @media (max-width: 599px) {
+  .dashboard {
+    padding: 24px 12px 48px;
+  }
   .stats {
     grid-template-columns: minmax(0, 1fr);
   }

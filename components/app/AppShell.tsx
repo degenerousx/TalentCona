@@ -1,5 +1,4 @@
 import Image from "next/image";
-import AngtHubLogo from "./AngtHubLogo";
 import Sidebar from "./Sidebar";
 import { BellIcon } from "./icons";
 import styles from "./AppShell.module.css";
@@ -9,9 +8,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.brand}>
-          <AngtHubLogo />
-        </div>
+        <Image className={styles.logo} src="/images/talentcona-logo.png" alt="TalentCona" width={124} height={48} priority />
         <div className={styles.actions}>
           <button type="button" className={styles.iconButton} aria-label="Notifications">
             <BellIcon />

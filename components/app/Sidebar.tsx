@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { DashboardIcon, LogoutIcon, SidebarToggleIcon, UserLinearIcon } from "./icons";
+import { DashboardIcon, LogoutIcon, SidebarToggleIcon, UserLinearIcon, WalletIcon } from "./icons";
 import styles from "./AppShell.module.css";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", Icon: DashboardIcon },
   { href: "/user-management", label: "User Management", Icon: UserLinearIcon },
+  { href: "/financial-ops", label: "Financial Ops", Icon: WalletIcon },
 ];
 
 export default function Sidebar() {

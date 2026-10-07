@@ -17,7 +17,8 @@ npm run dev      # http://localhost:3000
 | `/forgot-password` | Forgot Password |
 | `/reset-password` | Reset Password |
 | `/dashboard` | Admin Dashboard |
-| `/user-management` | Placeholder (design pending) |
+| `/user-management` | User Management (Students tab; Mentors/Partners pending) |
+| `/financial-ops` | Placeholder (design pending) |
 
 Sign In → Dashboard; the sidebar's Logout returns to Sign In.
 
@@ -34,6 +35,7 @@ Password flow: Sign In → "Forgot password?" → Proceed → Reset Password →
 - `components/auth/ResetPasswordForm.tsx` — the reset-password card
 - `components/auth/SuccessModal.tsx` — reusable success dialog (shown after a password reset)
 - `app/(app)/` — signed-in routes sharing `components/app/AppShell.tsx` (header, collapsible sidebar)
+- `components/users/` — User Management (tabs, search, students table; `data.ts` holds placeholder records)
 - `components/dashboard/` — dashboard widgets; `data.ts` holds the placeholder figures and `GrowthChart.tsx` the area chart
 - `components/icons/`, `components/app/icons.tsx` — inline SVG icons
 - `public/images/` — design assets

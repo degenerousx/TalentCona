@@ -1,0 +1,341 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 30px 32px 64px 28px;
+}
+
+/* ---------- Heading ---------- */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  height: 36px;
+  margin: 0;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 130%;
+  color: var(--ink);
+  transform: translateY(-2.78px);
+}
+
+.subtitle {
+  height: 24px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 20px;
+  color: var(--ink-2);
+  transform: translateY(-2.11px);
+}
+
+/* ---------- Card ---------- */
+.card {
+  padding: 0.89px;
+  background: #ffffff;
+  border: 0.89px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.tabs {
+  display: flex;
+  gap: 32px;
+  height: 57.78px;
+  padding-left: 24px;
+  border-bottom: 0.89px solid #d1d5dc;
+}
+
+.tab {
+  display: flex;
+  align-items: flex-start;
+  height: 57.78px;
+  padding: 13.89px 4px 0;
+  border: 0;
+  border-bottom: 1.78px solid transparent;
+  background: none;
+  font: 400 16px/24px var(--font-outfit), sans-serif;
+  color: #4a5565;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--brand);
+}
+
+.tabActive {
+  border-bottom-color: var(--brand);
+  color: var(--brand);
+}
+
+.toolbar {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  height: 90.67px;
+  padding: 24px 24px 0.89px;
+  border-bottom: 0.89px solid #e5e7eb;
+}
+
+.search {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 41.78px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 11px;
+  display: flex;
+  pointer-events: none;
+}
+
+.search input {
+  width: 100%;
+  height: 41px;
+  margin-top: 0.45px;
+  padding: 8px 16px 8px 40px;
+  border: 0.89px solid #d1d5dc;
+  border-radius: 8px;
+  outline: 0;
+  font: 400 16px/20px var(--font-outfit), sans-serif;
+  color: #3a3a3a;
+  background: #ffffff;
+}
+
+.search input::placeholder {
+  color: rgba(58, 58, 58, 0.5);
+}
+
+.search input:focus {
+  border-color: #a5a0e0;
+  box-shadow: 0 0 0 3px rgba(48, 42, 145, 0.08);
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  width: 146.54px;
+  height: 41.78px;
+  padding: 0 0 0 16px;
+  background: #ffffff;
+  border: 1px solid #d1d5dc;
+  border-radius: 8px;
+  font: 400 16px/24px var(--font-outfit), sans-serif;
+  color: #3a3a3a;
+  cursor: pointer;
+}
+
+.filters:hover {
+  background: #f9fafb;
+}
+
+/* ---------- Table ---------- */
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 1060px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th {
+  height: 41px;
+  padding: 12px 24px;
+  background: #f9fafb;
+  border-bottom: 0.89px solid #e5e7eb;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.6px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #6a7282;
+}
+
+/*
+ * In the design the header row uses slightly different column widths from the
+ * body rows, so from Laptop onwards each label sits a few px right of its data.
+ * These offsets reproduce that.
+ */
+.table th.thLaptop {
+  padding-left: 33.6px;
+}
+
+.table th.thShift {
+  padding-left: 30.4px;
+}
+
+/* Centred in its 117px column, so the wider label overhangs slightly. */
+.table th.thAdvisor {
+  padding-left: 3.9px;
+  padding-right: 0;
+}
+
+.table th.thActions {
+  padding-left: 27.2px;
+}
+
+.table td {
+  height: 76px;
+  padding: 0 24px;
+  border-bottom: 0.89px solid #e5e7eb;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.name {
+  display: block;
+  font-size: 16px;
+  line-height: 24px;
+  color: #101828;
+}
+
+.email {
+  display: block;
+  font-size: 14px;
+  line-height: 20px;
+  color: #6a7282;
+}
+
+.table td.tdProgram {
+  height: 92px;
+  padding-right: 0;
+  overflow: visible;
+}
+
+/* Long names wrap after ~125px; shorter ones may run into the next column like the design. */
+.program {
+  display: block;
+  width: max-content;
+  max-width: 125px;
+  white-space: normal;
+  font-size: 14px;
+  line-height: 20px;
+  color: #101828;
+}
+
+.table tbody tr:not(:first-child) td.tdProgram {
+  height: 76px;
+}
+
+.amount {
+  font-size: 14px;
+  line-height: 20px;
+  color: #101828;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.pillLaptop.pillGreen {
+  padding: 2px 7px;
+}
+
+.pillGreen {
+  background: #dcfce7;
+  color: #016630;
+}
+
+.pillOrange {
+  background: #ffedd4;
+  color: #9f2d00;
+}
+
+.pillBlue {
+  background: #dbeafe;
+  color: #193cb8;
+}
+
+.pillGray {
+  background: #f3f4f6;
+  color: #1e2939;
+}
+
+.person,
+.unassigned,
+.manage {
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.person {
+  color: #101828;
+}
+
+.unassigned {
+  color: #f44336;
+}
+
+.manage {
+  color: var(--brand);
+  text-decoration: none;
+}
+
+.manage:hover {
+  text-decoration: underline;
+}
+
+.empty {
+  margin: 0;
+  padding: 40px 24px;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  white-space: normal;
+  color: #6a7282;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 899px) {
+  .page {
+    padding: 32px 16px 64px;
+  }
+}
+
+@media (max-width: 599px) {
+  .toolbar {
+    align-items: center;
+  }
+  .page {
+    padding: 24px 12px 48px;
+  }
+  .title {
+    font-size: 26px;
+  }
+  .tabs {
+    gap: 16px;
+    padding-left: 12px;
+  }
+  .toolbar {
+    gap: 12px;
+    height: auto;
+    padding: 16px;
+  }
+  .filters {
+    width: auto;
+    padding: 0 14px;
+  }
+}
