@@ -1,0 +1,62 @@
+/* The side column (456px) is taller than the activity list, which the design centres beside it. */
+.overview {
+  align-items: center;
+}
+
+/* The design's activity column is 417.76px (5.76px taller than its content). */
+.overview > :first-child {
+  min-height: 417.76px;
+}
+
+.expertise {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 132px;
+  padding: 16px;
+  background: #eff6ff;
+  border-radius: 8px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding: 5px 10px;
+  background: #ffffff;
+  border: 0.89px solid #bedbff;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 16px;
+  color: #193cb8;
+  white-space: nowrap;
+}
+
+.soon {
+  margin: 0;
+  padding: 16px 24px 48px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #6a7282;
+}
+
+@media (max-width: 1199px) {
+  .overview {
+    align-items: stretch;
+  }
+  .overview > :first-child {
+    min-height: 0;
+  }
+}

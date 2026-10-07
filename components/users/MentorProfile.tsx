@@ -1,22 +1,17 @@
-"use client";
-
 import Link from "next/link";
-import { useCallback, useState } from "react";
-import { BanIcon, MailIcon, MapPinIcon, PhoneIcon, SendIcon, SquarePenIcon } from "@/components/app/icons";
-import { NotifyModal, SuspendModal, Toast } from "./ActionModals";
-import { initials } from "./data";
-import type { MentorAssignment, MentorProfile as Mentor } from "./mentors";
-import hero from "./StudentHero.module.css";
+import MentorHero from "./MentorHero";
+import { programSlug, type MentorAssignment, type MentorProfile as Mentor } from "./mentors";
 import styles from "./MentorProfile.module.css";
 
 function AssignmentCard({
   a,
-  selected,
-  onSelect,
+  href,
+  featured,
 }: {
   a: MentorAssignment;
-  selected?: boolean;
-  onSelect?: () => void;
+  /** Current programs link to the mentor's program page; history cards are static. */
+  href?: string;
+  featured?: boolean;
 }) {
   const body = (
     <>
@@ -40,23 +35,17 @@ function AssignmentCard({
     </>
   );
 
-  return onSelect ? (
-    <button type="button" className={`${styles.program} ${selected ? styles.programSelected : ""}`} aria-pressed={selected} onClick={onSelect}>
+  return href ? (
+    <Link href={href} className={`${styles.program} ${featured ? styles.programSelected : ""}`}>
       {body}
-    </button>
+    </Link>
   ) : (
     <div className={styles.program}>{body}</div>
   );
 }
 
 export default function MentorProfile({ mentor }: { mentor: Mentor }) {
-  const [selected, setSelected] = useState(0);
-  const [status, setStatus] = useState<"Active" | "Suspended">(mentor.status);
-  const [modal, setModal] = useState<"notify" | "suspend" | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const close = useCallback(() => setModal(null), []);
-  const clearToast = useCallback(() => setToast(null), []);
-  const suspended = status === "Suspended";
+  // The first current program is highlighted, as in the design.
 
   return (
     <div className={styles.page}>
@@ -66,62 +55,7 @@ export default function MentorProfile({ mentor }: { mentor: Mentor }) {
         </Link>
       </div>
 
-      <section className={`${hero.hero} ${styles.hero}`} aria-label="Mentor">
-        <div className={hero.avatar} aria-hidden="true">
-          {initials(mentor.name)}
-        </div>
-
-        <div className={hero.identity}>
-          <h1 className={hero.name}>{mentor.name}</h1>
-          <div className={hero.badges}>
-            <span className={suspended ? `${hero.badgeStatus} ${hero.badgeSuspended}` : hero.badgeStatus}>{status}</span>
-            <span className={hero.badgeOutline}>Joined: {mentor.joined}</span>
-          </div>
-          <ul className={hero.contacts}>
-            <li>
-              <MailIcon size={16} color="#FFFFFF" strokeWidth={2} />
-              <a href={`mailto:${mentor.email}`}>{mentor.email}</a>
-            </li>
-            <li>
-              <PhoneIcon size={16} color="#FFFFFF" strokeWidth={2} />
-              <a href={`tel:${mentor.phone.replace(/[^+\d]/g, "")}`}>{mentor.phone}</a>
-            </li>
-            <li>
-              <MapPinIcon size={16} color="#FFFFFF" strokeWidth={2} />
-              <span>{mentor.location}</span>
-            </li>
-          </ul>
-        </div>
-
-        <div className={hero.actions}>
-          <button type="button" className={`${hero.action} ${hero.actionAssign}`} onClick={() => setToast("Editing mentor roles is coming soon.")}>
-            <SquarePenIcon size={16} color="#364153" strokeWidth={2} />
-            Edit Role
-          </button>
-          <button type="button" className={hero.action} onClick={() => setModal("notify")} aria-haspopup="dialog">
-            <SendIcon size={16} color="#364153" strokeWidth={2} />
-            Notify
-          </button>
-          {suspended ? (
-            <button
-              type="button"
-              className={hero.action}
-              onClick={() => {
-                setStatus("Active");
-                setToast(`${mentor.name} has been reactivated.`);
-              }}
-            >
-              <BanIcon size={16} color="#364153" strokeWidth={2} />
-              Reactivate
-            </button>
-          ) : (
-            <button type="button" className={`${hero.action} ${hero.actionDanger}`} onClick={() => setModal("suspend")} aria-haspopup="dialog">
-              <BanIcon size={16} color="#C10007" strokeWidth={2} />
-              Suspend
-            </button>
-          )}
-        </div>
-      </section>
+      <MentorHero mentor={mentor} />
 
       <section className={styles.card} aria-labelledby="programs-assigned">
         <h2 id="programs-assigned" className={styles.cardTitle}>
@@ -133,7 +67,12 @@ export default function MentorProfile({ mentor }: { mentor: Mentor }) {
           {mentor.current.length > 0 ? (
             <div className={styles.programs}>
               {mentor.current.map((a, i) => (
-                <AssignmentCard key={`${a.program}-${a.role}`} a={a} selected={selected === i} onSelect={() => setSelected(i)} />
+                <AssignmentCard
+                  key={`${a.program}-${a.role}`}
+                  a={a}
+                  featured={i === 0}
+                  href={`/user-management/mentors/${mentor.id}/${programSlug(a.program)}`}
+                />
               ))}
             </div>
           ) : (
@@ -155,27 +94,6 @@ export default function MentorProfile({ mentor }: { mentor: Mentor }) {
         </div>
       </section>
 
-      {modal === "suspend" && (
-        <SuspendModal
-          name={mentor.name}
-          onClose={close}
-          onConfirm={() => {
-            setStatus("Suspended");
-            setModal(null);
-            setToast(`${mentor.name} has been suspended.`);
-          }}
-        />
-      )}
-      {modal === "notify" && (
-        <NotifyModal
-          onClose={close}
-          onSend={() => {
-            setModal(null);
-            setToast(`Notification sent to ${mentor.name}.`);
-          }}
-        />
-      )}
-      {toast && <Toast message={toast} onDone={clearToast} />}
     </div>
   );
 }

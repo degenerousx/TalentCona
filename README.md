@@ -20,6 +20,7 @@ npm run dev      # http://localhost:3000
 | `/user-management` | User Management (Students tab with search and the Filter drawer; Mentors tab with stats and the Pending / Assigned / Unassigned tables; Partners pending) |
 | `/user-management/[studentId]` | Student profile (one page per student) |
 | `/user-management/mentors/[mentorId]` | A mentor's profile: header with Edit Role / Notify / Suspend and the Programs Assigned card |
+| `/user-management/mentors/[mentorId]/[programId]` | A mentor's program: Overview (recent activity, expertise, avg session, response time, last active) and Performance (pending) tabs |
 | `/user-management/[studentId]/[programId]` | A student's program: Overview, Performance, Engagement, Loan and Campaign tabs |
 | `/financial-ops` | Placeholder (design pending) |
 
@@ -38,7 +39,7 @@ Password flow: Sign In → "Forgot password?" → Proceed → Reset Password →
 - `components/auth/ResetPasswordForm.tsx` — the reset-password card
 - `components/auth/SuccessModal.tsx` — reusable success dialog (shown after a password reset)
 - `app/(app)/` — signed-in routes sharing `components/app/AppShell.tsx` (header, collapsible sidebar)
-- `components/users/` — User Management (tabs, search, students table, `FilterPanel.tsx` drawer with `filters.ts` logic, `MentorsPanel.tsx` and `MentorProfile.tsx` with `mentors.ts` data) `StudentProfile.tsx`, `ProgramDetail.tsx` (with `PerformancePanel.tsx`, `EngagementPanel.tsx`, `LoanPanel.tsx` and `CampaignPanel.tsx`) and the shared `StudentHero.tsx` header (its Assign Mentor, Notify and Suspend buttons open the dialogs in `ActionModals.tsx`); `data.ts` holds placeholder student records
+- `components/users/` — User Management (tabs, search, students table, `FilterPanel.tsx` drawer with `filters.ts` logic, `MentorsPanel.tsx`, `MentorProfile.tsx` and `MentorProgram.tsx` with the shared `MentorHero.tsx` header and `mentors.ts` data) `StudentProfile.tsx`, `ProgramDetail.tsx` (with `PerformancePanel.tsx`, `EngagementPanel.tsx`, `LoanPanel.tsx` and `CampaignPanel.tsx`) and the shared `StudentHero.tsx` header (its Assign Mentor, Notify and Suspend buttons open the dialogs in `ActionModals.tsx`); `data.ts` holds placeholder student records
 - `components/dashboard/` — dashboard widgets; `data.ts` holds the placeholder figures and `GrowthChart.tsx` the area chart
 - `components/icons/`, `components/app/icons.tsx` — inline SVG icons
 - `public/images/` — design assets
