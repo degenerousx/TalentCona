@@ -50,6 +50,13 @@ export const ClockIcon = (p: IconProps) => (
   </Stroke>
 );
 
+export const CreditCardIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <rect width="20" height="14" x="2" y="5" rx="2" />
+    <line x1="2" x2="22" y1="10" y2="10" />
+  </Stroke>
+);
+
 export const TrendingUpIcon = (p: IconProps) => (
   <Stroke {...p}>
     <path d="M22 7 13.5 15.5 8.5 10.5 2 17" />
