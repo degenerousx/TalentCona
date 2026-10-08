@@ -70,3 +70,32 @@ export const WALLETS = {
 };
 
 export const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
+
+export type LoanStatus = "Pending" | "Approved" | "Rejected" | "In Repayment" | "Fully Paid";
+
+export type Loan = {
+  id: string;
+  student: string;
+  program: string;
+  amount: number;
+  provider: string;
+  date: string;
+  status: LoanStatus;
+};
+
+/** Current loan requests (the "All Requests" list in the design). */
+export const LOAN_REQUESTS: Loan[] = [
+  { id: "ln-1", student: "Michael Chen", program: "Full-Stack Development", amount: 1200, provider: "External Partner A", date: "2024-01-15", status: "Pending" },
+  { id: "ln-2", student: "David Kim", program: "Data Science", amount: 950, provider: "External Partner B", date: "2024-01-20", status: "Approved" },
+  { id: "ln-3", student: "Lisa Chang", program: "UI/UX Design", amount: 1100, provider: "External Partner A", date: "2024-01-18", status: "Rejected" },
+  { id: "ln-4", student: "Sarah Johnson", program: "Full-Stack Development", amount: 1500, provider: "External Partner C", date: "2024-02-01", status: "Approved" },
+  { id: "ln-5", student: "James Wilson", program: "Mobile Development", amount: 1300, provider: "External Partner B", date: "2024-02-10", status: "Pending" },
+];
+
+/** Disbursed loans the partners report on: being repaid, or settled (dates are the last payment). */
+export const LOAN_REPAYMENTS: Loan[] = [
+  { id: "rp-1", student: "David Kim", program: "Data Science", amount: 950, provider: "External Partner B", date: "2024-03-01", status: "In Repayment" },
+  { id: "rp-2", student: "Sarah Johnson", program: "Full-Stack Development", amount: 1500, provider: "External Partner C", date: "2024-03-05", status: "In Repayment" },
+  { id: "rp-3", student: "Adebayo Ojo", program: "UI/UX Design", amount: 800, provider: "External Partner A", date: "2023-12-20", status: "Fully Paid" },
+  { id: "rp-4", student: "Emily Rodriguez", program: "Intro to Programming", amount: 600, provider: "External Partner C", date: "2023-11-30", status: "Fully Paid" },
+];

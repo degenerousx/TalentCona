@@ -210,7 +210,8 @@
   color: #302a91;
 }
 
-.tabActive {
+/* Styled from aria-selected so the static preview's tab switching restyles it too. */
+.tab[aria-selected="true"] {
   border-bottom-color: #302a91;
   color: #302a91;
 }
@@ -262,6 +263,8 @@
   padding: 17.45px 24px 0;
   border-bottom: 0.89px solid #e5e7eb;
   vertical-align: top;
+  /* Long values (e.g. "Full-Stack Development") run past the 137px column on one line, as in the design. */
+  white-space: nowrap;
   font-size: 14px;
   line-height: 20px;
   color: #4a5565;
@@ -414,11 +417,100 @@
   margin-top: 0.98px;
 }
 
-.soon {
+/* ---------- Loan repayments ---------- */
+.loanNoticeWrap {
+  padding: 0 20px;
+}
+
+.loanNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 98px;
+  padding: 17px;
+  background: #eff6ff;
+  border: 0.89px solid #bedbff;
+  border-radius: 8px;
+}
+
+.loanNotice svg {
+  flex: none;
+}
+
+.loanNoticeTitle,
+.loanNoticeText {
   margin: 0;
-  padding: 24px;
   font-size: 14px;
   line-height: 20px;
+}
+
+.loanNoticeTitle {
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #1c398e;
+}
+
+.loanNoticeText {
+  color: #1447e6;
+}
+
+.subTabs {
+  display: flex;
+  gap: 8px;
+  height: 38.67px;
+  margin-top: 25px;
+  margin-bottom: 25px;
+  overflow-x: auto;
+  border-bottom: 0.89px solid #e5e7eb;
+}
+
+.subTab {
+  flex: none;
+  height: 37.78px;
+  /* The design's buttons carry extra room on the right (e.g. 132.03px for "All Requests (5)"). */
+  padding: 8px 24px 8px 16px;
+  background: none;
+  border: 0;
+  border-bottom: 1.78px solid transparent;
+  font: 500 14px/20px var(--font-outfit), sans-serif;
+  color: #4a5565;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.count {
+  font-size: 12px;
+}
+
+.subTab:hover {
+  color: #722fff;
+}
+
+.subTab[aria-selected="true"] {
+  border-bottom-color: #722fff;
+  color: #722fff;
+}
+
+.subTab:focus-visible {
+  outline: 2px solid #a5a0e0;
+  outline-offset: -2px;
+}
+
+.table .student {
+  padding-top: 14.33px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #101828;
+}
+
+.rejected {
+  background: #ffe2e2;
+  color: #9f0712;
+}
+
+.table .emptyRow {
+  padding-top: 18px;
   text-align: center;
   color: #64748b;
 }

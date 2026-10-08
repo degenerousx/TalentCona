@@ -16,6 +16,7 @@ import {
   type TxStatus,
   type WalletLine,
 } from "./data";
+import LoanRepayments from "./LoanRepayments";
 import RevenueChart from "./RevenueChart";
 import styles from "./FinancialOps.module.css";
 
@@ -173,7 +174,7 @@ export default function FinancialOps() {
               id={`tab-${t.id}`}
               aria-selected={tab === t.id}
               aria-controls={`panel-${t.id}`}
-              className={`${styles.tab} ${tab === t.id ? styles.tabActive : ""}`}
+              className={styles.tab}
               onClick={() => {
                 setTab(t.id);
                 window.history.replaceState(null, "", t.id === "ledger" ? window.location.pathname : `#${t.id}`);
@@ -268,7 +269,7 @@ export default function FinancialOps() {
         </div>
 
         <div role="tabpanel" id="panel-loans" aria-labelledby="tab-loans" hidden={tab !== "loans"} className={`${styles.panel} ${styles.padded}`}>
-          <p className={styles.soon}>Loan repayments are coming soon.</p>
+          <LoanRepayments />
         </div>
       </section>
 
