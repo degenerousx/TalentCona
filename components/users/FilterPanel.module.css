@@ -139,10 +139,15 @@
 }
 
 .input:focus,
-.dropdown:focus-visible,
-.popSearch input:focus {
+.dropdown:focus-visible {
   border-color: #a5a0e0;
   box-shadow: 0 0 0 3px rgba(48, 42, 145, 0.08);
+}
+
+/* The search box is focused as soon as a list opens, so it keeps the design's grey border (the caret shows
+   focus) and only turns purple once something is typed. */
+.popSearch input:focus:not(:placeholder-shown) {
+  border-color: #a5a0e0;
 }
 
 .dateInput {
