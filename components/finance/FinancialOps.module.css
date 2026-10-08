@@ -516,6 +516,69 @@
   color: #9f0712;
 }
 
+/* ---------- Repayment tracking table ---------- */
+.trackTable {
+  min-width: 1000px;
+}
+
+/* 56px rows including the 0.89px border; a wrapped program name grows its row to 74px as in the design. */
+.trackTable th {
+  height: 56px;
+  padding: 19.55px 24px;
+}
+
+.trackTable td {
+  height: 56px;
+  padding: 17px 24px;
+  vertical-align: middle;
+  /* Program names wrap in this table (Sarah's row is 74px tall in the design). */
+  white-space: normal;
+}
+
+.trackTable td.student {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  white-space: nowrap;
+}
+
+.trackTable .paid {
+  font-weight: 500;
+  color: #00a63e;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progressBar {
+  flex: none;
+  width: 58.65px;
+  height: 8px;
+  overflow: hidden;
+  background: #e5e7eb;
+  border-radius: 9999px;
+}
+
+.progressBar span {
+  display: block;
+  height: 100%;
+  background: #00a63e;
+  border-radius: 9999px;
+}
+
+.progressText {
+  flex: none;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.trackTable .status {
+  margin-top: 0;
+}
+
 /* ---------- Loan cards ---------- */
 .loanCards {
   display: flex;
@@ -556,6 +619,11 @@
   border-color: #bedbff;
 }
 
+.cardGray {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+}
+
 .loanCardHead {
   display: flex;
   align-items: flex-start;
@@ -582,6 +650,9 @@
 }
 
 .loanPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   flex: none;
   height: 28px;
   padding: 4px 12px;

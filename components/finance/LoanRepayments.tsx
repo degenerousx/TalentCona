@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CircleAlertIcon } from "@/components/app/icons";
+import { CircleAlertIcon, CircleCheckIcon } from "@/components/app/icons";
 import { LOAN_REPAYMENTS, LOAN_REQUESTS, usd, type Loan, type LoanStatus } from "./data";
 import styles from "./FinancialOps.module.css";
 
@@ -11,8 +11,8 @@ const AMOUNT: Field = { label: "Loan Amount", value: (l) => usd(l.amount), big: 
 const REQUESTED: Field = { label: "Request Date", value: (l) => l.date };
 const PROVIDER: Field = { label: "Loan Provider", value: (l) => l.provider };
 
-/** All Requests is a table; each status filter lists the loans as cards (fields per the designs). */
-const VIEWS: { id: string; label: string; rows: Loan[]; fields?: Field[] }[] = [
+/** All Requests and Repayment Tracking are tables; the other filters list the loans as cards (fields per the designs). */
+const VIEWS: { id: string; label: string; rows: Loan[]; fields?: Field[]; tracking?: boolean }[] = [
   { id: "all", label: "All Requests", rows: LOAN_REQUESTS },
   { id: "pending", label: "Pending", rows: LOAN_REQUESTS.filter((l) => l.status === "Pending"), fields: [AMOUNT, REQUESTED, PROVIDER] },
   {
@@ -26,13 +26,18 @@ const VIEWS: { id: string; label: string; rows: Loan[]; fields?: Field[] }[] = [
     id: "tracking",
     label: "Repayment Tracking",
     rows: LOAN_REPAYMENTS.filter((l) => l.status === "In Repayment"),
-    fields: [AMOUNT, { label: "Last Payment", value: (l) => l.date }, PROVIDER],
+    tracking: true,
   },
   {
     id: "paid",
     label: "Fully Paid",
     rows: LOAN_REPAYMENTS.filter((l) => l.status === "Fully Paid"),
-    fields: [AMOUNT, { label: "Paid Off", value: (l) => l.date }, PROVIDER],
+    fields: [
+      { ...AMOUNT, label: "Total Loan Amount" },
+      { label: "Completion Date", value: (l) => l.date },
+      { label: "Repayment Duration", value: (l) => (l.repayment ? `${l.repayment.installments} months` : "—") },
+      PROVIDER,
+    ],
   },
 ];
 
@@ -49,7 +54,7 @@ const CARD_CLASS: Record<LoanStatus, string> = {
   Approved: styles.cardGreen,
   Rejected: styles.cardRed,
   "In Repayment": styles.cardBlue,
-  "Fully Paid": styles.cardGreen,
+  "Fully Paid": styles.cardGray,
 };
 
 function LoanTable({ rows }: { rows: Loan[] }) {
@@ -85,6 +90,59 @@ function LoanTable({ rows }: { rows: Loan[] }) {
   );
 }
 
+function RepaymentTable({ rows }: { rows: Loan[] }) {
+  return (
+    <div className={styles.tableWrap}>
+      <table className={`${styles.table} ${styles.trackTable}`}>
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Program</th>
+            <th>Total Loan</th>
+            <th>Paid</th>
+            <th>Remaining</th>
+            <th>Progress</th>
+            <th>Next Due</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((l) => {
+            const r = l.repayment;
+            const paid = r?.paid ?? 0;
+            const pct = r && r.installments ? (r.installmentsPaid / r.installments) * 100 : 0;
+            return (
+              <tr key={l.id}>
+                <td className={styles.student}>{l.student}</td>
+                <td>{l.program}</td>
+                <td className={styles.amount}>{usd(l.amount)}</td>
+                <td className={styles.paid}>{usd(paid)}</td>
+                <td>{usd(l.amount - paid)}</td>
+                <td>
+                  <div className={styles.progress}>
+                    <span className={styles.progressBar}>
+                      <span style={{ width: `${pct}%` }} />
+                    </span>
+                    <span className={styles.progressText}>
+                      {r?.installmentsPaid ?? 0}/{r?.installments ?? 0}
+                    </span>
+                  </div>
+                </td>
+                <td>{r?.nextDue ?? "—"}</td>
+                <td>
+                  <span className={`${styles.status} ${r?.standing === "Overdue" ? styles.rejected : styles.completed}`}>
+                    {r?.standing ?? "On Track"}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function LoanCards({ rows, fields }: { rows: Loan[]; fields: Field[] }) {
   if (rows.length === 0) return <p className={styles.loanEmpty}>No loans here yet.</p>;
   return (
@@ -96,7 +154,10 @@ function LoanCards({ rows, fields }: { rows: Loan[]; fields: Field[] }) {
               <h3 className={styles.loanStudent}>{l.student}</h3>
               <p className={styles.loanProgram}>{l.program}</p>
             </div>
-            <span className={`${styles.loanPill} ${STATUS_CLASS[l.status]}`}>{l.status}</span>
+            <span className={`${styles.loanPill} ${STATUS_CLASS[l.status]}`}>
+              {l.status === "Fully Paid" && <CircleCheckIcon size={16} color="currentColor" strokeWidth={2} />}
+              {l.status}
+            </span>
           </div>
           <dl className={styles.loanFields} style={{ gridTemplateColumns: `repeat(${fields.length}, minmax(0, 1fr))` }}>
             {fields.map((f) => (
@@ -140,7 +201,7 @@ export default function LoanRepayments() {
             id={`loan-tab-${v.id}`}
             aria-selected={view === v.id}
             aria-controls={`loan-panel-${v.id}`}
-            data-layout={v.fields ? "cards" : "table"}
+            data-layout={v.fields ? "cards" : v.tracking ? "tracking" : "table"}
             className={styles.subTab}
             onClick={() => setView(v.id)}
           >
@@ -151,7 +212,13 @@ export default function LoanRepayments() {
 
       {VIEWS.map((v) => (
         <div key={v.id} role="tabpanel" id={`loan-panel-${v.id}`} aria-labelledby={`loan-tab-${v.id}`} hidden={view !== v.id}>
-          {v.fields ? <LoanCards rows={v.rows} fields={v.fields} /> : <LoanTable rows={v.rows} />}
+          {v.fields ? (
+            <LoanCards rows={v.rows} fields={v.fields} />
+          ) : v.tracking ? (
+            <RepaymentTable rows={v.rows} />
+          ) : (
+            <LoanTable rows={v.rows} />
+          )}
         </div>
       ))}
     </div>

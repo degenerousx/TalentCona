@@ -82,6 +82,14 @@ export type Loan = {
   date: string;
   status: LoanStatus;
   approvalDate?: string;
+  /** Repayment figures the partner reports once the loan is disbursed. */
+  repayment?: {
+    paid: number;
+    installmentsPaid: number;
+    installments: number;
+    nextDue?: string;
+    standing?: "On Track" | "Overdue";
+  };
 };
 
 /** Current loan requests (the "All Requests" list in the design). */
@@ -93,10 +101,46 @@ export const LOAN_REQUESTS: Loan[] = [
   { id: "ln-5", student: "James Wilson", program: "Mobile Development", amount: 1300, provider: "External Partner B", date: "2024-02-10", status: "Pending" },
 ];
 
-/** Disbursed loans the partners report on: being repaid, or settled (dates are the last payment). */
+/** Disbursed loans the partners report on: being repaid, or settled (`date` is the completion date). */
 export const LOAN_REPAYMENTS: Loan[] = [
-  { id: "rp-1", student: "David Kim", program: "Data Science", amount: 950, provider: "External Partner B", date: "2024-03-01", status: "In Repayment" },
-  { id: "rp-2", student: "Sarah Johnson", program: "Full-Stack Development", amount: 1500, provider: "External Partner C", date: "2024-03-05", status: "In Repayment" },
-  { id: "rp-3", student: "Adebayo Ojo", program: "UI/UX Design", amount: 800, provider: "External Partner A", date: "2023-12-20", status: "Fully Paid" },
-  { id: "rp-4", student: "Emily Rodriguez", program: "Intro to Programming", amount: 600, provider: "External Partner C", date: "2023-11-30", status: "Fully Paid" },
+  {
+    id: "rp-1",
+    student: "David Kim",
+    program: "Data Science",
+    amount: 950,
+    provider: "External Partner B",
+    date: "2024-01-25",
+    status: "In Repayment",
+    repayment: { paid: 380, installmentsPaid: 4, installments: 10, nextDue: "2024-03-25", standing: "On Track" },
+  },
+  {
+    id: "rp-2",
+    student: "Sarah Johnson",
+    program: "Full-Stack Development",
+    amount: 1500,
+    provider: "External Partner C",
+    date: "2024-02-05",
+    status: "In Repayment",
+    repayment: { paid: 300, installmentsPaid: 2, installments: 10, nextDue: "2024-03-05", standing: "On Track" },
+  },
+  {
+    id: "rp-3",
+    student: "Emily Rodriguez",
+    program: "UI/UX Design",
+    amount: 1000,
+    provider: "External Partner A",
+    date: "2024-01-10",
+    status: "Fully Paid",
+    repayment: { paid: 1000, installmentsPaid: 10, installments: 10 },
+  },
+  {
+    id: "rp-4",
+    student: "Ahmed Hassan",
+    program: "Data Science",
+    amount: 1200,
+    provider: "External Partner B",
+    date: "2024-01-05",
+    status: "Fully Paid",
+    repayment: { paid: 1200, installmentsPaid: 12, installments: 12 },
+  },
 ];
