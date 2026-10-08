@@ -14,6 +14,8 @@ import {
 } from "@/components/app/icons";
 import { Check, RoleDefinitions } from "./AssignParts";
 import AssignProgramsModal from "./AssignProgramsModal";
+import RejectDialog from "./RejectDialog";
+import ReviewApplicationModal from "./ReviewApplicationModal";
 import type { AssignableMentor } from "./assignableMentors";
 import { applicantInitials } from "./mentorApplications";
 import { ASSIGNABLE_PROGRAMS, type MentorRole } from "./mentors";
@@ -30,9 +32,13 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [selection, setSelection] = useState<Selection>({});
-  const [confirming, setConfirming] = useState(false);
-  const [done, setDone] = useState(false);
-  const closeConfirm = useCallback(() => setConfirming(false), []);
+  /** Assign → Assign Programs → Review Application → (Reject Application) → success. */
+  const [step, setStep] = useState<"page" | "programs" | "review" | "reject">("page");
+  const [rating, setRating] = useState(m.adminRating);
+  const [feedback, setFeedback] = useState("");
+  const [done, setDone] = useState<string | null>(null);
+  const backToPage = useCallback(() => setStep("page"), []);
+  const backToReview = useCallback(() => setStep("review"), []);
   const finish = useCallback(() => router.push("/user-management#mentors"), [router]);
 
   const q = query.trim().toLowerCase();
@@ -199,7 +205,7 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
               className={styles.assignButton}
               disabled={chosen.length === 0}
               title={chosen.length ? undefined : "Choose a program first"}
-              onClick={() => setConfirming(true)}
+              onClick={() => setStep("programs")}
             >
               Assign
             </button>
@@ -207,19 +213,45 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
         </footer>
       </section>
 
-      {confirming && (
+      {step === "programs" && (
         <AssignProgramsModal
           mentorName={m.name}
           initial={Object.fromEntries(chosen.map((p) => [p.id, selection[p.id][0] ?? null]))}
-          onCancel={closeConfirm}
+          onCancel={backToPage}
           onConfirm={(confirmed) => {
             setSelection(Object.fromEntries(Object.entries(confirmed).map(([id, role]) => [id, [role]])));
-            setConfirming(false);
-            setDone(true);
+            setStep("review");
           }}
         />
       )}
-      {done && <SuccessDialog title="Mentor Assigned Successfully !" onClose={finish} />}
+      {step === "review" && (
+        <ReviewApplicationModal
+          mentor={m}
+          initialRating={rating}
+          onClose={backToPage}
+          onApprove={(r) => {
+            setRating(r);
+            setStep("page");
+            setDone("Mentorship Application Approved & Assigned Successfully !");
+          }}
+          onReject={(r) => {
+            setRating(r);
+            setStep("reject");
+          }}
+        />
+      )}
+      {step === "reject" && (
+        <RejectDialog
+          initial={feedback}
+          onClose={backToReview}
+          onSubmit={(text) => {
+            setFeedback(text);
+            setStep("page");
+            setDone("Mentorship Application Rejected Successfully !");
+          }}
+        />
+      )}
+      {done && <SuccessDialog title={done} onClose={finish} />}
     </div>
   );
 }

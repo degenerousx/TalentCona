@@ -2,7 +2,10 @@ import { getApplication, type MentorApplication } from "./mentorApplications";
 import { UNASSIGNED_MENTORS, getUnassignedMentor } from "./mentors";
 
 /** An approved mentor who is not yet on a program, with the details from their application. */
-export type AssignableMentor = Pick<MentorApplication, "id" | "name" | "email" | "portfolio" | "linkedin" | "experience" | "expertise"> & {
+export type AssignableMentor = Pick<
+  MentorApplication,
+  "id" | "name" | "email" | "bio" | "education" | "portfolio" | "linkedin" | "experience" | "expertise"
+> & {
   approved: string;
   systemRating: number;
   adminRating: number;
@@ -17,6 +20,8 @@ export function getAssignableMentor(id: string): AssignableMentor | undefined {
     id: mentor.id,
     name: mentor.name,
     email: application?.email ?? `${slug}@email.com`,
+    bio: application?.bio ?? "",
+    education: application?.education ?? "",
     portfolio: application?.portfolio ?? "",
     linkedin: application?.linkedin ?? "",
     experience: mentor.experience,
