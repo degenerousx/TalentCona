@@ -12,7 +12,17 @@ function PasswordField({ id, label, autoComplete }: { id: string; label: string;
     <div className={styles.field}>
       <label className={styles.label} htmlFor={id}>{label}</label>
       <div className={styles.input}>
-        <input id={id} name={id} type={visible ? "text" : "password"} autoComplete={autoComplete} required />
+        <input
+          id={id}
+          name={id}
+          type={visible ? "text" : "password"}
+          autoComplete={autoComplete}
+          required
+          onInput={(e) => {
+            const confirm = e.currentTarget.form?.elements.namedItem("confirmPassword");
+            if (confirm instanceof HTMLInputElement) confirm.setCustomValidity("");
+          }}
+        />
         <button
           type="button"
           className={styles.trailing}
@@ -42,7 +52,12 @@ export default function ResetPasswordForm() {
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          // Until the reset API exists, every submit succeeds.
+          const form = e.currentTarget;
+          const confirm = form.elements.namedItem("confirmPassword") as HTMLInputElement;
+          const password = (form.elements.namedItem("newPassword") as HTMLInputElement).value;
+          confirm.setCustomValidity(confirm.value && confirm.value !== password ? "Passwords do not match." : "");
+          if (!form.reportValidity()) return;
+          // Until the reset API exists, every valid submit succeeds.
           setSuccess(true);
         }}
       >

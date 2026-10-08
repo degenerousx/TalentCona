@@ -142,7 +142,7 @@ export default function UserManagement() {
               role="tab"
               id={`tab-${t}`}
               aria-selected={tab === t}
-              aria-controls={`panel-${t}`}
+              aria-controls={tab === t ? `panel-${t}` : undefined}
               className={`${styles.tab} ${tab === t ? styles.tabActive : ""}`}
               onClick={() => {
                 setTab(t);

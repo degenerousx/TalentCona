@@ -19,6 +19,7 @@ export default function ForgotPasswordForm() {
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
+          if (!e.currentTarget.reportValidity()) return;
           // Until the reset email is wired up, go straight to the reset step.
           router.push("/reset-password");
         }}

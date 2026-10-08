@@ -23,7 +23,9 @@ export default function SignInForm() {
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          // Until auth is wired up, any sign-in goes to the dashboard.
+          // Both fields are required and the email must be valid; the browser shows what's missing.
+          if (!e.currentTarget.reportValidity()) return;
+          // Until auth is wired up, any valid sign-in goes to the dashboard.
           router.push("/dashboard");
         }}
       >
