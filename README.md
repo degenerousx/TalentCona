@@ -24,7 +24,7 @@ npm run dev      # http://localhost:3000
 | `/user-management/mentors/[mentorId]` | A mentor's profile: header with Edit Role / Notify / Suspend and the Programs Assigned card |
 | `/user-management/mentors/[mentorId]/[programId]` | A mentor's program: Overview (recent activity, expertise, avg session, response time, last active) and Performance (sessions, avg duration, response time, satisfaction, current mentees) tabs |
 | `/user-management/[studentId]/[programId]` | A student's program: Overview, Performance, Engagement, Loan and Campaign tabs |
-| `/financial-ops` | Financial Operations: revenue / funds / payout stat cards, Revenue vs Expenses chart, and tabs for the Transaction Ledger, Wallet Management and Withdrawal Requests and Loan Repayments (`#wallets`, `#withdrawals`, `#loans`; the loans tab has the monitoring notice and All / Pending / Approved / Rejected / Repayment Tracking / Fully Paid filters) |
+| `/financial-ops` | Financial Operations: revenue / funds / payout stat cards, Revenue vs Expenses chart, and tabs for the Transaction Ledger, Wallet Management and Withdrawal Requests and Loan Repayments (`#wallets`, `#withdrawals`, `#loans`; the loans tab has the monitoring notice and All / Pending / Approved / Rejected / Repayment Tracking / Fully Paid filters; All is a table, each status filter lists its loans as colour-coded cards — Pending in yellow with amount, request date and provider, Approved in green adding the approval date) |
 
 Sign In → Dashboard; the sidebar's Logout returns to Sign In.
 

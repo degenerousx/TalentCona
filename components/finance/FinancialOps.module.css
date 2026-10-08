@@ -426,11 +426,18 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  min-height: 98px;
-  padding: 17px;
+  min-height: 78px;
+  /* 17px in the design, which counts the 0.89px border inside the padding. */
+  padding: 16.11px;
   background: #eff6ff;
   border: 0.89px solid #bedbff;
   border-radius: 8px;
+}
+
+/* The All Requests (table) design has a taller notice than the card views. Keyed off the
+   selected tab so the static preview's tab switching updates it too. */
+.loans:has([data-layout="table"][aria-selected="true"]) .loanNotice {
+  min-height: 98px;
 }
 
 .loanNotice svg {
@@ -509,9 +516,117 @@
   color: #9f0712;
 }
 
-.table .emptyRow {
-  padding-top: 18px;
-  text-align: center;
+/* ---------- Loan cards ---------- */
+.loanCards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+  padding: 0 20px;
+  list-style: none;
+}
+
+.loanCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 156.76px;
+  padding: 24px;
+  border: 0.89px solid;
+  border-radius: 8px;
+}
+
+.cardPending {
+  background: #fefce8;
+  border-color: #fff085;
+}
+
+.cardGreen {
+  background: #f0fdf4;
+  border-color: #b9f8cf;
+}
+
+.cardRed {
+  background: #fef2f2;
+  border-color: #ffc9c9;
+}
+
+.cardBlue {
+  background: #eff6ff;
+  border-color: #bedbff;
+}
+
+.loanCardHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 47px;
+}
+
+.loanStudent {
+  height: 27px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 27px;
+  color: #101828;
+  transform: translateY(-1.11px);
+}
+
+.loanProgram {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: #4a5565;
+}
+
+.loanPill {
+  flex: none;
+  height: 28px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+/* Columns are 286.81px (three) or 211.11px (four) wide with 16px gaps in the designs: 892.44px in all. */
+.loanFields {
+  display: grid;
+  gap: 16px;
+  max-width: 892.44px;
+  margin: 0;
+}
+
+.loanFields dt {
+  height: 15.99px;
+  font-size: 12px;
+  line-height: 16px;
+  color: #4a5565;
+}
+
+.loanFields dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #101828;
+}
+
+.loanFields .loanBig {
+  height: 28px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 28px;
+  transform: translateY(-1.22px);
+}
+
+.loanEmpty {
+  margin: 0;
+  padding: 16px 20px;
+  font-size: 14px;
+  line-height: 20px;
   color: #64748b;
 }
 
@@ -533,6 +648,15 @@
 }
 
 @media (max-width: 599px) {
+  .loanFields {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .loanCards {
+    padding: 0 12px;
+  }
+  .loanCard {
+    padding: 20px 16px;
+  }
   .chartCard {
     padding: 20px 16px 8px;
   }
