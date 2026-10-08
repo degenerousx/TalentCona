@@ -150,6 +150,18 @@
   border-color: #a5a0e0;
 }
 
+/* No spinner arrows on the Amount Paid boxes (the design shows plain fields). */
+.input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.input[type="number"]::-webkit-inner-spin-button,
+.input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
 .dateInput {
   padding-right: 48px;
 }

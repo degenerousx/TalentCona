@@ -44,7 +44,7 @@ export default function MentorPerformance({ mentor }: { mentor: MentorProfile })
                 <li key={m.name} className={styles.mentee}>
                   <div className={styles.who}>
                     <span className={styles.avatar} aria-hidden="true">
-                      M
+                      {m.name.trim().charAt(0).toUpperCase()}
                     </span>
                     <div className={styles.text}>
                       {id ? (
