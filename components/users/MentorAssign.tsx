@@ -47,12 +47,9 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
 
   const toggleProgram = (id: string) =>
     setSelection(({ [id]: current, ...rest }) => (current ? rest : { ...rest, [id]: [] }));
+  // One role per program, as in the Assign Programs modal: picking a role replaces the other one.
   const toggleRole = (id: string, role: MentorRole) =>
-    setSelection((s) => {
-      const roles = s[id] ?? [];
-      const next = roles.includes(role) ? roles.filter((r) => r !== role) : [...roles, role];
-      return { ...s, [id]: ROLES.filter((r) => next.includes(r)) };
-    });
+    setSelection((s) => ({ ...s, [id]: s[id]?.includes(role) ? [] : [role] }));
 
   return (
     <div className={review.page}>
@@ -122,7 +119,7 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
             <dt>Admin Rating</dt>
             <dd>
               <TrophyIcon />
-              <span className={styles.score}>{m.adminRating || "—"}</span>
+              <span className={styles.score}>{rating || "—"}</span>
             </dd>
           </div>
         </dl>
