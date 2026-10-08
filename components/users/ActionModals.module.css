@@ -91,9 +91,10 @@
 
 .field:focus,
 .dropdown:focus-visible,
-.popSearch input:focus {
+/* The search box is focused as soon as a list opens, so it keeps the design's grey border (the caret shows
+   focus) and only turns purple once something is typed. */
+.popSearch input:focus:not(:placeholder-shown) {
   border-color: #a5a0e0;
-  box-shadow: 0 0 0 3px rgba(114, 47, 255, 0.1);
 }
 
 /* Shown after a submit attempt with an empty required field. */
@@ -311,9 +312,9 @@ textarea.field {
   cursor: pointer;
 }
 
+/* The current choice is shown in the dropdown itself; in the list it stays grey like the others (as in the design). */
 .option:hover,
-.option:focus-visible,
-.optionOn {
+.option:focus-visible {
   color: #302a91;
 }
 

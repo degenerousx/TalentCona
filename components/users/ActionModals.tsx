@@ -214,7 +214,7 @@ function Select({ label, placeholder, options, value, onChange, open, onToggle, 
                 <li key={o} role="option" aria-selected={o === value}>
                   <button
                     type="button"
-                    className={o === value ? `${styles.option} ${styles.optionOn}` : styles.option}
+                    className={styles.option}
                     onClick={() => {
                       onChange(o);
                       onToggle();
