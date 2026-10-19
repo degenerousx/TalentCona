@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens from Figma — use these (e.g. bg-primary, text-danger) instead
+ * of hex values.
+ *
+ * Most neutrals and status tints in the design (gray-*, slate-*, green-*,
+ * blue-*, purple-*, orange-*, red-*) are Tailwind's default palette, so they
+ * are used directly. Only the colours specific to this product live here.
+ */
+@theme inline {
+  --font-sans: var(--font-outfit);
+
+  /* Brand */
+  --color-primary: #302a91;
+  --color-primary-soft: #f5f0ff; /* active tab count badge */
+  --color-accent: #722fff; /* Talent Corner violet */
+  --color-accent-light: #bfa3ff; /* initials avatar */
+  --color-accent-deep: #491a99; /* initials avatar text */
+  --color-highlight: #a02fff; /* program names in fundraising */
+  --color-avatar: #6721af;
+
+  /* Text */
+  --color-heading: #0b1026; /* Gray/Darkest Gray */
+  --color-ink: #3a3a3a;
+  --color-muted: #9e9e9e;
+
+  /* Lines and surfaces */
+  --color-page: #f1f5f9; /* Gray/Background */
+  --color-stroke: #ebebeb; /* Stroke Color */
+  --color-hairline: #f5f5f7;
+
+  /* Status */
+  --color-success: #00c853;
+  --color-success-soft: #e8f5e9;
+  --color-warning: #fb8c00;
+  --color-warning-soft: #fff3e0;
+  --color-warning-strong: #f38120;
+  --color-info: #2196f3;
+  --color-info-soft: #e3f2fd;
+  --color-pending: #ffcc00;
+  --color-danger: #ff4842;
+  --color-teal: #0a9bad;
+  --color-teal-soft: #e6fbf7;
+
+  /* Tokens used by the shadcn components in src/components/shadcn (Admin
+     Management and Referrals only). Names we already define above
+     (accent, muted, heading, success, pending) keep OUR values. */
+  --color-primary-foreground: #ffffff;
+  --color-background: #ffffff;
+  --color-foreground: #27243d;
+  --color-card: #ffffff;
+  --color-popover: #ffffff;
+  --color-secondary: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-destructive: #e5484d;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #94a3b8;
+  --color-brand: #302a91;
+  --color-table-head: #f8fafc;
+  --color-table-label: #64748b;
+  --color-role: #f4e8f7;
+  --color-role-foreground: #8b3d9b;
+  --color-pending-foreground: #946c00;
+  --color-expired: #fee4e2;
+  --color-expired-foreground: #c43232;
+  --color-finance-positive: #16a36a;
+  --color-finance-positive-soft: #e6f7ed;
+  --color-finance-blue: #4c6fff;
+  --color-finance-orange: #ee9b35;
+  --color-finance-purple: #923fc0;
+  --color-finance-info: #e8f0ff;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 10%);
+}
+
+/* Plain CSS variables read by the CSS Modules of Dashboard, User Management,
+   Financial Ops and the auth pages (they don't use Tailwind classes). */
+:root {
+  --brand: #302a91;
+  --ink: #0b1026;
+  --ink-2: #0f172a;
+  --ink-3: #212121;
+  --muted: #616161;
+  --border: #f5f5f5;
+  --border-2: #f1f5f9;
+  --surface: #ffffff;
+}
+
+body {
+  background: var(--color-page);
+  color: #0f172a;
+}
+
+/* Visible keyboard focus everywhere, never for mouse users. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/*
+ * Images can't be dragged out or saved with a long-press (see ImageGuard for
+ * the right-click menu). This only deters casual saving: screenshots and the
+ * browser's developer tools can always get at anything shown on screen.
+ */
+img {
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}

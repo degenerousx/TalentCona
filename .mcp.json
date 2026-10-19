@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "talentcona-api": {
+      "type": "http",
+      "url": "https://talentcona.docs.buildwithfern.com/_mcp/server"
+    }
+  }
+}

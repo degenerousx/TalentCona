@@ -1,0 +1,372 @@
+.panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 32px;
+  padding: 24px;
+}
+
+.main {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.card {
+  background: #fff;
+  border: 0.89px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 16px;
+  color: #0b1026;
+  transform: translateY(-1.67px);
+}
+
+.iconTitle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  height: 20px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 16px;
+  color: #0b1026;
+}
+
+.iconTitle svg {
+  flex: none;
+}
+
+.iconTitle span {
+  padding-top: 0.33px;
+}
+
+/* Funding Progress */
+.funding {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 150.78px;
+}
+
+.funding .title {
+  padding: 24px 24px 9px;
+}
+
+.fundingBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 24px 24px;
+}
+
+.track {
+  height: 16px;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: #ebebeb;
+}
+
+.fill {
+  height: 100%;
+  background: #00a63e;
+}
+
+.fundingMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #64748b;
+  transform: translateY(-2px);
+}
+
+/* Campaign Link */
+.link {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 131.56px;
+  padding: 24px;
+}
+
+.input {
+  width: 100%;
+  height: 37.78px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border: 0.89px solid #d1d5dc;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  color: #0b1026;
+  text-overflow: ellipsis;
+  outline: none;
+}
+
+.input:focus-visible {
+  border-color: #722fff;
+}
+
+/* Campaign Story */
+.story {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  /* The design's 365.53px card height includes its borders. */
+  padding: 22.22px 24px 24px;
+}
+
+.storyBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.storyText {
+  margin: 0;
+  padding: 19.11px 20px;
+  border: 0.89px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  font-size: 16px;
+  line-height: 24px;
+  color: #364153;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  height: 67.76px;
+  padding: 8px 0;
+  border-top: 0.89px solid rgba(0, 0, 0, 0.1);
+}
+
+.fieldLabel {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: #64748b;
+}
+
+/* Fixed-width pill: long labels are clipped exactly as in the design. */
+.badge {
+  display: block;
+  width: 113.12px;
+  height: 21.76px;
+  padding: 1.89px 0 0 8.89px;
+  overflow: hidden;
+  border: 0.89px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 16px;
+  color: #0b1026;
+  white-space: nowrap;
+}
+
+/* Contributions */
+.contributions {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  width: 368px;
+  padding: 20px;
+}
+
+.contribHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-self: stretch;
+}
+
+.supporters {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  color: #0f172a;
+  transform: translateY(-2.11px);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 318.22px;
+  /* The design's 450.85px card height includes its borders. */
+  margin: -1.78px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  gap: 12px;
+  height: 79.99px;
+  border-bottom: 0.89px solid rgba(0, 0, 0, 0.1);
+}
+
+.item:first-child {
+  height: 80.88px;
+}
+
+.item:last-child {
+  border-bottom: 0;
+}
+
+.avatar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f3e8ff;
+  font-size: 16px;
+  line-height: 24px;
+  color: #8200db;
+}
+
+.itemBody {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.itemBody p {
+  margin: 0;
+}
+
+.itemTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 20px;
+}
+
+.name {
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 20px;
+  color: #0b1026;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The amount sits in a 30.21px slot, so wider values run slightly past the edge as in the design. */
+.amount {
+  flex: none;
+  width: 30.21px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #00a63e;
+  white-space: nowrap;
+  transform: translateY(-2px);
+}
+
+.message {
+  font-size: 14px;
+  line-height: 20px;
+  color: #64748b;
+}
+
+.ago {
+  font-size: 12px;
+  line-height: 16px;
+  color: #0f172a;
+}
+
+.empty {
+  font-size: 14px;
+  line-height: 20px;
+  color: #64748b;
+}
+
+.more {
+  align-self: stretch;
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: right;
+  transform: translateY(-2.11px);
+}
+
+.moreLink {
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: #302a91;
+  cursor: pointer;
+}
+
+.moreLink:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 1199px) {
+  .panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .contributions {
+    width: auto;
+  }
+  .list {
+    width: 100%;
+  }
+}
+
+@media (max-width: 599px) {
+  .panel {
+    padding: 16px 12px;
+  }
+  .funding,
+  .link,
+  .field,
+  .item,
+  .item:first-child {
+    height: auto;
+  }
+  .item {
+    padding-bottom: 16px;
+  }
+  .link,
+  .story {
+    padding: 16px;
+  }
+  .storyText {
+    padding: 16px;
+  }
+  .funding .title {
+    padding: 16px 16px 9px;
+  }
+  .fundingBody {
+    padding: 0 16px 16px;
+  }
+  .badge {
+    width: auto;
+    max-width: 100%;
+    padding-right: 8.89px;
+    text-overflow: ellipsis;
+  }
+  .amount {
+    width: auto;
+  }
+}

@@ -1,0 +1,76 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 303.71px);
+  gap: 24px;
+  margin: 0;
+  padding: 24px;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* 169px tall in the design; the padding absorbs the 0.89px border. */
+  height: 169px;
+  padding: 24.11px;
+  background: #ffffff;
+  border: 0.89px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.card > * {
+  flex: none;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  color: #ffffff;
+}
+
+.name {
+  height: 27px;
+  margin: 0;
+  overflow: hidden;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 27px;
+  color: #101828;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: translateY(-2.11px);
+}
+
+.description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: #4a5565;
+}
+
+.empty {
+  margin: 0;
+  padding: 40px 24px;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  color: #6a7282;
+}
+
+@media (max-width: 599px) {
+  .grid {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  .card {
+    height: auto;
+  }
+}
