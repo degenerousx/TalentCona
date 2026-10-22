@@ -25,7 +25,9 @@ rules, and the PR checklist.
 297 paths / 330 operations / 1306 schemas. OpenAPI 3.1.0.
 
 **MCP server for the docs** (configured in `.mcp.json`): query the API docs
-directly instead of scraping. Note the OpenAPI spec defines **no**
+directly instead of scraping. `.mcp.json` also registers Postman's official
+MCP server (`postman`), authenticated with each developer's own
+`POSTMAN_API_KEY` from the shell — see `docs/ONBOARDING.md` §4. Note the OpenAPI spec defines **no**
 `securitySchemes` — auth is documented only in the Postman collection, whose
 response examples are the source of truth below.
 

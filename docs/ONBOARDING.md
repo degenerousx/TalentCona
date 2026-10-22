@@ -65,12 +65,35 @@ Server Components or `page.tsx` server code — the token lives in browser memor
 
 - **Postman** (best — has example responses): ask the team lead to invite you
   to the workspace. Collection "TalentCona REST API", environment "Staging".
+  See *Postman in Claude Code* below to let Claude read it directly.
 - **Fern docs:** https://talentcona.docs.buildwithfern.com/talent-cona-rest-api/introduction
 - **OpenAPI spec:** https://talentcona.docs.buildwithfern.com/openapi.json
 
 Admin endpoints usually contain `/admin` (`/programs/admin`, `/communities/admin`,
 `/admin/loans`, `/admin-portal/team/members`). Read the **example response** in
 Postman before writing types — field names and shapes vary between endpoints.
+
+### Postman in Claude Code
+
+`.mcp.json` registers Postman's official MCP server (`postman`,
+`https://mcp.postman.com/mcp`), so Claude Code can read the collection's
+requests, example responses and environments itself. Each developer uses their
+own key:
+
+1. Postman → avatar → **Settings → API keys → Generate API Key** (after you've
+   joined the workspace — the key sees what your account sees).
+2. Export it in the shell that starts Claude Code (not `.env.local` — Claude
+   Code reads the shell environment, not Next's env files):
+   `export POSTMAN_API_KEY=PMAK-...` (add it to `~/.zshrc` / `~/.bashrc`).
+3. Start Claude Code in the repo, approve the project's MCP servers, and check
+   `/mcp` shows `postman` connected.
+
+Never commit the key. If your team's data is in Postman's EU region, change the
+URL to `https://mcp.eu.postman.com/mcp` locally.
+
+On claude.ai (web / cloud sessions) use the **Postman** connector instead
+(Settings → Connectors). A cloud environment also needs `mcp.postman.com`
+allowed under Network access.
 
 **Pagination is not consistent** — check each endpoint:
 

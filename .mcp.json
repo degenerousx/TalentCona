@@ -3,6 +3,13 @@
     "talentcona-api": {
       "type": "http",
       "url": "https://talentcona.docs.buildwithfern.com/_mcp/server"
+    },
+    "postman": {
+      "type": "http",
+      "url": "https://mcp.postman.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${POSTMAN_API_KEY:-}"
+      }
     }
   }
 }
