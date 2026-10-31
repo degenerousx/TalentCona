@@ -10,7 +10,7 @@ import { FilterChips, ListToolbar, SearchInput } from "@/components/ui/Toolbar";
 import { downloadCsv } from "@/lib/csv";
 import { useCandidates, useMatchCandidates } from "./api";
 import { CandidateCard } from "./CandidateCard";
-import { availabilityLabel, shortDate, type Availability, type Candidate, type Requirements } from "./data";
+import { availabilityLabel, cvStatusLabel, shortDate, type Availability, type Candidate, type Requirements } from "./data";
 import { RequirementsPanel } from "./RequirementsPanel";
 
 const matchesQuery = (query: string, fields: string[]) =>
@@ -34,7 +34,7 @@ export function TalentMatchView() {
     const filtered = list.filter(
       (c) =>
         (filter === "all" || c.availability === filter) &&
-        matchesQuery(query, [c.name, c.headline, c.program, c.location, ...c.skills]),
+        matchesQuery(query, [c.name, c.headline, c.program, c.location, c.education, ...c.certifications, ...c.skills]),
     );
     // With results, best match first.
     return results ? filtered.sort((a, b) => (resultFor.get(b.id)?.score ?? 0) - (resultFor.get(a.id)?.score ?? 0)) : filtered;
@@ -61,9 +61,11 @@ export function TalentMatchView() {
         Cohort: c.cohort,
         "Experience (years)": c.yearsExperience,
         Education: c.education,
+        Certifications: c.certifications.join("; "),
         Location: c.location,
         Availability: availabilityLabel[c.availability],
         Skills: c.skills.join("; "),
+        "CV Status": cvStatusLabel[c.cvStatus],
         "CV Submitted": shortDate(c.cvSubmittedOn),
         ...(results ? { "Match %": resultFor.get(c.id)?.score ?? "" } : {}),
       })),
@@ -92,7 +94,7 @@ export function TalentMatchView() {
           return (
             <div className="flex flex-col gap-6">
               <ListToolbar
-                search={<SearchInput label="Search candidates" placeholder="Search by name, role, program, location or skills..." value={query} onChange={setQuery} />}
+                search={<SearchInput label="Search candidates" placeholder="Search by name, role, skills, qualifications or location..." value={query} onChange={setQuery} />}
                 filters={
                   <FilterChips
                     label="Filter by availability"

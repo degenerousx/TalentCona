@@ -6,8 +6,10 @@
 
 ## What it does
 
-- One card per student/user who has submitted a CV, with five lines of key information:
-  role, program and cohort, experience and education, location, and skills.
+- One card per student/user who has submitted a CV: profile picture (initials if it's missing
+  or fails to load), full name, role, availability, and five labelled lines — **Skills,
+  Qualifications** (education and certifications), **Experience** (years, program and cohort),
+  **Location** and **CV status** (Verified / In review / Needs update, with the submitted date).
 - **Employer Requirements** (role, required skills, minimum experience, location) and
   **Match Candidates**: ranks the cards and adds a match score, a one-line reason and the
   missing skills to each.
@@ -21,6 +23,10 @@ Everything that talks to the backend is in `_components/api.ts`; components only
 |---|---|
 | `useCandidates()` | The list of candidates with CVs, mapped to `Candidate` in `data.ts` |
 | `useMatchCandidates()` | The AI matching endpoint (requirements in, `MatchResult[]` out). It currently uses a simple sample score: skills 70%, experience 20%, location 10% |
+
+Sample profile pictures are in `public/talent-match/avatars/` — illustrations generated with
+DiceBear's "Notionists" style (CC0). Once the API returns real photos, set `photoUrl` from it and
+delete that folder.
 
 Also still needed from the backend:
 
