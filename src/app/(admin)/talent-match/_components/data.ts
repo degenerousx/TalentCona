@@ -222,3 +222,145 @@ export const candidates: Candidate[] = [
     cvStatus: "in-review",
   },
 ];
+
+// ---- Mentor matching --------------------------------------------------------
+
+/** Days a mentor takes sessions. */
+export type Weekday = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
+
+/**
+ * An approved mentor who can take mentees. Mirrors the backend's mentor
+ * application (`totalYearsExperience`, `country`, expertise areas) and
+ * `mentorAvailability` (`maxStudents`, `currentStudentCount`, weekly slots).
+ */
+export type Mentor = {
+  id: string;
+  name: string;
+  initials: string;
+  photoUrl?: string;
+  /** e.g. "Senior Frontend Engineer at Paystack". */
+  title: string;
+  expertise: string[];
+  yearsExperience: number;
+  location: string;
+  maxMentees: number;
+  currentMentees: number;
+  availableDays: Weekday[];
+  /** Average rating from mentees, 0–5. */
+  rating: number;
+};
+
+/** A mentor suggested for one candidate. */
+export type MentorOption = {
+  mentorId: string;
+  /** 0–100. */
+  score: number;
+  sharedSkills: string[];
+  /** Short reasons, as an AI matcher would give. */
+  reasons: string[];
+};
+
+/** Start Match's result for one candidate: mentors best first. */
+export type MentorSuggestion = {
+  candidateId: string;
+  options: MentorOption[];
+};
+
+/** An approved candidate–mentor pairing. */
+export type ConfirmedMatch = {
+  candidateId: string;
+  mentorId: string;
+  score: number;
+  /** ISO date-time. */
+  confirmedAt: string;
+};
+
+export const mentors: Mentor[] = [
+  {
+    id: "mentor-1",
+    name: "Amara Nwosu",
+    initials: "AN",
+    photoUrl: "/talent-match/avatars/mentor-1.svg",
+    title: "Senior Frontend Engineer",
+    expertise: ["React", "TypeScript", "Next.js", "Design Systems"],
+    yearsExperience: 9,
+    location: "Lagos, Nigeria",
+    maxMentees: 6,
+    currentMentees: 3,
+    availableDays: ["Mon", "Wed", "Sat"],
+    rating: 4.9,
+  },
+  {
+    id: "mentor-2",
+    name: "David Okonkwo",
+    initials: "DO",
+    photoUrl: "/talent-match/avatars/mentor-2.svg",
+    title: "Backend Engineering Lead",
+    expertise: ["Node.js", "PostgreSQL", "Docker", "REST APIs", "TypeScript"],
+    yearsExperience: 11,
+    location: "Abuja, Nigeria",
+    maxMentees: 8,
+    currentMentees: 5,
+    availableDays: ["Tue", "Thu"],
+    rating: 4.7,
+  },
+  {
+    id: "mentor-3",
+    name: "Fatima Bello",
+    initials: "FB",
+    photoUrl: "/talent-match/avatars/mentor-3.svg",
+    title: "Data Science Manager",
+    expertise: ["Python", "SQL", "Machine Learning", "Pandas", "TensorFlow"],
+    yearsExperience: 8,
+    location: "Remote",
+    maxMentees: 5,
+    currentMentees: 2,
+    availableDays: ["Mon", "Thu", "Fri"],
+    rating: 4.8,
+  },
+  {
+    id: "mentor-4",
+    name: "James Wilson",
+    initials: "JW",
+    photoUrl: "/talent-match/avatars/mentor-4.svg",
+    title: "Cloud & DevOps Architect",
+    expertise: ["AWS", "Kubernetes", "Terraform", "Docker", "CI/CD"],
+    yearsExperience: 12,
+    location: "Remote",
+    maxMentees: 4,
+    currentMentees: 4,
+    availableDays: ["Sat", "Sun"],
+    rating: 4.6,
+  },
+  {
+    id: "mentor-5",
+    name: "Ngozi Adeyemi",
+    initials: "NA",
+    photoUrl: "/talent-match/avatars/mentor-5.svg",
+    title: "Principal Product Designer",
+    expertise: ["Figma", "User Research", "Prototyping", "Design Systems"],
+    yearsExperience: 10,
+    location: "Lagos, Nigeria",
+    maxMentees: 5,
+    currentMentees: 1,
+    availableDays: ["Tue", "Wed", "Fri"],
+    rating: 5.0,
+  },
+  {
+    id: "mentor-6",
+    name: "Ahmed Hassan",
+    initials: "AH",
+    photoUrl: "/talent-match/avatars/mentor-6.svg",
+    title: "Mobile Engineering Lead",
+    expertise: ["Flutter", "Dart", "Firebase", "React", "REST APIs"],
+    yearsExperience: 7,
+    location: "Port Harcourt, Nigeria",
+    maxMentees: 6,
+    currentMentees: 2,
+    availableDays: ["Mon", "Tue", "Sat"],
+    rating: 4.5,
+  },
+];
+
+/** Free mentee places a mentor has left. */
+export const openSlots = (m: Mentor) => Math.max(0, m.maxMentees - m.currentMentees);

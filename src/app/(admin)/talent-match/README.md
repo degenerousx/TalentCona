@@ -6,6 +6,21 @@
 
 ## What it does
 
+Two tabs.
+
+### Mentor Matching (default)
+
+- **Submitted CVs** and **Available Mentors** side by side. Mentor cards show photo, name, title,
+  rating and five labelled lines: Expertise, Experience, Location, Available days and Mentees
+  (current of maximum, with a capacity bar).
+- **Start Match** suggests up to three mentors for each selected CV — or every unmatched CV when
+  none is selected — best first, with a score and reasons. Mentors with no free places are skipped.
+- **Confirm Match** approves the mentor picked for a CV (the best one is pre-selected); **Dismiss**
+  drops the suggestion. Confirmed pairs appear under **Confirmed Matches**, the CV card says
+  "Matched with …", and the mentor's mentee count goes up by one.
+
+### Employer Matching
+
 - One card per student/user who has submitted a CV: profile picture (initials if it's missing
   or fails to load), full name, role, availability, and five labelled lines — **Skills,
   Qualifications** (education and certifications), **Experience** (years, program and cohort),
@@ -23,6 +38,10 @@ Everything that talks to the backend is in `_components/api.ts`; components only
 |---|---|
 | `useCandidates()` | The list of candidates with CVs, mapped to `Candidate` in `data.ts` |
 | `useMatchCandidates()` | The AI matching endpoint (requirements in, `MatchResult[]` out). It currently uses a simple sample score: skills 70%, experience 20%, location 10% |
+| `useMentors()` | Approved mentors with capacity — likely `GET /mentor-application/admin?status=Approved`, using `mentorUser.mentorAvailability` (`maxStudents`, `currentStudentCount`, `slots`), mapped to `Mentor` |
+| `useStartMentorMatch()` | The AI mentor-matching endpoint (candidate IDs in, `MentorSuggestion[]` out). Sample score: shared skills 60%, seniority 15%, location 10%, free places 15% |
+| `useConfirmMatch()` | The endpoint that approves a match (or `POST /mentorship/admin/programs/assign-mentor`, if a match means assigning a mentor to a program). On success, invalidate the mentors and confirmed-matches queries instead of editing the cache, as the sample does now |
+| `useConfirmedMatches()` | The list of confirmed matches; it starts empty for now |
 
 Sample profile pictures are in `public/talent-match/avatars/` — illustrations generated with
 DiceBear's "Notionists" style (CC0). Once the API returns real photos, set `photoUrl` from it and

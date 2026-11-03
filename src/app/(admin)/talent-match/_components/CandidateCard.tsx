@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Award, Briefcase, Code, FileText, GraduationCap, MapPin, Sparkles } from "lucide-react";
+import { Award, Briefcase, CircleCheck, Code, FileText, GraduationCap, MapPin, Sparkles } from "lucide-react";
+import { Checkbox } from "@/components/shadcn/checkbox";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Pill, type PillTone } from "@/components/ui/Pill";
@@ -16,34 +17,35 @@ const cvStatusTone: Record<CvStatus, PillTone> = {
 };
 
 /** Profile picture, or initials when there's none or it fails to load. */
-function Avatar({ candidate }: { candidate: Candidate }) {
+export function Avatar({ person, size = "lg" }: { person: { name: string; initials: string; photoUrl?: string }; size?: "md" | "lg" }) {
   const [failed, setFailed] = useState(false);
-  if (candidate.photoUrl && !failed) {
+  const box = size === "lg" ? "size-16 text-xl" : "size-12 text-base";
+  if (person.photoUrl && !failed) {
     return (
       // eslint-disable-next-line @next/next/no-img-element -- small local/API image; next/image adds nothing here
       <img
-        src={candidate.photoUrl}
-        alt={`${candidate.name}'s profile picture`}
-        width={64}
-        height={64}
+        src={person.photoUrl}
+        alt={`${person.name}'s profile picture`}
+        width={size === "lg" ? 64 : 48}
+        height={size === "lg" ? 64 : 48}
         onError={() => setFailed(true)}
-        className="size-16 shrink-0 rounded-full border border-hairline bg-accent-light object-cover"
+        className={cn(box, "shrink-0 rounded-full border border-hairline bg-accent-light object-cover")}
       />
     );
   }
   return (
     <span
       role="img"
-      aria-label={`${candidate.name}'s initials`}
-      className="grid size-16 shrink-0 place-items-center rounded-full bg-accent-light text-xl leading-7 font-bold text-accent-deep"
+      aria-label={`${person.name}'s initials`}
+      className={cn(box, "grid shrink-0 place-items-center rounded-full bg-accent-light leading-7 font-bold text-accent-deep")}
     >
-      {candidate.initials}
+      {person.initials}
     </span>
   );
 }
 
-/** One labelled row of the card's key information. */
-function InfoRow({ icon: Icon, label, children }: { icon: typeof Briefcase; label: string; children: React.ReactNode }) {
+/** One labelled row of a card's key information. */
+export function InfoRow({ icon: Icon, label, children }: { icon: typeof Briefcase; label: string; children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-[7.5rem_1fr] items-start gap-3 py-2.5 first:pt-0 last:pb-0">
       <dt className="flex items-center gap-2 text-xs leading-5 font-medium text-muted uppercase">
@@ -61,9 +63,16 @@ function scoreTone(score: number) {
   return "bg-warning-soft text-warning";
 }
 
-type CandidateCardProps = { candidate: Candidate; match?: MatchResult };
+type CandidateCardProps = {
+  candidate: Candidate;
+  match?: MatchResult;
+  /** Shows a checkbox to pick this CV (Mentor Matching). */
+  selection?: { selected: boolean; onChange: (selected: boolean) => void; disabled?: boolean };
+  /** Name of the mentor this candidate is confirmed with. */
+  matchedWith?: string;
+};
 
-export function CandidateCard({ candidate, match }: CandidateCardProps) {
+export function CandidateCard({ candidate, match, selection, matchedWith }: CandidateCardProps) {
   const years = `${candidate.yearsExperience} ${candidate.yearsExperience === 1 ? "year" : "years"}`;
 
   return (
@@ -71,7 +80,7 @@ export function CandidateCard({ candidate, match }: CandidateCardProps) {
       {/* Who: photo, full name, role, availability, match score. */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
-          <Avatar candidate={candidate} />
+          <Avatar person={candidate} />
           <div className="flex min-w-0 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2.5">
               <h3 className="text-lg leading-7 font-semibold text-ink">{candidate.name}</h3>
@@ -80,8 +89,24 @@ export function CandidateCard({ candidate, match }: CandidateCardProps) {
               </Pill>
             </div>
             <p className="text-sm leading-5 text-slate-700">{candidate.headline}</p>
+            {matchedWith && (
+              <p className="flex items-center gap-1.5 text-sm leading-5 font-medium text-success">
+                <CircleCheck aria-hidden className="size-4" strokeWidth={1.67} />
+                Matched with {matchedWith}
+              </p>
+            )}
           </div>
         </div>
+
+        {selection && (
+          <Checkbox
+            checked={selection.selected}
+            onCheckedChange={(v) => selection.onChange(v === true)}
+            disabled={selection.disabled}
+            aria-label={`Select ${candidate.name}'s CV`}
+            className="mt-1 size-5 border-accent data-[state=checked]:bg-accent data-[state=checked]:text-white"
+          />
+        )}
 
         {match && (
           <div className="flex shrink-0 flex-col items-center">
