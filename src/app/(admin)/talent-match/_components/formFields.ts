@@ -44,6 +44,8 @@ export const HIRING_FIELDS = {
   roleTitle: "roleTitle",
   /** Comma-separated. */
   requiredSkills: "requiredSkills",
+  /** Comma-separated. Optional. */
+  niceToHaveSkills: "niceToHaveSkills",
   /** Minimum experience, one of EXPERIENCE_OPTIONS. */
   yearsOfExperience: "yearsOfExperience",
   employmentType: "employmentType",

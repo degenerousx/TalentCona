@@ -12,7 +12,7 @@ import { downloadCsv } from "@/lib/csv";
 import { scoreTalent, useConfirmMatch, useConfirmedMatches, useHiringRequests, useTalents } from "./api";
 import { CvViewerModal } from "./CvViewerModal";
 import { HiringRequestCard } from "./HiringRequestCard";
-import { MatchTalentsModal } from "./MatchTalentsModal";
+import { RequestDetailsModal } from "./RequestDetailsModal";
 import { TalentCard } from "./TalentCard";
 import { TalentProfileModal, type HireDetails } from "./TalentProfileModal";
 import {
@@ -115,10 +115,10 @@ function TalentsPanel({ talents, onViewProfile, onViewCv }: TalentsPanelProps) {
 type RequestsPanelProps = {
   requests: HiringRequest[];
   matchedNames: (requestId: string) => string[];
-  onMatch: (r: HiringRequest) => void;
+  onViewDetails: (r: HiringRequest) => void;
 };
 
-function RequestsPanel({ requests, matchedNames, onMatch }: RequestsPanelProps) {
+function RequestsPanel({ requests, matchedNames, onViewDetails }: RequestsPanelProps) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | RequestStatus>("all");
   const count = (s: RequestStatus) => requests.filter((r) => r.status === s).length;
@@ -156,12 +156,12 @@ function RequestsPanel({ requests, matchedNames, onMatch }: RequestsPanelProps) 
     <div className="flex flex-col gap-6">
       <div className="grid gap-6 md:grid-cols-3">
         <StatCard label="Total Requests" labelClassName="text-slate-500" value={requests.length} icon={<Building2 className="text-accent" strokeWidth={2.67} />} />
-        <StatCard label="Open" labelClassName="text-slate-500" value={count("open")} valueClassName="text-warning" icon={<Clock className="text-warning" strokeWidth={2.67} />} />
-        <StatCard label="Matched" labelClassName="text-slate-500" value={count("matched")} valueClassName="text-success" icon={<CircleCheck className="text-success" strokeWidth={2.67} />} />
+        <StatCard label="Pending" labelClassName="text-slate-500" value={count("pending")} valueClassName="text-warning" icon={<Clock className="text-warning" strokeWidth={2.67} />} />
+        <StatCard label="Fulfilled" labelClassName="text-slate-500" value={count("fulfilled")} valueClassName="text-success" icon={<CircleCheck className="text-success" strokeWidth={2.67} />} />
       </div>
 
       <ListToolbar
-        search={<SearchInput label="Search hiring requests" placeholder="Search by organization, contact, role, or skills..." value={query} onChange={setQuery} />}
+        search={<SearchInput label="Search hiring requests" placeholder="Search by company, contact, location, or role..." value={query} onChange={setQuery} />}
         filters={
           <FilterChips
             label="Filter by status"
@@ -169,8 +169,8 @@ function RequestsPanel({ requests, matchedNames, onMatch }: RequestsPanelProps) 
             onChange={setFilter}
             options={[
               { id: "all", label: `All (${requests.length})` },
-              { id: "open", label: `Open (${count("open")})` },
-              { id: "matched", label: `Matched (${count("matched")})` },
+              { id: "pending", label: `Pending (${count("pending")})` },
+              { id: "fulfilled", label: `Fulfilled (${count("fulfilled")})` },
             ]}
           />
         }
@@ -181,7 +181,7 @@ function RequestsPanel({ requests, matchedNames, onMatch }: RequestsPanelProps) 
       {visible.length > 0 ? (
         <ul aria-label="Hiring requests" className="flex flex-col gap-4">
           {visible.map((r) => (
-            <HiringRequestCard key={r.id} request={r} matchedTalents={matchedNames(r.id)} onMatch={() => onMatch(r)} />
+            <HiringRequestCard key={r.id} request={r} onViewDetails={() => onViewDetails(r)} />
           ))}
         </ul>
       ) : (
@@ -212,7 +212,7 @@ export function TalentMatchView() {
   }, [talentsQuery.data, confirmedList]);
   const requests = useMemo(() => {
     const ids = new Set(confirmedList.map((m) => m.requestId));
-    return requestsQuery.data?.map((r) => (ids.has(r.id) ? { ...r, status: "matched" as const } : r));
+    return requestsQuery.data?.map((r) => (ids.has(r.id) ? { ...r, status: "fulfilled" as const } : r));
   }, [requestsQuery.data, confirmedList]);
 
   const talentName = (id: string) => talents?.find((t) => t.id === id)?.name ?? "Unknown talent";
@@ -224,7 +224,7 @@ export function TalentMatchView() {
     confirmMatch.mutate(
       { requestId: request.id, talentId, score, ...hire },
       {
-        onSuccess: () => toast.success(`${talentName(talentId)} matched to ${request.organization}`),
+        onSuccess: () => toast.success(`${request.organization}'s request fulfilled: matched with ${talentName(talentId)}`),
         onError: (error) => toast.error(errorText(error)),
       },
     );
@@ -263,13 +263,13 @@ export function TalentMatchView() {
             errorTitle="Couldn't load hiring requests"
             empty={<EmptyState icon={Building2} title="No hiring requests yet" description="Requests appear here as soon as an organization submits the hiring form." />}
           >
-            {() => <RequestsPanel requests={requests ?? []} matchedNames={matchedNames} onMatch={setMatching} />}
+            {() => <RequestsPanel requests={requests ?? []} matchedNames={matchedNames} onViewDetails={setMatching} />}
           </QueryState>
         )}
       </TabPanel>
 
-      <MatchTalentsModal
-        request={matching}
+      <RequestDetailsModal
+        request={matching ? (requests?.find((r) => r.id === matching.id) ?? matching) : null}
         talents={talents ?? []}
         confirmedIds={confirmedForMatching}
         confirming={confirmMatch.isPending}

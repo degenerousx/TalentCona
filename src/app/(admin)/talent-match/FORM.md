@@ -78,6 +78,7 @@ remove them.
 | Job location | `location` | text | yes |
 | Role you're hiring for | `roleTitle` | text | yes |
 | Required skills | `requiredSkills` | text, comma-separated | yes |
+| Nice-to-have skills | `niceToHaveSkills` | text, comma-separated | no |
 | Minimum experience | `yearsOfExperience` | select (same values as above) | yes |
 | Employment type | `employmentType` | select: `Full-time`, `Part-time`, `Contract`, `Internship` | yes |
 | Work mode | `workMode` | select: `On-site`, `Hybrid`, `Remote` | yes |
@@ -96,6 +97,7 @@ remove them.
   <label>Job location * <input name="location" type="text" placeholder="City, Country" required maxlength="120"></label>
   <label>Role you're hiring for * <input name="roleTitle" type="text" placeholder="e.g. Data Analyst" required maxlength="120"></label>
   <label>Required skills * <input name="requiredSkills" type="text" placeholder="e.g. Python, SQL, Power BI" required maxlength="500"></label>
+  <label>Nice-to-have skills (Optional) <input name="niceToHaveSkills" type="text" placeholder="e.g. Excel, Tableau" maxlength="500"></label>
   <label>Minimum experience *
     <select name="yearsOfExperience" required>
       <option value="" disabled selected>Select experience</option>

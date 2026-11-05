@@ -24,13 +24,18 @@ admin ──▶ Talent Match ──▶ /api/talent-match/talents          ◀─
     qualifications and work experience.
   - The popup ends with **Job Information** for a matched talent. For anyone else it shows the
     **Has been Hired? / Hired By / Hire Date / Role** form, which records the hire.
-- **Hiring Requests tab:** one card per request.
-  - Each card shows organization, contact, location, employment type and work mode, dates, role,
-    positions, required skills and description.
-  - **Match Talents** ranks every talent for that request, best first, with a score, reasons and
-    missing skills.
-  - **Confirm Match** approves the selected talent. The request and the talent then show
-    **Matched**.
+- **Hiring Requests tab:** one card per request, in the Talent Corner "Talent Request" design.
+  - Each card shows organization, contact, a Pending/Fulfilled badge, email, phone, location,
+    requested date, deadline, employment type and description, and has a **View Full Details**
+    button.
+  - **View Full Details** opens the Talent Request Details popup:
+    - Request ID (`#TR-0001`, numbered in order of arrival), request date and status.
+    - Company information and description.
+    - Role requirements: level, employment type, positions, required and nice-to-have skills.
+    - **Talent Matches:** every available talent rated for the role, best first, as a match % and
+      a 5-star rating, with the reasons and any missing skills.
+  - **Mark as Fulfilled** confirms the selected talent. The request shows **Fulfilled**, and the
+    talent shows **Matched**.
 - **Both tabs:** stat cards, search, status filters and CSV export. Both lists refetch every
   60 seconds and on focus.
 

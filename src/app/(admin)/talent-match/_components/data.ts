@@ -35,11 +35,14 @@ export type Talent = {
   status: TalentStatus;
 };
 
-export type RequestStatus = "open" | "matched";
+/** "fulfilled" once a talent is confirmed for the request. */
+export type RequestStatus = "pending" | "fulfilled";
 
 /** A recruitment request from an organization, company or individual. */
 export type HiringRequest = {
   id: string;
+  /** Display ID, e.g. "TR-0001", numbered in order of arrival. */
+  code: string;
   organization: string;
   contactName: string;
   email: string;
@@ -48,6 +51,8 @@ export type HiringRequest = {
   location: string;
   role: string;
   requiredSkills: string[];
+  /** Optional on the form. */
+  niceToHaveSkills: string[];
   /** Minimum years, lower bound of the range picked. */
   minYearsExperience: number;
   experienceLabel?: string;
@@ -92,9 +97,28 @@ export const talentStatusLabel: Record<TalentStatus, string> = {
 };
 
 export const requestStatusLabel: Record<RequestStatus, string> = {
-  open: "Open",
-  matched: "Matched",
+  pending: "Pending",
+  fulfilled: "Fulfilled",
 };
+
+/** Seniority label for a minimum number of years, as in the design's level pill. */
+export function levelFor(minYears: number) {
+  if (minYears >= 11) return "Lead Level";
+  if (minYears >= 7) return "Senior Level";
+  if (minYears >= 4) return "Mid Level";
+  if (minYears >= 1) return "Junior Level";
+  return "Entry Level";
+}
+
+/** A 0–100 match score as a 0–5 rating in half stars. */
+export function ratingFor(score: number) {
+  return Math.round((score / 20) * 2) / 2;
+}
+
+/** "April 15, 2026" */
+export function longDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
 
 export function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -133,6 +157,7 @@ export const talentFixtures: Talent[] = [
 export const hiringRequestFixtures: HiringRequest[] = [
   {
     id: "request-1",
+    code: "TR-0001",
     organization: "TechCorp Solutions",
     contactName: "Adewale Ogunleye",
     email: "hiring@techcorp.example",
@@ -141,6 +166,7 @@ export const hiringRequestFixtures: HiringRequest[] = [
     location: "Lagos, Nigeria",
     role: "Data Analyst",
     requiredSkills: ["Python", "SQL", "Power BI"],
+    niceToHaveSkills: ["Excel"],
     minYearsExperience: 1,
     experienceLabel: "1–3 years",
     employmentType: "Full-time",
@@ -149,6 +175,6 @@ export const hiringRequestFixtures: HiringRequest[] = [
     deadline: "2026-12-15",
     description: "Analyse product and sales data and build dashboards for the leadership team.",
     submittedAt: "2026-11-05T09:00:00.000Z",
-    status: "open",
+    status: "pending",
   },
 ];

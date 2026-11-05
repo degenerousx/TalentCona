@@ -240,6 +240,7 @@ export function toHiringRequest(sub: Json, sharedForm: boolean): HiringRequest |
   const deadline = text(fields, HIRING_FIELDS.deadline);
   return {
     id,
+    code: "", // numbered in fetchHiringRequests, once all are known
     organization: organization || "—",
     contactName: text(fields, HIRING_FIELDS.contactName, "contact") || "—",
     email: text(fields, HIRING_FIELDS.email),
@@ -248,6 +249,7 @@ export function toHiringRequest(sub: Json, sharedForm: boolean): HiringRequest |
     location: text(fields, HIRING_FIELDS.location) || "—",
     role: role || "—",
     requiredSkills: listFrom(text(fields, HIRING_FIELDS.requiredSkills, "skills"), /[,;\n]/),
+    niceToHaveSkills: listFrom(text(fields, HIRING_FIELDS.niceToHaveSkills, "nice_to_have_skills"), /[,;\n]/),
     minYearsExperience: experience.years,
     experienceLabel: experience.label,
     employmentType: text(fields, HIRING_FIELDS.employmentType) || "—",
@@ -256,7 +258,7 @@ export function toHiringRequest(sub: Json, sharedForm: boolean): HiringRequest |
     deadline: /^\d{4}-\d{2}-\d{2}/.test(deadline) ? deadline : undefined,
     description: text(fields, HIRING_FIELDS.description) || "",
     submittedAt: createdAtOf(sub),
-    status: "open",
+    status: "pending",
   };
 }
 
@@ -314,5 +316,10 @@ export async function fetchTalents(): Promise<Talent[]> {
 export async function fetchHiringRequests(): Promise<HiringRequest[]> {
   const { talentFormId, hiringFormId } = formcarryConfig();
   const subs = await fetchSubmissions(hiringFormId ?? talentFormId);
-  return newestFirst(subs.map((s) => toHiringRequest(s, !hiringFormId)).filter((r): r is HiringRequest => r !== null));
+  const requests = subs.map((s) => toHiringRequest(s, !hiringFormId)).filter((r): r is HiringRequest => r !== null);
+  // Request IDs count up in order of arrival: the first request is TR-0001.
+  [...requests]
+    .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))
+    .forEach((r, i) => (r.code = `TR-${String(i + 1).padStart(4, "0")}`));
+  return newestFirst(requests);
 }
