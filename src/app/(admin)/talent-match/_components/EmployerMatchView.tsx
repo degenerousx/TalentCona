@@ -34,7 +34,7 @@ export function EmployerMatchView() {
     const filtered = list.filter(
       (c) =>
         (filter === "all" || c.availability === filter) &&
-        matchesQuery(query, [c.name, c.headline, c.program, c.location, c.education, ...c.certifications, ...c.skills]),
+        matchesQuery(query, [c.name, c.email, c.headline, c.program ?? "", c.location, c.education ?? "", ...c.certifications, ...c.skills]),
     );
     // With results, best match first.
     return results ? filtered.sort((a, b) => (resultFor.get(b.id)?.score ?? 0) - (resultFor.get(a.id)?.score ?? 0)) : filtered;
@@ -56,17 +56,20 @@ export function EmployerMatchView() {
       list.map((c) => ({
         Name: c.name,
         Email: c.email,
+        Phone: c.phone ?? "",
         Role: c.headline,
-        Program: c.program,
-        Cohort: c.cohort,
-        "Experience (years)": c.yearsExperience,
-        Education: c.education,
+        Program: c.program ?? "",
+        Cohort: c.cohort ?? "",
+        Experience: c.experienceLabel ?? `${c.yearsExperience} years`,
+        Education: c.education ?? "",
+        LinkedIn: c.linkedinUrl ?? "",
         Certifications: c.certifications.join("; "),
         Location: c.location,
         Availability: availabilityLabel[c.availability],
         Skills: c.skills.join("; "),
         "CV Status": cvStatusLabel[c.cvStatus],
         "CV Submitted": shortDate(c.cvSubmittedOn),
+        CV: c.cvUrl ?? "",
         ...(results ? { "Match %": resultFor.get(c.id)?.score ?? "" } : {}),
       })),
     );
@@ -87,7 +90,7 @@ export function EmployerMatchView() {
         query={candidates}
         isEmpty={(data) => data.length === 0}
         errorTitle="Couldn't load candidates"
-        empty={<EmptyState title="No CVs yet" description="Candidates appear here once they submit a CV." />}
+        empty={<EmptyState title="No CVs yet" description="Candidates appear here as soon as they submit the talent network form." />}
       >
         {(data) => {
           const list = visible(data);

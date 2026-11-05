@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Award, Briefcase, CircleCheck, Code, FileText, GraduationCap, MapPin, Sparkles } from "lucide-react";
+import { Award, Briefcase, CircleCheck, Code, ExternalLink, FileText, GraduationCap, Mail, MapPin, Phone, Sparkles } from "lucide-react";
 import { Checkbox } from "@/components/shadcn/checkbox";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Pill, type PillTone } from "@/components/ui/Pill";
 import { Tag, TagList } from "@/components/ui/Tag";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/cn";
 import { availabilityLabel, cvStatusLabel, shortDate, type Candidate, type CvStatus, type MatchResult } from "./data";
 
 const cvStatusTone: Record<CvStatus, PillTone> = {
+  new: "blue",
   verified: "success",
   "in-review": "info",
   "needs-update": "warning",
@@ -73,7 +74,7 @@ type CandidateCardProps = {
 };
 
 export function CandidateCard({ candidate, match, selection, matchedWith }: CandidateCardProps) {
-  const years = `${candidate.yearsExperience} ${candidate.yearsExperience === 1 ? "year" : "years"}`;
+  const years = candidate.experienceLabel ?? `${candidate.yearsExperience} ${candidate.yearsExperience === 1 ? "year" : "years"}`;
 
   return (
     <Card as="li" tone="hairline" className="flex flex-col gap-5 p-6">
@@ -89,6 +90,24 @@ export function CandidateCard({ candidate, match, selection, matchedWith }: Cand
               </Pill>
             </div>
             <p className="text-sm leading-5 text-slate-700">{candidate.headline}</p>
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-4 text-slate-500">
+              <a href={`mailto:${candidate.email}`} className="inline-flex items-center gap-1 hover:text-accent hover:underline">
+                <Mail aria-hidden className="size-3.5" strokeWidth={1.33} />
+                {candidate.email}
+              </a>
+              {candidate.phone && (
+                <a href={`tel:${candidate.phone.replace(/\s+/g, "")}`} className="inline-flex items-center gap-1 hover:text-accent hover:underline">
+                  <Phone aria-hidden className="size-3.5" strokeWidth={1.33} />
+                  {candidate.phone}
+                </a>
+              )}
+              {candidate.linkedinUrl && (
+                <a href={candidate.linkedinUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-accent hover:underline">
+                  <ExternalLink aria-hidden className="size-3.5" strokeWidth={1.33} />
+                  LinkedIn<span className="sr-only"> profile of {candidate.name} (opens in a new tab)</span>
+                </a>
+              )}
+            </p>
             {matchedWith && (
               <p className="flex items-center gap-1.5 text-sm leading-5 font-medium text-success">
                 <CircleCheck aria-hidden className="size-4" strokeWidth={1.67} />
@@ -128,7 +147,7 @@ export function CandidateCard({ candidate, match, selection, matchedWith }: Cand
           </TagList>
         </InfoRow>
         <InfoRow icon={GraduationCap} label="Qualifications">
-          {candidate.education}
+          {candidate.education ?? (candidate.certifications.length ? null : <span className="text-slate-500">See CV</span>)}
           {candidate.certifications.map((c) => (
             <span key={c} className="mt-1 flex items-center gap-1.5 text-slate-700">
               <Award aria-hidden className="size-3.5 shrink-0 text-success" strokeWidth={1.17} />
@@ -138,9 +157,12 @@ export function CandidateCard({ candidate, match, selection, matchedWith }: Cand
         </InfoRow>
         <InfoRow icon={Briefcase} label="Experience">
           {years}
-          <span className="block text-slate-700">
-            {candidate.program} <span aria-hidden="true">•</span> {candidate.cohort}
-          </span>
+          {candidate.program && (
+            <span className="block text-slate-700">
+              {candidate.program}
+              {candidate.cohort && <> <span aria-hidden="true">•</span> {candidate.cohort}</>}
+            </span>
+          )}
         </InfoRow>
         <InfoRow icon={MapPin} label="Location">{candidate.location}</InfoRow>
         <InfoRow icon={FileText} label="CV status">
@@ -164,16 +186,27 @@ export function CandidateCard({ candidate, match, selection, matchedWith }: Cand
       )}
 
       <div className="mt-auto flex justify-end">
-        {/* CV files aren't stored by the backend yet. */}
-        <Button
-          variant="outline-accent"
-          disabled
-          title="Available once CVs are connected to the backend"
-          icon={<FileText aria-hidden className="size-4" strokeWidth={1.33} />}
-          className="font-medium"
-        >
-          View CV<span className="sr-only"> of {candidate.name}</span>
-        </Button>
+        {candidate.cvUrl ? (
+          <a
+            href={candidate.cvUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonClasses({ variant: "outline-accent", className: "font-medium" })}
+          >
+            <FileText aria-hidden className="size-4" strokeWidth={1.33} />
+            View CV<span className="sr-only"> of {candidate.name} (opens in a new tab)</span>
+          </a>
+        ) : (
+          <Button
+            variant="outline-accent"
+            disabled
+            title="No CV file was uploaded"
+            icon={<FileText aria-hidden className="size-4" strokeWidth={1.33} />}
+            className="font-medium"
+          >
+            View CV<span className="sr-only"> of {candidate.name}</span>
+          </Button>
+        )}
       </div>
     </Card>
   );

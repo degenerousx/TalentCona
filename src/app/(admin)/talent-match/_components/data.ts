@@ -1,14 +1,14 @@
 /**
- * Talent Match content. There's no backend for CVs or matching yet, so the
- * candidates below are sample data. `api.ts` serves them through TanStack
- * Query hooks — replace those hooks' bodies with API calls when the endpoints
- * exist; components won't need to change.
+ * Talent Match types and sample data. Candidates come from the "Join our talent
+ * network" form (Formcarry), served by `api.ts`; the candidate list below is
+ * kept as test data. Mentors and confirmed matches are still sample data
+ * until the backend has endpoints for them.
  */
 
 export type Availability = "available" | "employed";
 
-/** Where the candidate's CV is in review. */
-export type CvStatus = "verified" | "in-review" | "needs-update";
+/** Where the candidate's CV is in review. "new" = not opened in Formcarry yet. */
+export type CvStatus = "new" | "verified" | "in-review" | "needs-update";
 
 /** A student/user who has submitted a CV. */
 export type Candidate = {
@@ -18,12 +18,18 @@ export type Candidate = {
   /** Profile picture; the card falls back to initials without one. */
   photoUrl?: string;
   email: string;
+  phone?: string;
+  linkedinUrl?: string;
   /** Current or target job title, e.g. "Frontend Developer". */
   headline: string;
-  program: string;
-  cohort: string;
+  /** TalentCona program and cohort — not asked on the form. */
+  program?: string;
+  cohort?: string;
+  /** Lower bound of the range, used for scoring. */
   yearsExperience: number;
-  education: string;
+  /** What the candidate picked, e.g. "4–6 years". Shown instead of the number when set. */
+  experienceLabel?: string;
+  education?: string;
   certifications: string[];
   location: string;
   availability: Availability;
@@ -31,6 +37,8 @@ export type Candidate = {
   /** ISO date the CV was submitted. */
   cvSubmittedOn: string;
   cvFileName: string;
+  /** Link to the uploaded CV. */
+  cvUrl?: string;
   cvStatus: CvStatus;
 };
 
@@ -59,6 +67,7 @@ export const availabilityLabel: Record<Availability, string> = {
 };
 
 export const cvStatusLabel: Record<CvStatus, string> = {
+  new: "New",
   verified: "Verified",
   "in-review": "In review",
   "needs-update": "Needs update",

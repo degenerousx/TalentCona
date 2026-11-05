@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import {
-  candidates,
   mentors,
   openSlots,
   type Candidate,
@@ -13,10 +13,14 @@ import {
 } from "./data";
 
 /**
- * Talent Match ↔ backend. There are no CV or matching endpoints yet, so these
- * hooks serve the sample data in `data.ts`. To integrate, replace each
- * queryFn/mutationFn with an `api()` call from `@/lib/api` and map the
- * response to the types in `data.ts` here — components only use these hooks.
+ * Talent Match ↔ backend. Components only use these hooks.
+ *
+ * - Candidates are live: the talent network form's Formcarry submissions, read
+ *   by the portal's own route /api/talent-match/submissions (it holds the
+ *   Formcarry key and maps submissions to `Candidate`).
+ * - Mentors, matching and confirmed matches are still sample data: replace
+ *   those queryFn/mutationFn bodies with `api()` calls when the backend has
+ *   endpoints, mapping responses to the types in `data.ts` here.
  */
 
 const keys = {
@@ -25,13 +29,23 @@ const keys = {
   confirmed: ["talent-match", "confirmed-matches"] as const,
 };
 
-/** Every student/user who has submitted a CV. */
+/** How often the CV list checks for new submissions. */
+const CANDIDATES_REFRESH_MS = 60_000;
+
+/** Everyone who has submitted the talent network form, newest first. */
 export function useCandidates() {
   return useQuery({
     queryKey: keys.candidates,
-    // TODO(backend): e.g. api<ApiPage<ApiCandidate>>("/talent-match/admin/candidates")
-    queryFn: async (): Promise<Candidate[]> => candidates,
+    queryFn: async (): Promise<Candidate[]> => (await api<{ items: Candidate[] }>("/talent-match/submissions")).items,
+    // New submissions show up without a reload.
+    refetchInterval: CANDIDATES_REFRESH_MS,
+    refetchOnWindowFocus: true,
   });
+}
+
+/** The candidates already loaded by useCandidates. */
+function loadedCandidates(queryClient: ReturnType<typeof useQueryClient>) {
+  return queryClient.getQueryData<Candidate[]>(keys.candidates) ?? [];
 }
 
 const normalise = (value: string) => value.trim().toLowerCase();
@@ -67,11 +81,12 @@ function sampleMatch(candidate: Candidate, req: Requirements): MatchResult {
 
 /** Ranks candidates against an employer's requirements, best first. */
 export function useMatchCandidates() {
+  const queryClient = useQueryClient();
   return useMutation({
     // TODO(backend): e.g. api<ApiMatch[]>("/talent-match/admin/match", { method: "POST", body: req })
     mutationFn: async (req: Requirements): Promise<MatchResult[]> => {
       await new Promise((resolve) => setTimeout(resolve, 600));
-      return candidates.map((c) => sampleMatch(c, req)).sort((a, b) => b.score - a.score);
+      return loadedCandidates(queryClient).map((c) => sampleMatch(c, req)).sort((a, b) => b.score - a.score);
     },
   });
 }
@@ -138,8 +153,9 @@ export function useStartMentorMatch() {
     mutationFn: async (candidateIds: string[]): Promise<MentorSuggestion[]> => {
       await new Promise((resolve) => setTimeout(resolve, 700));
       const pool = queryClient.getQueryData<Mentor[]>(keys.mentors) ?? mentors;
+      const loaded = loadedCandidates(queryClient);
       return candidateIds.flatMap((id) => {
-        const candidate = candidates.find((c) => c.id === id);
+        const candidate = loaded.find((c) => c.id === id);
         return candidate ? [{ candidateId: id, options: sampleMentorOptions(candidate, pool) }] : [];
       });
     },

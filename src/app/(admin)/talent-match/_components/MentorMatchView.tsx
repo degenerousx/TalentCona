@@ -183,7 +183,7 @@ export function MentorMatchView() {
             query={candidates}
             isEmpty={(data) => data.length === 0}
             errorTitle="Couldn't load CVs"
-            empty={<EmptyState title="No CVs yet" description="Candidates appear here once they submit a CV." />}
+            empty={<EmptyState title="No CVs yet" description="Candidates appear here as soon as they submit the talent network form." />}
             loading={<LoadingState rows={3} />}
           >
             {(data) => (
