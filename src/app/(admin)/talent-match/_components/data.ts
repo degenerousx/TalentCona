@@ -1,375 +1,154 @@
 /**
- * Talent Match types and sample data. Candidates come from the "Join our talent
- * network" form (Formcarry), served by `api.ts`; the candidate list below is
- * kept as test data. Mentors and confirmed matches are still sample data
- * until the backend has endpoints for them.
+ * Talent Match types, plus sample records used as test fixtures.
+ *
+ * Talents and hiring requests are live: both public forms post to Formcarry
+ * and `api.ts` reads them through the portal's server routes. Confirmed
+ * matches are kept in the page until the backend has an endpoint for them.
  */
 
-export type Availability = "available" | "employed";
+/** Where a talent's profile is in review. "new" = not opened in Formcarry yet. */
+export type TalentStatus = "new" | "in-review" | "matched";
 
-/** Where the candidate's CV is in review. "new" = not opened in Formcarry yet. */
-export type CvStatus = "new" | "verified" | "in-review" | "needs-update";
-
-/** A student/user who has submitted a CV. */
-export type Candidate = {
+/** A job seeker who submitted the talent network form. */
+export type Talent = {
   id: string;
   name: string;
   initials: string;
-  /** Profile picture; the card falls back to initials without one. */
-  photoUrl?: string;
   email: string;
   phone?: string;
-  linkedinUrl?: string;
-  /** Current or target job title, e.g. "Frontend Developer". */
-  headline: string;
-  /** TalentCona program and cohort — not asked on the form. */
-  program?: string;
-  cohort?: string;
+  location: string;
+  /** Professional title or area of expertise. */
+  title: string;
+  skills: string[];
   /** Lower bound of the range, used for scoring. */
   yearsExperience: number;
-  /** What the candidate picked, e.g. "4–6 years". Shown instead of the number when set. */
+  /** What they picked, e.g. "4–6 years". */
   experienceLabel?: string;
-  education?: string;
-  certifications: string[];
-  location: string;
-  availability: Availability;
-  skills: string[];
-  /** ISO date the CV was submitted. */
-  cvSubmittedOn: string;
-  cvFileName: string;
-  /** Link to the uploaded CV. */
+  /** Educational qualifications, one per entry. */
+  education: string[];
+  workExperience?: string;
+  portfolioUrl?: string;
   cvUrl?: string;
-  cvStatus: CvStatus;
+  cvFileName?: string;
+  /** ISO date-time. */
+  submittedAt: string;
+  status: TalentStatus;
 };
 
-/** What an employer is looking for. */
-export type Requirements = {
-  role: string;
-  skills: string[];
-  minYearsExperience: number;
+export type RequestStatus = "open" | "matched";
+
+/** A recruitment request from an organization, company or individual. */
+export type HiringRequest = {
+  id: string;
+  organization: string;
+  contactName: string;
+  email: string;
+  phone?: string;
+  website?: string;
   location: string;
+  role: string;
+  requiredSkills: string[];
+  /** Minimum years, lower bound of the range picked. */
+  minYearsExperience: number;
+  experienceLabel?: string;
+  employmentType: string;
+  workMode: string;
+  positions: number;
+  /** ISO date, optional. */
+  deadline?: string;
+  description: string;
+  /** ISO date-time. */
+  submittedAt: string;
+  status: RequestStatus;
 };
 
-/** One candidate's fit for a set of requirements. */
-export type MatchResult = {
-  candidateId: string;
+/** How well one talent fits one hiring request. */
+export type TalentMatch = {
+  talentId: string;
   /** 0–100. */
   score: number;
   matchedSkills: string[];
   missingSkills: string[];
-  /** One-line explanation, as an AI matcher would give. */
-  summary: string;
+  /** Short reasons, as an AI matcher would give. */
+  reasons: string[];
 };
 
-export const availabilityLabel: Record<Availability, string> = {
-  available: "Available",
-  employed: "Employed",
+/** A talent approved for a hiring request with Confirm Match. */
+export type ConfirmedMatch = {
+  requestId: string;
+  talentId: string;
+  score: number;
+  /** ISO date-time. */
+  confirmedAt: string;
+  /** Set when recorded as a hire from the profile: ISO date and the role. */
+  hiredOn?: string;
+  role?: string;
 };
 
-export const cvStatusLabel: Record<CvStatus, string> = {
+export const talentStatusLabel: Record<TalentStatus, string> = {
   new: "New",
-  verified: "Verified",
   "in-review": "In review",
-  "needs-update": "Needs update",
+  matched: "Matched",
+};
+
+export const requestStatusLabel: Record<RequestStatus, string> = {
+  open: "Open",
+  matched: "Matched",
 };
 
 export function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
-export const candidates: Candidate[] = [
+export function initialsOf(name: string) {
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}
+
+// ---- Fixtures ---------------------------------------------------------------
+
+export const talentFixtures: Talent[] = [
   {
-    id: "cand-1",
-    name: "Sarah Johnson",
-    initials: "SJ",
-    photoUrl: "/talent-match/avatars/cand-1.svg",
-    email: "sarah.johnson@example.com",
-    headline: "Frontend Developer",
-    program: "Frontend Engineering with React",
-    cohort: "Jan 2026",
-    yearsExperience: 2,
-    education: "B.Sc. Computer Science",
-    certifications: ["Meta Front-End Developer"],
+    id: "talent-1",
+    name: "David Kim",
+    initials: "DK",
+    email: "david.k@example.com",
+    phone: "+234 804 567 8901",
     location: "Lagos, Nigeria",
-    availability: "available",
-    skills: ["React", "TypeScript", "Next.js", "Tailwind CSS", "Git"],
-    cvSubmittedOn: "2026-10-12",
-    cvFileName: "Sarah-Johnson-CV.pdf",
-    cvStatus: "verified",
-  },
-  {
-    id: "cand-2",
-    name: "Michael Chen",
-    initials: "MC",
-    photoUrl: "/talent-match/avatars/cand-2.svg",
-    email: "michael.chen@example.com",
-    headline: "Backend Engineer",
-    program: "Backend Engineering with Node.js",
-    cohort: "Nov 2025",
-    yearsExperience: 3,
-    education: "B.Eng. Electrical Engineering",
-    certifications: ["AWS Cloud Practitioner"],
-    location: "Abuja, Nigeria",
-    availability: "available",
-    skills: ["Node.js", "PostgreSQL", "TypeScript", "Docker", "REST APIs"],
-    cvSubmittedOn: "2026-10-08",
-    cvFileName: "Michael-Chen-CV.pdf",
-    cvStatus: "verified",
-  },
-  {
-    id: "cand-3",
-    name: "Adebayo Ojo",
-    initials: "AO",
-    photoUrl: "/talent-match/avatars/cand-3.svg",
-    email: "adebayo.ojo@example.com",
-    headline: "Data Analyst",
-    program: "Data Science Fundamentals",
-    cohort: "Jan 2026",
-    yearsExperience: 1,
-    education: "B.Sc. Statistics",
-    certifications: ["Google Data Analytics"],
-    location: "Ibadan, Nigeria",
-    availability: "available",
-    skills: ["Python", "SQL", "Pandas", "Power BI", "Excel"],
-    cvSubmittedOn: "2026-10-15",
-    cvFileName: "Adebayo-Ojo-CV.pdf",
-    cvStatus: "in-review",
-  },
-  {
-    id: "cand-4",
-    name: "Chiamaka Eze",
-    initials: "CE",
-    photoUrl: "/talent-match/avatars/cand-4.svg",
-    email: "chiamaka.eze@example.com",
-    headline: "UX/UI Designer",
-    program: "UX/UI Design",
-    cohort: "Sep 2025",
+    title: "Data Analyst",
+    skills: ["Python", "SQL", "Pandas", "Data Visualization"],
     yearsExperience: 4,
-    education: "B.A. Fine and Applied Arts",
-    certifications: ["Google UX Design"],
-    location: "Remote",
-    availability: "employed",
-    skills: ["Figma", "User Research", "Prototyping", "Design Systems"],
-    cvSubmittedOn: "2026-09-28",
-    cvFileName: "Chiamaka-Eze-CV.pdf",
-    cvStatus: "verified",
-  },
-  {
-    id: "cand-5",
-    name: "Tunde Bakare",
-    initials: "TB",
-    photoUrl: "/talent-match/avatars/cand-5.svg",
-    email: "tunde.bakare@example.com",
-    headline: "Full-Stack Developer",
-    program: "Full-Stack Web Development",
-    cohort: "Nov 2025",
-    yearsExperience: 5,
-    education: "HND Computer Science",
-    certifications: ["AWS Developer Associate", "MongoDB Associate"],
-    location: "Lagos, Nigeria",
-    availability: "available",
-    skills: ["React", "Node.js", "MongoDB", "TypeScript", "AWS"],
-    cvSubmittedOn: "2026-10-20",
-    cvFileName: "Tunde-Bakare-CV.pdf",
-    cvStatus: "verified",
-  },
-  {
-    id: "cand-6",
-    name: "Grace Okafor",
-    initials: "GO",
-    photoUrl: "/talent-match/avatars/cand-6.svg",
-    email: "grace.okafor@example.com",
-    headline: "Mobile Developer",
-    program: "Mobile Development with Flutter",
-    cohort: "Jan 2026",
-    yearsExperience: 2,
-    education: "B.Sc. Information Technology",
-    certifications: [],
-    location: "Port Harcourt, Nigeria",
-    availability: "available",
-    skills: ["Flutter", "Dart", "Firebase", "REST APIs"],
-    cvSubmittedOn: "2026-10-18",
-    cvFileName: "Grace-Okafor-CV.pdf",
-    cvStatus: "needs-update",
-  },
-  {
-    id: "cand-7",
-    name: "Ibrahim Musa",
-    initials: "IM",
-    photoUrl: "/talent-match/avatars/cand-7.svg",
-    email: "ibrahim.musa@example.com",
-    headline: "DevOps Engineer",
-    program: "DevOps Engineering",
-    cohort: "Sep 2025",
-    yearsExperience: 6,
-    education: "M.Sc. Computer Science",
-    certifications: ["CKA (Kubernetes)", "Terraform Associate"],
-    location: "Kano, Nigeria",
-    availability: "employed",
-    skills: ["AWS", "Docker", "Kubernetes", "Terraform", "CI/CD"],
-    cvSubmittedOn: "2026-09-30",
-    cvFileName: "Ibrahim-Musa-CV.pdf",
-    cvStatus: "in-review",
-  },
-  {
-    id: "cand-8",
-    name: "Lisa Chang",
-    initials: "LC",
-    photoUrl: "/talent-match/avatars/cand-8.svg",
-    email: "lisa.chang@example.com",
-    headline: "Junior Data Scientist",
-    program: "Data Science Fundamentals",
-    cohort: "Nov 2025",
-    yearsExperience: 1,
-    education: "B.Sc. Mathematics",
-    certifications: ["TensorFlow Developer"],
-    location: "Remote",
-    availability: "available",
-    skills: ["Python", "Machine Learning", "SQL", "TensorFlow"],
-    cvSubmittedOn: "2026-10-22",
-    cvFileName: "Lisa-Chang-CV.pdf",
-    cvStatus: "in-review",
+    experienceLabel: "4–6 years",
+    education: ["B.Sc. Statistics, University of Lagos", "IBM Data Science Professional"],
+    workExperience: "Data Analyst, TechCorp Solutions (2022–present)\nJunior Analyst, Finlytics (2020–2022)",
+    portfolioUrl: "https://linkedin.com/in/davidkim",
+    cvUrl: "https://example.com/cv/david-kim.pdf",
+    cvFileName: "David-Kim-CV.pdf",
+    submittedAt: "2026-11-04T10:00:00.000Z",
+    status: "new",
   },
 ];
 
-// ---- Mentor matching --------------------------------------------------------
-
-/** Days a mentor takes sessions. */
-export type Weekday = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
-
-/**
- * An approved mentor who can take mentees. Mirrors the backend's mentor
- * application (`totalYearsExperience`, `country`, expertise areas) and
- * `mentorAvailability` (`maxStudents`, `currentStudentCount`, weekly slots).
- */
-export type Mentor = {
-  id: string;
-  name: string;
-  initials: string;
-  photoUrl?: string;
-  /** e.g. "Senior Frontend Engineer at Paystack". */
-  title: string;
-  expertise: string[];
-  yearsExperience: number;
-  location: string;
-  maxMentees: number;
-  currentMentees: number;
-  availableDays: Weekday[];
-  /** Average rating from mentees, 0–5. */
-  rating: number;
-};
-
-/** A mentor suggested for one candidate. */
-export type MentorOption = {
-  mentorId: string;
-  /** 0–100. */
-  score: number;
-  sharedSkills: string[];
-  /** Short reasons, as an AI matcher would give. */
-  reasons: string[];
-};
-
-/** Start Match's result for one candidate: mentors best first. */
-export type MentorSuggestion = {
-  candidateId: string;
-  options: MentorOption[];
-};
-
-/** An approved candidate–mentor pairing. */
-export type ConfirmedMatch = {
-  candidateId: string;
-  mentorId: string;
-  score: number;
-  /** ISO date-time. */
-  confirmedAt: string;
-};
-
-export const mentors: Mentor[] = [
+export const hiringRequestFixtures: HiringRequest[] = [
   {
-    id: "mentor-1",
-    name: "Amara Nwosu",
-    initials: "AN",
-    photoUrl: "/talent-match/avatars/mentor-1.svg",
-    title: "Senior Frontend Engineer",
-    expertise: ["React", "TypeScript", "Next.js", "Design Systems"],
-    yearsExperience: 9,
+    id: "request-1",
+    organization: "TechCorp Solutions",
+    contactName: "Adewale Ogunleye",
+    email: "hiring@techcorp.example",
+    phone: "+234 901 234 5678",
+    website: "https://techcorp.example",
     location: "Lagos, Nigeria",
-    maxMentees: 6,
-    currentMentees: 3,
-    availableDays: ["Mon", "Wed", "Sat"],
-    rating: 4.9,
-  },
-  {
-    id: "mentor-2",
-    name: "David Okonkwo",
-    initials: "DO",
-    photoUrl: "/talent-match/avatars/mentor-2.svg",
-    title: "Backend Engineering Lead",
-    expertise: ["Node.js", "PostgreSQL", "Docker", "REST APIs", "TypeScript"],
-    yearsExperience: 11,
-    location: "Abuja, Nigeria",
-    maxMentees: 8,
-    currentMentees: 5,
-    availableDays: ["Tue", "Thu"],
-    rating: 4.7,
-  },
-  {
-    id: "mentor-3",
-    name: "Fatima Bello",
-    initials: "FB",
-    photoUrl: "/talent-match/avatars/mentor-3.svg",
-    title: "Data Science Manager",
-    expertise: ["Python", "SQL", "Machine Learning", "Pandas", "TensorFlow"],
-    yearsExperience: 8,
-    location: "Remote",
-    maxMentees: 5,
-    currentMentees: 2,
-    availableDays: ["Mon", "Thu", "Fri"],
-    rating: 4.8,
-  },
-  {
-    id: "mentor-4",
-    name: "James Wilson",
-    initials: "JW",
-    photoUrl: "/talent-match/avatars/mentor-4.svg",
-    title: "Cloud & DevOps Architect",
-    expertise: ["AWS", "Kubernetes", "Terraform", "Docker", "CI/CD"],
-    yearsExperience: 12,
-    location: "Remote",
-    maxMentees: 4,
-    currentMentees: 4,
-    availableDays: ["Sat", "Sun"],
-    rating: 4.6,
-  },
-  {
-    id: "mentor-5",
-    name: "Ngozi Adeyemi",
-    initials: "NA",
-    photoUrl: "/talent-match/avatars/mentor-5.svg",
-    title: "Principal Product Designer",
-    expertise: ["Figma", "User Research", "Prototyping", "Design Systems"],
-    yearsExperience: 10,
-    location: "Lagos, Nigeria",
-    maxMentees: 5,
-    currentMentees: 1,
-    availableDays: ["Tue", "Wed", "Fri"],
-    rating: 5.0,
-  },
-  {
-    id: "mentor-6",
-    name: "Ahmed Hassan",
-    initials: "AH",
-    photoUrl: "/talent-match/avatars/mentor-6.svg",
-    title: "Mobile Engineering Lead",
-    expertise: ["Flutter", "Dart", "Firebase", "React", "REST APIs"],
-    yearsExperience: 7,
-    location: "Port Harcourt, Nigeria",
-    maxMentees: 6,
-    currentMentees: 2,
-    availableDays: ["Mon", "Tue", "Sat"],
-    rating: 4.5,
+    role: "Data Analyst",
+    requiredSkills: ["Python", "SQL", "Power BI"],
+    minYearsExperience: 1,
+    experienceLabel: "1–3 years",
+    employmentType: "Full-time",
+    workMode: "Hybrid",
+    positions: 2,
+    deadline: "2026-12-15",
+    description: "Analyse product and sales data and build dashboards for the leadership team.",
+    submittedAt: "2026-11-05T09:00:00.000Z",
+    status: "open",
   },
 ];
-
-/** Free mentee places a mentor has left. */
-export const openSlots = (m: Mentor) => Math.max(0, m.maxMentees - m.currentMentees);

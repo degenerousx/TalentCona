@@ -8,7 +8,7 @@ export default function Page() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Talent Match"
-        description="Match candidates' CVs with mentors and employers"
+        description="Match available talents with organizations' hiring requests"
       />
       <TalentMatchView />
     </div>
