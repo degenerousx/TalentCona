@@ -33,6 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Admissions & Routing", href: "/admissions-routing", icon: "carbon:task-complete", enabled: true, privilege: "MANAGE_ADMISSIONS_ROUTING" },
   { label: "Manage Programs", href: "/manage-programs", icon: "mynaui:academic-hat", enabled: true, privilege: "MANAGE_PROGRAMS" },
   { label: "Talent Corner", href: "/talent-corner", icon: "mingcute:sparkles-line", enabled: true, privilege: "MANAGE_TALENT_COMPANY_REQUESTS" },
+  { label: "Talent Match", href: "/talent-match", icon: "lucide:user-search", enabled: true },
   { label: "Financial Ops", href: "/financial-ops", icon: "iconoir:wallet", enabled: true, privilege: "MANAGE_FINANCIAL_OPERATIONS" },
   { label: "Laptops", href: "/laptops", icon: "ic:baseline-laptop", enabled: true, privilege: "MANAGE_LAPTOPS" },
   { label: "Communities", href: "/communities", icon: "fluent:people-community-24-regular", enabled: true, privilege: "MANAGE_COMMUNITIES" },
