@@ -9,8 +9,10 @@
  *   FORMCARRY_FORM_ID   optional — defaults to the TalentMatch form
  *   FORMCARRY_API_URL   optional — submissions endpoint, "{formId}" is filled in
  *
- * The response shape below accepts the forms Formcarry's API is known to use;
- * check it against a real submission (see README) and tighten it then.
+ * Shape confirmed from a real submission (via the Formcarry connector):
+ *   { data: [{ id, created_at, spam, read, fields: [{ key, value }], attachments: [] }],
+ *     has_more, next_cursor }
+ * Other likely shapes are still accepted in case the REST API differs.
  */
 import type { Candidate } from "../_components/data";
 import { EXPERIENCE_OPTIONS, FORM_FIELDS } from "../_components/formFields";
@@ -74,10 +76,23 @@ function nextCursorOf(body: unknown): string | null {
   return typeof cursor === "string" && cursor && more !== false ? cursor : null;
 }
 
-/** The submitted fields: nested under fields/data/body, or on the submission itself. */
+/** `[{ key, value }]` (Formcarry's form) or `[{ name, value }]` → `{ key: value }`. */
+function pairsToObject(list: unknown[]): Json {
+  const out: Json = {};
+  for (const item of list) {
+    if (!isObject(item)) continue;
+    const key = [item.key, item.name, item.field].find((v): v is string => typeof v === "string" && v.length > 0);
+    if (key) out[key] = item.value;
+  }
+  return out;
+}
+
+/** The submitted fields: a key/value list or object under fields/data/body, or on the submission itself. */
 function fieldsOf(sub: Json): Json {
   for (const key of ["fields", "data", "body", "submission", "values"]) {
-    if (isObject(sub[key])) return { ...sub, ...(sub[key] as Json) };
+    const value = sub[key];
+    if (Array.isArray(value)) return { ...sub, ...pairsToObject(value) };
+    if (isObject(value)) return { ...sub, ...value };
   }
   return sub;
 }

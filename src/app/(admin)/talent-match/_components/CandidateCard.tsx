@@ -147,7 +147,7 @@ export function CandidateCard({ candidate, match, selection, matchedWith }: Cand
           </TagList>
         </InfoRow>
         <InfoRow icon={GraduationCap} label="Qualifications">
-          {candidate.education ?? (candidate.certifications.length ? null : <span className="text-slate-500">See CV</span>)}
+          {candidate.education ?? (candidate.certifications.length ? null : <span className="text-slate-500">{candidate.cvUrl ? "See CV" : "Not provided"}</span>)}
           {candidate.certifications.map((c) => (
             <span key={c} className="mt-1 flex items-center gap-1.5 text-slate-700">
               <Award aria-hidden className="size-3.5 shrink-0 text-success" strokeWidth={1.17} />
