@@ -1,6 +1,6 @@
 # Auth
 
-- **Routes:** `/sign-in`, `/forgot-password`, `/reset-password` (`/` redirects to `/sign-in`)
+- **Routes:** `/sign-in`, `/forgot-password`, `/reset-password`, `/accept-invite` (`/` redirects to `/sign-in`)
 - **Design:** [Figma section "Authentication"](https://www.figma.com/design/q8WJ8duI2FR5mc7ESAcUhi/Talent-cona-Admin-Portal--Copy-?node-id=293-7246) — the "Universal Sign In" frames. The older "Sign Up" frames in other copies of the file are outdated.
 
 These pages sit outside `(admin)`, so they have no header or sidebar. `layout.tsx` lets them scroll on small screens.
@@ -13,6 +13,7 @@ Styling is CSS Modules (`*.module.css` next to each component).
 | `/sign-in` | `sign-in/page.tsx` → `_components/SignInForm.tsx` | Welcome Back form |
 | `/forgot-password` | `forgot-password/page.tsx` → `_components/ForgotPasswordForm.tsx` | Request a reset email |
 | `/reset-password` | `reset-password/page.tsx` → `_components/ResetPasswordForm.tsx` | New password, then the "Congratulations!" modal (`_components/SuccessModal.tsx`) |
+| `/accept-invite` | `accept-invite/page.tsx` → `_components/AcceptInviteForm.tsx` | Invited admin sets a password (`?token=` from the invitation email); no Figma frame, uses the reset-password card |
 
 - `_components/AuthShell.tsx` — the responsive page layout (Tailwind). Two columns at Figma width (illustration 569px, card 567px) with Figma side margins. Each column has flexible spacers in the Figma ratio of space above/below it (never less than a minimum margin), so a 1440 × 1024 window shows the Figma layout and any other window fits without scrolling. Type and the card stay at design size; the illustration is what shrinks on short windows. Below `lg` (1024px) it stacks: logo, then card.
 - `_components/AuthArt.tsx` — the Figma artwork as SVG: purple band, line art, dots and stars (`BandArt`), and the waves behind and in front of the illustration (`BackWaves`, `FrontWave`). Paths are exported from Figma; AuthShell places them in Figma coordinates relative to the logo and illustration.

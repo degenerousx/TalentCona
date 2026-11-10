@@ -1,24 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDeferredValue, useState } from "react";
 import { Award, Building2, CircleCheck, Clock } from "lucide-react";
+import { toast } from "sonner";
+import { Toaster } from "@/components/shadcn/sonner";
+import { Button } from "@/components/ui/Button";
 import { StatCard } from "@/components/ui/StatCard";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 import { TabPanel, Tabs, type TabItem } from "@/components/ui/Tabs";
 import { FilterChips, ListToolbar, SearchInput } from "@/components/ui/Toolbar";
 import { downloadCsv } from "@/lib/csv";
+import { fetchAllRequests, fetchAllTalents, useRequestSummary, useTalentRequests, useTalents, useTalentSummary } from "./api";
 import { RequestCard } from "./RequestCard";
 import { RequestDetailsModal } from "./RequestDetailsModal";
 import { statusLabel, TalentCard } from "./TalentCard";
 import { TalentProfileModal } from "./TalentProfileModal";
-import {
-  shortDate,
-  talentRequests,
-  talents,
-  totalPositions,
-  type RequestStatus,
-  type TalentRequest,
-  type TalentStatus,
-} from "./data";
+import { shortDate, type RequestStatus, type Talent, type TalentRequest, type TalentStatus } from "./data";
 
 type TabId = "talents" | "requests";
 
@@ -28,166 +25,187 @@ const tabs: TabItem<TabId>[] = [
 ];
 
 const ID = "talent-corner";
-const matches = (query: string, fields: string[]) =>
-  fields.some((f) => f.toLowerCase().includes(query.trim().toLowerCase()));
 
-function EmptyState({ children }: { children: React.ReactNode }) {
+const errorMessage = (error: unknown) =>
+  error instanceof Error && error.message ? error.message : "Something went wrong. Please try again.";
+
+type PagedQuery<T> = {
+  data?: { pages: { items: T[] }[] };
+  isPending: boolean;
+  isError: boolean;
+  error: unknown;
+  isFetching: boolean;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  refetch: () => Promise<unknown>;
+  fetchNextPage: () => Promise<unknown>;
+};
+
+/** Loading, error, empty, the items, and "Load more". */
+function PagedList<T>({
+  query,
+  label,
+  errorTitle,
+  empty,
+  render,
+}: {
+  query: PagedQuery<T>;
+  label: string;
+  errorTitle: string;
+  empty: React.ReactNode;
+  render: (item: T) => React.ReactNode;
+}) {
+  if (query.isPending) return <LoadingState variant="block" />;
+  if (query.isError && !query.data) {
+    return <ErrorState error={query.error} title={errorTitle} onRetry={() => void query.refetch()} retrying={query.isFetching} />;
+  }
+  const items = query.data?.pages.flatMap((p) => p.items) ?? [];
+  if (items.length === 0) return <>{empty}</>;
   return (
-    <p role="status" className="rounded-lg bg-white p-10 text-center text-sm text-slate-500">
-      {children}
-    </p>
+    <div className="flex flex-col gap-4">
+      <ul aria-label={label} className="flex flex-col gap-4">
+        {items.map(render)}
+      </ul>
+      {query.hasNextPage && (
+        <Button variant="outline" className="self-center px-5" onClick={() => void query.fetchNextPage()} disabled={query.isFetchingNextPage}>
+          {query.isFetchingNextPage ? "Loading…" : "Load more"}
+        </Button>
+      )}
+    </div>
   );
 }
 
-function TalentsPanel({ requests }: { requests: TalentRequest[] }) {
+const count = (n: number | undefined) => (n === undefined ? "…" : n);
+
+function useExport<T>(load: () => Promise<T[]>, file: string, row: (item: T) => Record<string, string | number>) {
+  const [busy, setBusy] = useState(false);
+  const run = async () => {
+    setBusy(true);
+    try {
+      const items = await load();
+      if (items.length === 0) toast.info("Nothing to export with these filters.");
+      else downloadCsv(file, items.map(row));
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return { busy, run };
+}
+
+function TalentsPanel() {
   const [query, setQuery] = useState("");
+  const q = useDeferredValue(query.trim());
   const [filter, setFilter] = useState<"all" | TalentStatus>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const summary = useTalentSummary().data;
+  const talents = useTalents(filter, q);
 
-  const count = (s: TalentStatus) => talents.filter((t) => t.status === s).length;
-  const avgGrade = Math.round(talents.reduce((sum, t) => sum + t.grade, 0) / talents.length);
+  const exporter = useExport<Talent>(() => fetchAllTalents(filter, q), "talents.csv", (t) => ({
+    Name: t.name,
+    Email: t.email,
+    Program: t.program,
+    Cohort: t.cohort,
+    Location: t.location,
+    Status: statusLabel[t.status],
+    "Final Grade": t.grade === null ? "" : `${t.grade}%`,
+    Seeking: t.seeking,
+    "Target Role": t.targetRole,
+    Skills: t.skills.join("; "),
+    Certifications: t.certifications.join("; "),
+  }));
 
-  const visible = talents.filter(
-    (t) =>
-      (filter === "all" || t.status === filter) &&
-      matches(query, [t.name, t.program, ...t.skills]),
-  );
-
-  const exportList = () =>
-    downloadCsv(
-      "talents.csv",
-      visible.map((t) => ({
-        Name: t.name,
-        Program: t.program,
-        Cohort: t.cohort,
-        Location: t.location,
-        Status: statusLabel[t.status],
-        "Final Grade": `${t.grade}%`,
-        Skills: t.skills.join("; "),
-        Certifications: t.certifications.join("; "),
-      })),
-    );
+  const filtered = q || filter !== "all";
 
   return (
     <div className="flex flex-col gap-6">
       <div className="grid gap-6 sm:grid-cols-2">
-        <StatCard
-          label="Total Graduates"
-          value={talents.length}
-          icon={<Award className="text-accent" strokeWidth={2.67} />}
-        />
+        <StatCard label="Total Graduates" value={count(summary?.totalGraduates)} icon={<Award className="text-accent" strokeWidth={2.67} />} />
         <StatCard
           label="Avg Grade"
-          value={`${avgGrade}%`}
+          value={summary ? (summary.averageFinalGradePercent == null ? "-" : `${Math.round(summary.averageFinalGradePercent)}%`) : "…"}
           valueClassName="text-accent"
           icon={<Award className="text-accent" strokeWidth={2.67} />}
         />
       </div>
 
       <ListToolbar
-        search={
-          <SearchInput
-            label="Search talents"
-            placeholder="Search by name, program, or skills..."
-            value={query}
-            onChange={setQuery}
-          />
-        }
+        search={<SearchInput label="Search talents" placeholder="Search by name, program, or skills..." value={query} onChange={setQuery} />}
         filters={
           <FilterChips
             label="Filter by status"
             value={filter}
             onChange={setFilter}
             options={[
-              { id: "all", label: `All (${talents.length})` },
-              { id: "available", label: `Available (${count("available")})` },
-              { id: "hired", label: `Hired (${count("hired")})` },
+              { id: "all", label: `All (${count(summary?.totalGraduates)})` },
+              { id: "available", label: `Available (${count(summary?.availableCount)})` },
+              { id: "hired", label: `Hired (${count(summary?.hiredCount)})` },
             ]}
           />
         }
-        exportLabel="Export List"
-        onExport={exportList}
+        exportLabel={exporter.busy ? "Exporting…" : "Export List"}
+        onExport={() => void exporter.run()}
       />
 
-      {visible.length > 0 ? (
-        <ul aria-label="Talents" className="flex flex-col gap-4">
-          {visible.map((t) => (
-            <TalentCard key={t.id} talent={t} onViewProfile={() => setSelectedId(t.id)} />
-          ))}
-        </ul>
-      ) : (
-        <EmptyState>No talents match your search.</EmptyState>
-      )}
-
-      <TalentProfileModal
-        talent={talents.find((t) => t.id === selectedId) ?? null}
-        requests={requests}
-        onClose={() => setSelectedId(null)}
+      <PagedList<Talent>
+        query={talents}
+        label="Talents"
+        errorTitle="Couldn't load talents"
+        empty={
+          <EmptyState
+            title={filtered ? "No talents match your search" : "No graduates in the talent pool yet"}
+            description={filtered ? "Try another name, program, skill or status." : "Graduates appear here once they finish a program and opt in."}
+          />
+        }
+        render={(t) => <TalentCard key={t.id} talent={t} onViewProfile={() => setSelectedId(t.id)} />}
       />
+
+      {selectedId && <TalentProfileModal talentId={selectedId} onClose={() => setSelectedId(null)} />}
     </div>
   );
 }
 
-type RequestsPanelProps = {
-  requests: TalentRequest[];
-  onMarkFulfilled: (id: string) => void;
-};
-
-function RequestsPanel({ requests, onMarkFulfilled }: RequestsPanelProps) {
+function RequestsPanel() {
   const [query, setQuery] = useState("");
+  const search = useDeferredValue(query.trim());
   const [filter, setFilter] = useState<"all" | RequestStatus>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const summary = useRequestSummary().data;
+  const requests = useTalentRequests(filter, search);
 
-  const count = (s: RequestStatus) => requests.filter((r) => r.status === s).length;
+  const exporter = useExport<TalentRequest>(() => fetchAllRequests(filter, search), "talent-requests.csv", (r) => ({
+    "Request ID": r.code,
+    Company: r.company,
+    Contact: r.contact,
+    Email: r.email,
+    Phone: r.phone,
+    Location: r.location,
+    Requested: shortDate(r.requestedOn),
+    Deadline: shortDate(r.deadline),
+    "Employment Type": r.employmentType,
+    Roles: r.roles.map((role) => `${role.title} (${role.positions})`).join("; "),
+    Positions: r.totalPositions,
+    Status: r.status === "pending" ? "Pending" : "Fulfilled",
+  }));
 
-  const visible = useMemo(
-    () =>
-      requests.filter(
-        (r) =>
-          (filter === "all" || r.status === filter) &&
-          matches(query, [r.company, r.contact, r.location, ...r.roles.map((role) => role.title)]),
-      ),
-    [requests, filter, query],
-  );
-
-  const exportList = () =>
-    downloadCsv(
-      "talent-requests.csv",
-      visible.map((r) => ({
-        "Request ID": r.code,
-        Company: r.company,
-        Contact: r.contact,
-        Email: r.email,
-        Phone: r.phone,
-        Location: r.location,
-        Requested: shortDate(r.requestedOn),
-        Deadline: shortDate(r.deadline),
-        "Employment Type": r.employmentType,
-        Positions: totalPositions(r),
-        Status: r.status === "pending" ? "Pending" : "Fulfilled",
-      })),
-    );
+  const filtered = search || filter !== "all";
 
   return (
     <div className="flex flex-col gap-6">
       <div className="grid gap-6 md:grid-cols-3">
-        <StatCard
-          label="Total Requests"
-          labelClassName="text-slate-500"
-          value={requests.length}
-          icon={<Building2 className="text-accent" strokeWidth={2.67} />}
-        />
+        <StatCard label="Total Requests" labelClassName="text-slate-500" value={count(summary?.total)} icon={<Building2 className="text-accent" strokeWidth={2.67} />} />
         <StatCard
           label="Pending"
           labelClassName="text-slate-500"
-          value={count("pending")}
+          value={count(summary?.pending)}
           valueClassName="text-warning"
           icon={<Clock className="text-warning" strokeWidth={2.67} />}
         />
         <StatCard
           label="Fulfilled"
           labelClassName="text-slate-500"
-          value={count("fulfilled")}
+          value={count(summary?.fulfilled)}
           valueClassName="text-success"
           icon={<CircleCheck className="text-success" strokeWidth={2.67} />}
         />
@@ -208,53 +226,44 @@ function RequestsPanel({ requests, onMarkFulfilled }: RequestsPanelProps) {
             value={filter}
             onChange={setFilter}
             options={[
-              { id: "all", label: `All (${requests.length})` },
-              { id: "pending", label: `Pending (${count("pending")})` },
-              { id: "fulfilled", label: `Fulfilled (${count("fulfilled")})` },
+              { id: "all", label: `All (${count(summary?.total)})` },
+              { id: "pending", label: `Pending (${count(summary?.pending)})` },
+              { id: "fulfilled", label: `Fulfilled (${count(summary?.fulfilled)})` },
             ]}
           />
         }
-        exportLabel="Export"
-        onExport={exportList}
+        exportLabel={exporter.busy ? "Exporting…" : "Export"}
+        onExport={() => void exporter.run()}
       />
 
-      {visible.length > 0 ? (
-        <ul aria-label="Talent requests" className="flex flex-col gap-4">
-          {visible.map((r) => (
-            <RequestCard key={r.id} request={r} onViewDetails={() => setSelectedId(r.id)} />
-          ))}
-        </ul>
-      ) : (
-        <EmptyState>No talent requests match your search.</EmptyState>
-      )}
-
-      <RequestDetailsModal
-        request={requests.find((r) => r.id === selectedId) ?? null}
-        onClose={() => setSelectedId(null)}
-        onMarkFulfilled={onMarkFulfilled}
+      <PagedList<TalentRequest>
+        query={requests}
+        label="Talent requests"
+        errorTitle="Couldn't load talent requests"
+        empty={
+          <EmptyState
+            title={filtered ? "No talent requests match your search" : "No talent requests yet"}
+            description={filtered ? "Try another company, contact, location, role or status." : "Requests from companies appear here."}
+          />
+        }
+        render={(r) => <RequestCard key={r.id} request={r} onViewDetails={() => setSelectedId(r.id)} />}
       />
+
+      {selectedId && <RequestDetailsModal requestId={selectedId} onClose={() => setSelectedId(null)} />}
     </div>
   );
 }
 
 export function TalentCornerView() {
   const [tab, setTab] = useState<TabId>("talents");
-  // Lives here so a request marked fulfilled stays fulfilled across tab switches.
-  const [requests, setRequests] = useState<TalentRequest[]>(talentRequests);
-
-  const markFulfilled = (id: string) =>
-    setRequests((rs) => rs.map((r) => (r.id === id ? { ...r, status: "fulfilled" } : r)));
 
   return (
     <div className="flex flex-col gap-6">
       <Tabs idBase={ID} label="Talent Corner sections" tabs={tabs} value={tab} onChange={setTab} />
       <TabPanel idBase={ID} id={tab}>
-        {tab === "talents" ? (
-          <TalentsPanel requests={requests} />
-        ) : (
-          <RequestsPanel requests={requests} onMarkFulfilled={markFulfilled} />
-        )}
+        {tab === "talents" ? <TalentsPanel /> : <RequestsPanel />}
       </TabPanel>
+      <Toaster />
     </div>
   );
 }

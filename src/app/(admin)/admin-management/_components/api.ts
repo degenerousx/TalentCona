@@ -236,3 +236,13 @@ export function useSetAdminActive() {
     onSuccess: invalidate,
   });
 }
+
+/**
+ * Removes a member's authenticator so they enrol again at their next sign-in.
+ * The backend requires a recent MFA step-up: call stepUp() first.
+ */
+export function useClearMemberMfa() {
+  return useMutation({
+    mutationFn: (id: string) => api(`/admin-portal/team/members/${encodeURIComponent(id)}/mfa`, { method: "DELETE" }),
+  });
+}
