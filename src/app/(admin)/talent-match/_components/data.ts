@@ -1,5 +1,5 @@
 /**
- * Talent Match types, plus sample records used as test fixtures.
+ * Talent Match types and display helpers.
  *
  * Talents and hiring requests are live: both public forms post to Formcarry
  * and `api.ts` reads them through the portal's server routes. Confirmed
@@ -129,52 +129,3 @@ export function initialsOf(name: string) {
   if (!parts.length) return "?";
   return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
 }
-
-// ---- Fixtures ---------------------------------------------------------------
-
-export const talentFixtures: Talent[] = [
-  {
-    id: "talent-1",
-    name: "David Kim",
-    initials: "DK",
-    email: "david.k@example.com",
-    phone: "+234 804 567 8901",
-    location: "Lagos, Nigeria",
-    title: "Data Analyst",
-    skills: ["Python", "SQL", "Pandas", "Data Visualization"],
-    yearsExperience: 4,
-    experienceLabel: "4–6 years",
-    education: ["B.Sc. Statistics, University of Lagos", "IBM Data Science Professional"],
-    workExperience: "Data Analyst, TechCorp Solutions (2022–present)\nJunior Analyst, Finlytics (2020–2022)",
-    portfolioUrl: "https://linkedin.com/in/davidkim",
-    cvUrl: "https://example.com/cv/david-kim.pdf",
-    cvFileName: "David-Kim-CV.pdf",
-    submittedAt: "2026-11-04T10:00:00.000Z",
-    status: "new",
-  },
-];
-
-export const hiringRequestFixtures: HiringRequest[] = [
-  {
-    id: "request-1",
-    code: "TR-0001",
-    organization: "TechCorp Solutions",
-    contactName: "Adewale Ogunleye",
-    email: "hiring@techcorp.example",
-    phone: "+234 901 234 5678",
-    website: "https://techcorp.example",
-    location: "Lagos, Nigeria",
-    role: "Data Analyst",
-    requiredSkills: ["Python", "SQL", "Power BI"],
-    niceToHaveSkills: ["Excel"],
-    minYearsExperience: 1,
-    experienceLabel: "1–3 years",
-    employmentType: "Full-time",
-    workMode: "Hybrid",
-    positions: 2,
-    deadline: "2026-12-15",
-    description: "Analyse product and sales data and build dashboards for the leadership team.",
-    submittedAt: "2026-11-05T09:00:00.000Z",
-    status: "pending",
-  },
-];
