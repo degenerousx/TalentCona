@@ -230,12 +230,14 @@ export function IconButton({
   tone = "blue",
   size = "sm",
   onClick,
+  disabled,
   children,
 }: {
   label: string;
   tone?: "blue" | "red" | "green" | "primary";
   size?: "sm" | "md";
   onClick?: () => void;
+  disabled?: boolean;
   children: React.ReactNode;
 }) {
   const tones = {
@@ -250,8 +252,9 @@ export function IconButton({
       aria-label={label}
       title={label}
       onClick={onClick}
+      disabled={disabled}
       className={cn(
-        "grid shrink-0 place-items-center",
+        "grid shrink-0 place-items-center disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent",
         size === "sm" ? "size-[26px] rounded" : "size-8 rounded-lg",
         tones[tone],
       )}

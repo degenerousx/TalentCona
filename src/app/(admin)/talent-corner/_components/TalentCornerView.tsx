@@ -9,6 +9,7 @@ import { StatCard } from "@/components/ui/StatCard";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 import { TabPanel, Tabs, type TabItem } from "@/components/ui/Tabs";
 import { FilterChips, ListToolbar, SearchInput } from "@/components/ui/Toolbar";
+import { gradeFor } from "@/config/grading";
 import { downloadCsv } from "@/lib/csv";
 import { fetchAllRequests, fetchAllTalents, useRequestSummary, useTalentRequests, useTalents, useTalentSummary } from "./api";
 import { RequestCard } from "./RequestCard";
@@ -110,6 +111,8 @@ function TalentsPanel() {
     Location: t.location,
     Status: statusLabel[t.status],
     "Final Grade": t.grade === null ? "" : `${t.grade}%`,
+    "Grade": gradeFor(t.grade)?.letter ?? "",
+    "Rating": gradeFor(t.grade)?.label ?? "",
     Seeking: t.seeking,
     "Target Role": t.targetRole,
     Skills: t.skills.join("; "),
@@ -124,7 +127,7 @@ function TalentsPanel() {
         <StatCard label="Total Graduates" value={count(summary?.totalGraduates)} icon={<Award className="text-accent" strokeWidth={2.67} />} />
         <StatCard
           label="Avg Grade"
-          value={summary ? (summary.averageFinalGradePercent == null ? "-" : `${Math.round(summary.averageFinalGradePercent)}%`) : "…"}
+          value={summary ? (summary.averageFinalGradePercent == null ? "-" : `${Math.round(summary.averageFinalGradePercent)}% · ${gradeFor(summary.averageFinalGradePercent)?.letter}`) : "…"}
           valueClassName="text-accent"
           icon={<Award className="text-accent" strokeWidth={2.67} />}
         />

@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { Award, ExternalLink, Mail, MapPin, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
+import { GradeBadge, StarRating } from "@/components/ui/Grade";
 import { Modal, ModalSection } from "@/components/ui/Modal";
 import { ErrorState, LoadingState } from "@/components/ui/States";
 import { Tag, TagList } from "@/components/ui/Tag";
@@ -181,7 +182,19 @@ export function TalentProfileModal({ talentId, onClose }: Props) {
             <ModalSection title="Academic Performance">
               <dl className="grid gap-4 sm:grid-cols-2 sm:gap-8">
                 {[
-                  talent.grade !== null ? { label: "Final Grade", value: `${talent.grade}%` } : null,
+                  talent.grade !== null
+                    ? {
+                        label: "Final Grade",
+                        value: (
+                          <span className="flex flex-col gap-1">
+                            <span className="flex items-center gap-2">
+                              {talent.grade}% <GradeBadge percent={talent.grade} className="text-sm" />
+                            </span>
+                            <StarRating percent={talent.grade} />
+                          </span>
+                        ),
+                      }
+                    : null,
                   talent.projectsCompleted !== null ? { label: "Projects Completed", value: talent.projectsCompleted } : null,
                 ]
                   .filter((s) => s !== null)

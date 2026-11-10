@@ -1,9 +1,9 @@
 import { Award, Eye, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { GradeBadge } from "@/components/ui/Grade";
 import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { Tag, TagList } from "@/components/ui/Tag";
-import { cn } from "@/lib/cn";
 import type { Talent } from "./data";
 
 export const statusLabel = { available: "Available", hired: "Hired" } as const;
@@ -36,8 +36,6 @@ function Label({ children }: { children: React.ReactNode }) {
 type TalentCardProps = { talent: Talent; onViewProfile: () => void };
 
 export function TalentCard({ talent, onViewProfile }: TalentCardProps) {
-  const highGrade = talent.grade !== null && talent.grade >= 90;
-
   return (
     <Card as="li" tone="hairline" className="flex flex-col gap-4 p-6">
       <div className="flex items-start justify-between gap-4">
@@ -72,23 +70,11 @@ export function TalentCard({ talent, onViewProfile }: TalentCardProps) {
           </div>
         </div>
 
-        {talent.grade !== null && (
-          <div className="flex shrink-0 flex-col items-center">
-            <span
-              className={cn(
-                "grid size-14 place-items-center rounded-full text-lg leading-7 font-bold",
-                highGrade
-                  ? "bg-success-soft text-success"
-                  : "bg-info-soft text-info",
-              )}
-            >
-              {talent.grade}%
-            </span>
-            <span className="text-xs leading-4 text-slate-700">
-              Final Grade
-            </span>
-          </div>
-        )}
+        <GradeBadge
+          percent={talent.grade}
+          variant="circle"
+          caption="Final Grade"
+        />
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
