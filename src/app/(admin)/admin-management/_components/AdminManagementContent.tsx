@@ -35,6 +35,7 @@ import {
   useUpdateAdmin,
 } from "./api";
 import type { Admin, AdminForm, Invitation } from "./data";
+import { ResetMfaDialog } from "./ResetMfaDialog";
 
 /** Privilege code → catalog label; falls back to "Manage support" style text until the catalog loads. */
 type RoleLabel = (privilege: string) => string;
@@ -313,6 +314,7 @@ function PendingTable({ invitations, roleLabel }: { invitations: Invitation[]; r
 function ActiveTable({ admins, roleLabel, onEdit }: { admins: Admin[]; roleLabel: RoleLabel; onEdit: (admin: Admin) => void }) {
   const setActive = useSetAdminActive();
   const myId = useSession()?.claims.sub;
+  const [resetting, setResetting] = useState<Admin | null>(null);
 
   function toggleActive(person: Admin) {
     const active = person.status !== "Active";
@@ -323,15 +325,18 @@ function ActiveTable({ admins, roleLabel, onEdit }: { admins: Admin[]; roleLabel
   }
 
   return (
+    <>
     <table className="w-full min-w-[1040px] table-fixed border-collapse text-left">
       {/* Figma column widths: 149 / 149 / 149 / 171 / 149 / 149 / 196 of 1110px, 12px cell padding. */}
       <thead className="bg-table-head text-xs uppercase tracking-wide text-table-label"><tr><th className="w-[13.4%] px-3 py-3 font-normal">NAME</th><th className="w-[13.4%] px-3 py-3 font-normal">EMAIL</th><th className="w-[13.4%] px-3 py-3 font-normal">ROLE</th><th className="w-[15.4%] px-3 py-3 font-normal">IS A PROGRAM ADVISOR</th><th className="w-[13.4%] px-3 py-3 font-normal">PROGRAMS</th><th className="w-[13.4%] px-3 py-3 font-normal">LAST LOGIN</th><th className="w-[17.6%] px-3 py-3 font-normal">ACTIONS</th></tr></thead>
       <tbody>{admins.map((person) => {
         const pending = setActive.isPending && setActive.variables?.id === person.id;
         const inactive = person.status !== "Active";
-        return <tr key={person.id} className="border-t border-border text-sm text-heading"><td className={`px-3 py-5 text-base ${inactive ? "text-muted-foreground" : ""}`}>{person.name}</td><td className="truncate px-3 py-5" title={person.email}>{person.email}</td><td className="px-3 py-5">{person.isSuperAdmin ? <RolePill>Super Admin</RolePill> : <RolePills roles={person.roles} roleLabel={roleLabel} />}</td><td className="px-3 py-5 text-center">{person.advisor}</td><td className="px-3 py-5 leading-5">{person.programs}</td><td className="whitespace-nowrap px-3 py-5">{person.lastLogin}</td><td className="px-3 py-5"><div className="flex items-center gap-3 whitespace-nowrap"><button onClick={() => onEdit(person)} className="text-base text-blue-600 hover:underline">Edit Role</button>{person.id !== myId && <button disabled={pending} onClick={() => toggleActive(person)} className={`text-base hover:underline disabled:opacity-50 disabled:hover:no-underline ${inactive ? "text-blue-600" : "text-red-600"}`}>{inactive ? "Reactivate" : "Deactivate"}</button>}</div></td></tr>;
+        return <tr key={person.id} className="border-t border-border text-sm text-heading"><td className={`px-3 py-5 text-base ${inactive ? "text-muted-foreground" : ""}`}>{person.name}</td><td className="truncate px-3 py-5" title={person.email}>{person.email}</td><td className="px-3 py-5">{person.isSuperAdmin ? <RolePill>Super Admin</RolePill> : <RolePills roles={person.roles} roleLabel={roleLabel} />}</td><td className="px-3 py-5 text-center">{person.advisor}</td><td className="px-3 py-5 leading-5">{person.programs}</td><td className="whitespace-nowrap px-3 py-5">{person.lastLogin}</td><td className="px-3 py-5"><div className="flex items-center gap-3 whitespace-nowrap">{person.id === myId ? <span className="text-sm text-muted-foreground" title="You can't change your own access">You</span> : <>{!person.isSuperAdmin && <button onClick={() => onEdit(person)} className="text-base text-blue-600 hover:underline">Edit Role</button>}<button disabled={pending} onClick={() => toggleActive(person)} className={`text-base hover:underline disabled:opacity-50 disabled:hover:no-underline ${inactive ? "text-blue-600" : "text-red-600"}`}>{inactive ? "Reactivate" : "Deactivate"}</button><button onClick={() => setResetting(person)} className="text-base text-blue-600 hover:underline">Reset MFA</button></>}</div></td></tr>;
       })}</tbody>
     </table>
+    {resetting && <ResetMfaDialog admin={resetting} onClose={() => setResetting(null)} />}
+    </>
   );
 }
 

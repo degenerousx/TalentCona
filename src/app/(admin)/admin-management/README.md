@@ -17,6 +17,8 @@
 | Edit Role | `PUT /admin-portal/team/members/:userId` |
 | Deactivate / Reactivate | `PATCH /admin-portal/team/members/:userId/deactivate` · `…/reactivate` |
 | Program picker | `GET /programs/admin` (read only) |
+| Reset MFA | `POST /auth/admin/mfa/step-up` (your own code), then `DELETE /admin-portal/team/members/:userId/mfa` |
+| Accept invitation (invitee, no sign-in) | `GET /admin-portal/invitations/preview?token=` · `POST /admin-portal/invitations/accept` — page `/accept-invite` in `(auth)` |
 
 ## Notes
 
@@ -29,12 +31,20 @@
 - Resend and revoke send no body. The Postman examples show an old `roles` body that the
   other endpoints no longer use; confirm with the backend if either returns 400.
 
+## Privileges
+
+- The privileges picked in Create New Admin are sent as `privileges` and granted **when the
+  invitee accepts** at `/accept-invite?token=…`. Edit Role changes them later (`PUT …/members/:id`).
+- The signed-in admin's privileges come from the login/refresh response. Each sidebar item and
+  every page under it needs its privilege (`src/config/navigation.ts`, enforced by
+  `RequirePrivilege`); super admins see everything. A change made by Edit Role applies at that
+  admin's next sign-in or token refresh (15 minutes at most).
+- Your own row has no actions. Super admins have no Edit Role (they already have everything).
+
 ## Not done
 
-- **Clear member's MFA** (`DELETE /admin-portal/team/members/:userId/mfa`): needs a recent
-  MFA step-up and has no button in the design.
-- **Accept invitation** (`POST /admin-portal/invitations/accept`): the invitee's public page
-  doesn't exist in the portal yet.
+- **Invitation link path:** the page is `/accept-invite?token=…`. The backend builds the emailed
+  link; confirm it points there (or tell us its path).
 - **Pagination:** lists load the first 100 records; the design has no paging controls.
 - The shape of a member's or invitation's `programs` items isn't documented (every example
   is empty); `api.ts` accepts `{ id, title }` or `{ program: { id, title } }`. Check it

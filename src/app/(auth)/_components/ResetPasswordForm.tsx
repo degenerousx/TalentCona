@@ -9,7 +9,7 @@ import { EyeOffIcon, EyeOpenIcon } from "./icons";
 import SuccessModal from "./SuccessModal";
 import styles from "./ResetPasswordForm.module.css";
 
-function PasswordField({ id, label, autoComplete }: { id: string; label: string; autoComplete: string }) {
+export function PasswordField({ id, label, autoComplete }: { id: string; label: string; autoComplete: string }) {
   const [visible, setVisible] = useState(false);
 
   return (
