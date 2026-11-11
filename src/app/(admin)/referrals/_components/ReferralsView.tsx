@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Download, Info } from "lucide-react";
+import { toast } from "sonner";
 import { Toaster } from "@/components/shadcn/sonner";
 import { Card } from "@/components/ui/Card";
 import { TabPanel, Tabs, type TabItem } from "@/components/ui/Tabs";
@@ -9,7 +10,8 @@ import { downloadCsv } from "@/lib/csv";
 import { usePayoutRequests } from "./api";
 import { naira, sampleAmbassadors, statusLabel } from "./data";
 import { CommissionChart, PendingPayoutCard, StatCards } from "./Overview";
-import { AmbassadorsTable, PayoutRequestsTable } from "./Tables";
+import { PayoutRequests } from "./PayoutRequests";
+import { AmbassadorsTable } from "./Tables";
 
 type TabId = "ambassadors" | "payouts";
 
@@ -30,7 +32,8 @@ export function ReferralsView() {
     { id: "payouts", label: "Payout requests", count: pending.isSuccess && !pending.hasNextPage ? pendingItems.length : undefined },
   ];
 
-  const exportReport = () =>
+  const exportReport = () => {
+    toast.success("Report export started");
     downloadCsv(
       "ambassadors.csv",
       sampleAmbassadors.map((a) => ({
@@ -45,6 +48,7 @@ export function ReferralsView() {
         Status: statusLabel[a.status],
       })),
     );
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-6">
@@ -87,7 +91,7 @@ export function ReferralsView() {
         <Card tone="hairline" className="overflow-hidden">
           <Tabs idBase="referrals" label="Referral records" tabs={tabs} value={tab} onChange={setTab} weight="regular" />
           <TabPanel idBase="referrals" id={tab}>
-            {tab === "ambassadors" ? <AmbassadorsTable ambassadors={sampleAmbassadors} /> : <PayoutRequestsTable />}
+            {tab === "ambassadors" ? <AmbassadorsTable ambassadors={sampleAmbassadors} /> : <PayoutRequests />}
           </TabPanel>
         </Card>
       </div>

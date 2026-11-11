@@ -49,14 +49,6 @@ export const statusLabel: Record<AmbassadorStatus, string> = {
   inactive: "Inactive",
 };
 
-export const payoutStatusLabel: Record<PayoutStatus, string> = {
-  PendingOtp: "Awaiting OTP",
-  Pending: "Pending",
-  Approved: "Approved",
-  Rejected: "Rejected",
-  Disbursed: "Disbursed",
-};
-
 export const naira = (value: number) => `₦${Math.round(value).toLocaleString("en-NG")}`;
 
 export function initialsOf(name: string) {
