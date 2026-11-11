@@ -61,8 +61,10 @@ export default function Sidebar() {
           } ${
             active
               ? "bg-primary font-semibold text-white"
-              : "text-slate-900 hover:bg-slate-100"
-          } ${item.enabled ? "" : "cursor-default"}`;
+              : item.enabled
+                ? "text-slate-900 hover:bg-slate-100"
+                : "cursor-default text-slate-400"
+          }`;
 
           const content = (
             <>
@@ -87,7 +89,7 @@ export default function Sidebar() {
               key={item.href}
               ref={active ? setActiveRef : undefined}
               className={className}
-              title={item.label}
+              title={`${item.label} — coming soon`}
               aria-disabled="true"
             >
               {content}

@@ -28,16 +28,20 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: "material-symbols:dashboard-outline", enabled: true },
   { label: "User Management", href: "/user-management", icon: "solar:user-linear", enabled: true, privilege: "MANAGE_USERS" },
   { label: "Admin Management", href: "/admin-management", icon: "mingcute:user-star-line", enabled: true, privilege: "MANAGE_ADMINS" },
-  { label: "My Mentees", href: "/my-mentees", icon: "lucide:calendar", enabled: true },
-  { label: "Sessions", href: "/sessions", icon: "simple-icons:codementor", enabled: true },
   { label: "Admissions & Routing", href: "/admissions-routing", icon: "carbon:task-complete", enabled: true, privilege: "MANAGE_ADMISSIONS_ROUTING" },
   { label: "Manage Programs", href: "/manage-programs", icon: "mynaui:academic-hat", enabled: true, privilege: "MANAGE_PROGRAMS" },
   { label: "Talent Corner", href: "/talent-corner", icon: "mingcute:sparkles-line", enabled: true, privilege: "MANAGE_TALENT_COMPANY_REQUESTS" },
   { label: "Financial Ops", href: "/financial-ops", icon: "iconoir:wallet", enabled: true, privilege: "MANAGE_FINANCIAL_OPERATIONS" },
+  // Coming soon: in the design, no page yet (shown greyed out, not clickable).
+  { label: "CSR Management", href: "/csr-management", icon: "lucide:ribbon", enabled: false },
+  { label: "Talent Matching", href: "/talent-matching", icon: "lucide:podium", enabled: false },
   { label: "Laptops", href: "/laptops", icon: "ic:baseline-laptop", enabled: true, privilege: "MANAGE_LAPTOPS" },
   { label: "Communities", href: "/communities", icon: "fluent:people-community-24-regular", enabled: true, privilege: "MANAGE_COMMUNITIES" },
   { label: "Referrals", href: "/referrals", icon: "tabler:transfer", enabled: true, privilege: "MANAGE_REFERRALS" },
   { label: "Reports & Insights", href: "/reports-insights", icon: "iconoir:stats-report", enabled: true, privilege: "VIEW_REPORTS_INSIGHTS" },
+  // Not in the latest sidebar design; kept at the end.
+  { label: "My Mentees", href: "/my-mentees", icon: "lucide:calendar", enabled: true },
+  { label: "Sessions", href: "/sessions", icon: "simple-icons:codementor", enabled: true },
 ];
 
 /** The nav item a path belongs to (`/laptops/new` → Laptops), or undefined. */
