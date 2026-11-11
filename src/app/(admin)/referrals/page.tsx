@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import ReferralsContent from "./_components/ReferralsContent";
+import { ReferralsView } from "./_components/ReferralsView";
 
 export const metadata: Metadata = {
-  title: "Referral & Commission",
-  description: "Manage viral growth, referral earnings, withdrawals, and commission settings.",
+  title: "Ambassador Management",
+  description: "Manage ambassadors, student referrals, commissions, and payouts.",
 };
 
 export default function ReferralsPage() {
-  return <ReferralsContent />;
+  return <ReferralsView />;
 }
