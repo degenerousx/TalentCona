@@ -4,9 +4,9 @@ import { useMemo, useState } from "react";
 import { Check, Filter, Search } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/shadcn/popover";
 import { Modal } from "@/components/ui/Modal";
-import { EmptyState } from "@/components/ui/States";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 import { cn } from "@/lib/cn";
-import { initialsOf, naira, statusLabel, type Ambassador, type AmbassadorStatus } from "./data";
+import { initialsOf, naira, statusLabel, type Ambassador, type AmbassadorStatus, type PayoutRequest } from "./data";
 
 const avatarTones = [
   "bg-purple-100 text-purple-700",
@@ -26,10 +26,20 @@ export function Avatar({ name, index }: { name: string; index: number }) {
 }
 
 const statusTones: Record<AmbassadorStatus, string> = {
-  active: "bg-success-soft text-green-700",
   "payout-due": "bg-warning-soft text-orange-700",
-  inactive: "bg-slate-100 text-slate-500",
+  approved: "bg-blue-50 text-blue-700",
+  paid: "bg-success-soft text-green-700",
 };
+
+const payoutLabel: Record<PayoutRequest["status"], string> = {
+  PendingOtp: "Awaiting OTP",
+  Pending: "Awaiting review",
+  Approved: "Approved",
+  Rejected: "Rejected",
+  Disbursed: "Paid",
+};
+
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
 const th = "px-4 py-3 text-left text-[11px] leading-4 font-semibold tracking-wide text-slate-500 uppercase";
 const td = "px-4 py-3.5 text-sm leading-5 text-slate-900";
@@ -89,11 +99,21 @@ function FilterMenu<T extends string>({ value, options, onChange }: { value: T; 
   );
 }
 
-// ---- Ambassadors (sample data) -------------------------------------------------
+// ---- Ambassadors (from payout records) -------------------------------------------
 
 const PAGE = 6;
 
-export function AmbassadorsTable({ ambassadors }: { ambassadors: Ambassador[] }) {
+type AmbassadorsTableProps = {
+  ambassadors: Ambassador[];
+  payouts: PayoutRequest[];
+  loading: boolean;
+  error: unknown;
+  onRetry: () => void;
+  retrying: boolean;
+};
+
+/** Everyone who has requested a payout, with their totals; Manage shows their payout history. */
+export function AmbassadorsTable({ ambassadors, payouts, loading, error, onRetry, retrying }: AmbassadorsTableProps) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | AmbassadorStatus>("all");
   const [page, setPage] = useState(0);
@@ -106,6 +126,7 @@ export function AmbassadorsTable({ ambassadors }: { ambassadors: Ambassador[] })
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE));
   const current = Math.min(page, pages - 1);
   const rows = filtered.slice(current * PAGE, current * PAGE + PAGE);
+  const history = selected ? payouts.filter((p) => p.payeeId === selected.id).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt)) : [];
 
   return (
     <div className="flex flex-col">
@@ -127,28 +148,39 @@ export function AmbassadorsTable({ ambassadors }: { ambassadors: Ambassador[] })
           }}
           options={[
             { id: "all", label: "All statuses" },
-            { id: "active", label: "Active" },
             { id: "payout-due", label: "Payout due" },
-            { id: "inactive", label: "Inactive" },
+            { id: "approved", label: "Awaiting transfer" },
+            { id: "paid", label: "Nothing due" },
           ]}
         />
       </div>
 
-      {rows.length === 0 ? (
+      {loading ? (
         <div className="px-4 pb-6">
-          <EmptyState title="No ambassadors match" description="Try another name, email or status." />
+          <LoadingState variant="block" label="Loading ambassadors…" />
+        </div>
+      ) : error ? (
+        <div className="px-4 pb-6">
+          <ErrorState error={error} title="Couldn't load ambassadors" onRetry={onRetry} retrying={retrying} />
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="px-4 pb-6">
+          <EmptyState
+            title={ambassadors.length ? "No ambassadors match" : "No ambassadors yet"}
+            description={ambassadors.length ? "Try another name, email or status." : "Ambassadors appear here once they request a payout of their referral earnings."}
+          />
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] border-collapse">
+          <table className="w-full min-w-[900px] border-collapse">
             <thead className="bg-slate-50">
               <tr>
                 <th className={th}>Ambassador</th>
-                <th className={th}>Students</th>
-                <th className={th}>Student payments</th>
-                <th className={th}>Commission earned</th>
-                <th className={th}>Withdrawn</th>
-                <th className={th}>Available</th>
+                <th className={th}>Requests</th>
+                <th className={th}>Requested</th>
+                <th className={th}>Paid out</th>
+                <th className={th}>Outstanding</th>
+                <th className={th}>Last request</th>
                 <th className={th}>Status</th>
                 <th className={th}>
                   <span className="sr-only">Actions</span>
@@ -163,20 +195,15 @@ export function AmbassadorsTable({ ambassadors }: { ambassadors: Ambassador[] })
                       <Avatar name={a.name} index={current * PAGE + i} />
                       <div className="flex min-w-0 flex-col">
                         <span className="font-medium">{a.name}</span>
-                        <span className="truncate text-xs leading-4 text-primary">{a.email}</span>
+                        {a.email && <span className="truncate text-xs leading-4 text-primary">{a.email}</span>}
                       </div>
                     </div>
                   </td>
-                  <td className={td}>{a.students}</td>
-                  <td className={td}>{naira(a.studentPayments)}</td>
-                  <td className={td}>
-                    <span className="flex flex-col">
-                      <span className="font-semibold text-green-700">{naira(a.commission)}</span>
-                      <span className="text-xs leading-4 text-slate-500">{a.rate}% rate</span>
-                    </span>
-                  </td>
-                  <td className={td}>{naira(a.withdrawn)}</td>
-                  <td className={td}>{naira(a.available)}</td>
+                  <td className={td}>{a.requests}</td>
+                  <td className={td}>{naira(a.requested)}</td>
+                  <td className={cn(td, "font-semibold text-green-700")}>{naira(a.paidOut)}</td>
+                  <td className={td}>{naira(a.outstanding)}</td>
+                  <td className={td}>{shortDate(a.lastRequest)}</td>
                   <td className={td}>
                     <span className={cn("rounded-full px-2.5 py-0.5 text-xs leading-4 font-medium", statusTones[a.status])}>{statusLabel[a.status]}</span>
                   </td>
@@ -217,17 +244,12 @@ export function AmbassadorsTable({ ambassadors }: { ambassadors: Ambassador[] })
       </div>
 
       {selected && (
-        <Modal open size="md" onClose={() => setSelected(null)} title={selected.name} subtitle={selected.email}>
-          <dl className="grid gap-3 sm:grid-cols-2">
+        <Modal open size="md" onClose={() => setSelected(null)} title={selected.name} subtitle={selected.email || undefined}>
+          <dl className="grid gap-3 sm:grid-cols-3">
             {[
-              ["Status", statusLabel[selected.status]],
-              ["Referral code", selected.referralCode],
-              ["Students referred", String(selected.students)],
-              ["Student payments", naira(selected.studentPayments)],
-              ["Commission earned", `${naira(selected.commission)} (${selected.rate}% rate)`],
-              ["Withdrawn", naira(selected.withdrawn)],
-              ["Available to withdraw", naira(selected.available)],
-              ["Joined", new Date(selected.joined).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })],
+              ["Paid out", naira(selected.paidOut)],
+              ["Outstanding", naira(selected.outstanding)],
+              ["Requests", String(selected.requests)],
             ].map(([label, value]) => (
               <div key={label} className="rounded-lg bg-slate-50 p-3">
                 <dt className="text-xs leading-4 text-slate-500">{label}</dt>
@@ -235,12 +257,25 @@ export function AmbassadorsTable({ ambassadors }: { ambassadors: Ambassador[] })
               </div>
             ))}
           </dl>
-          <p className="rounded-lg bg-warning-soft p-3 text-sm leading-5 text-orange-800">
-            Sample ambassador. Account actions arrive when the backend adds ambassador endpoints.
-          </p>
+          <section aria-label="Payout history" className="flex flex-col gap-2">
+            <h3 className="text-sm leading-5 font-semibold text-slate-900">Payout history</h3>
+            <ul className="flex flex-col divide-y divide-slate-100 rounded-lg border border-slate-100">
+              {history.map((h) => (
+                <li key={h.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-sm leading-5">
+                  <span className="flex flex-col">
+                    <span className="font-semibold text-slate-900">{h.amount}</span>
+                    <span className="text-xs leading-4 text-slate-500">
+                      {shortDate(h.requestedAt)} · {h.bank} {h.account}
+                    </span>
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs leading-4 font-medium text-slate-700">{payoutLabel[h.status]}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <p className="text-xs leading-4 text-slate-500">Approve, reject or mark payouts as sent in the Payout requests tab.</p>
         </Modal>
       )}
     </div>
   );
 }
-
