@@ -1,15 +1,20 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { naira, type PayoutRequest, type PayoutStatus } from "./data";
 
 /**
- * Payout requests ↔ backend: the withdrawals admin endpoints (Postman
- * "withdrawals → admin"). The ambassador list, stat cards and chart have no
- * admin endpoints yet, so they use sample data (data.ts).
+ * Referrals ↔ backend. The only admin referral endpoints in Postman are the
+ * withdrawals (payout) ones, so every number on the page comes from payout
+ * records:
+ *   GET   /withdrawals/admin?cursor=&limit=&status=
+ *   PATCH /withdrawals/admin/:id/{approve|reject|disburse}  { note? }
+ * (/referrals/me/* are for an ambassador's own dashboard, not for admins.)
  */
 
 type ApiWithdrawal = {
   id: string;
+  studentId?: string | null;
+  userId?: string | null;
   amount: number;
   currency: string;
   minorUnit: number;
@@ -19,9 +24,11 @@ type ApiWithdrawal = {
   accountName?: string | null;
   note?: string | null;
   reviewNote?: string | null;
+  reviewedAt?: string | null;
+  disbursedAt?: string | null;
   createdAt: string;
-  student?: { fullName?: string | null; email?: string | null } | null;
-  user?: { fullName?: string | null; email?: string | null } | null;
+  student?: { id?: string; fullName?: string | null; email?: string | null } | null;
+  user?: { id?: string; fullName?: string | null; email?: string | null } | null;
 };
 
 type CursorPage<T> = { items: T[]; limit: number; hasNext: boolean; nextCursor: string | null };
@@ -32,6 +39,7 @@ function toPayout(w: ApiWithdrawal): PayoutRequest {
   const acct = w.accountNumber ?? "";
   return {
     id: w.id,
+    payeeId: w.studentId || w.userId || person?.id || person?.email || w.accountName || w.id,
     name: person?.fullName || w.accountName || "Ambassador",
     email: person?.email || "",
     amount: w.currency === "NGN" ? naira(value) : `${w.currency} ${Math.round(value).toLocaleString()}`,
@@ -43,12 +51,17 @@ function toPayout(w: ApiWithdrawal): PayoutRequest {
     note: w.note || "",
     reviewNote: w.reviewNote || "",
     requestedAt: w.createdAt,
+    disbursedAt: w.disbursedAt ?? null,
   };
 }
 
-const keys = { all: ["referrals", "payouts"] as const, list: (status: string) => ["referrals", "payouts", status] as const };
+const keys = {
+  all: ["referrals", "payouts"] as const,
+  list: (status: string) => ["referrals", "payouts", "list", status] as const,
+  everything: ["referrals", "payouts", "everything"] as const,
+};
 
-/** Pending by default; "all" omits the status filter. */
+/** One status (or all), page by page — for the Payout requests tab. */
 export function usePayoutRequests(status: PayoutStatus | "all") {
   return useInfiniteQuery({
     queryKey: keys.list(status),
@@ -60,6 +73,24 @@ export function usePayoutRequests(status: PayoutStatus | "all") {
       return { ...page, items: page.items.map(toPayout) };
     },
     getNextPageParam: (last) => (last.hasNext ? last.nextCursor : null),
+  });
+}
+
+/** Every payout record (all statuses, all pages) — for the stats, chart and ambassador list. */
+export function useAllPayouts() {
+  return useQuery({
+    queryKey: keys.everything,
+    queryFn: async () => {
+      const all: PayoutRequest[] = [];
+      let cursor: string | null = null;
+      for (let i = 0; i < 50; i++) {
+        const page: CursorPage<ApiWithdrawal> = await api<CursorPage<ApiWithdrawal>>("/withdrawals/admin", { query: { limit: 100, cursor } });
+        all.push(...page.items.map(toPayout));
+        if (!page.hasNext || !page.nextCursor) break;
+        cursor = page.nextCursor;
+      }
+      return all;
+    },
   });
 }
 

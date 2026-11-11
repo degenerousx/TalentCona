@@ -1,37 +1,20 @@
 /**
- * Ambassador Management types, plus SAMPLE data for the parts the backend has
- * no admin endpoints for yet: the ambassador list, the stat cards and the
- * commission chart. The page labels these as sample data. Payout requests
- * are live (see api.ts).
+ * Referrals types and the calculations that turn payout records (the only
+ * admin referral data the backend offers) into the page's numbers. No sample
+ * data.
  */
-
-export type AmbassadorStatus = "active" | "payout-due" | "inactive";
-
-export type Ambassador = {
-  id: string;
-  name: string;
-  email: string;
-  students: number;
-  /** Amounts in naira (major units). */
-  studentPayments: number;
-  commission: number;
-  /** Commission rate in percent. */
-  rate: number;
-  withdrawn: number;
-  available: number;
-  status: AmbassadorStatus;
-  joined: string;
-  referralCode: string;
-};
 
 export type PayoutStatus = "PendingOtp" | "Pending" | "Approved" | "Rejected" | "Disbursed";
 
 export type PayoutRequest = {
   id: string;
+  /** Who asked for the payout (user id when the backend sends it). */
+  payeeId: string;
   name: string;
   email: string;
   /** Formatted, e.g. "₦50,000". */
   amount: string;
+  /** Naira (major units). */
   amountValue: number;
   bank: string;
   accountName: string;
@@ -41,12 +24,30 @@ export type PayoutRequest = {
   note: string;
   reviewNote: string;
   requestedAt: string;
+  disbursedAt: string | null;
+};
+
+export type AmbassadorStatus = "payout-due" | "approved" | "paid";
+
+/** One person, from all their payout requests. */
+export type Ambassador = {
+  id: string;
+  name: string;
+  email: string;
+  requests: number;
+  /** Naira: everything requested except rejected requests. */
+  requested: number;
+  paidOut: number;
+  /** Pending review + approved but not yet sent. */
+  outstanding: number;
+  lastRequest: string;
+  status: AmbassadorStatus;
 };
 
 export const statusLabel: Record<AmbassadorStatus, string> = {
-  active: "Active",
   "payout-due": "Payout due",
-  inactive: "Inactive",
+  approved: "Awaiting transfer",
+  paid: "Nothing due",
 };
 
 export const naira = (value: number) => `₦${Math.round(value).toLocaleString("en-NG")}`;
@@ -57,60 +58,75 @@ export function initialsOf(name: string) {
   return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
 }
 
-// ---- Sample data (no backend endpoints yet) ---------------------------------
+const sum = (list: PayoutRequest[]) => list.reduce((total, r) => total + r.amountValue, 0);
 
-export const sampleStats = [
-  { key: "ambassadors", label: "Total ambassadors", value: "128", note: "vs last month", trend: "+12.4%" },
-  { key: "students", label: "Students referred", value: "1,284", note: "186 this month", trend: "+18.2%" },
-  { key: "revenue", label: "Referral revenue", value: naira(486240), note: "Total student payments", trend: "+9.6%" },
-  { key: "commission", label: "Commission earned", value: naira(48624), note: "Commission rate", trend: "10%" },
-] as const;
+/** Group payout records by person, busiest first. */
+export function ambassadorsFrom(payouts: PayoutRequest[]): Ambassador[] {
+  const groups = new Map<string, PayoutRequest[]>();
+  for (const p of payouts) groups.set(p.payeeId, [...(groups.get(p.payeeId) ?? []), p]);
+  return [...groups.entries()]
+    .map(([id, list]) => {
+      const latest = [...list].sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))[0];
+      const pending = list.filter((r) => r.status === "Pending");
+      const approved = list.filter((r) => r.status === "Approved");
+      const status: AmbassadorStatus = pending.length ? "payout-due" : approved.length ? "approved" : "paid";
+      return {
+        id,
+        name: latest.name,
+        email: latest.email,
+        requests: list.length,
+        requested: sum(list.filter((r) => r.status !== "Rejected")),
+        paidOut: sum(list.filter((r) => r.status === "Disbursed")),
+        outstanding: sum([...pending, ...approved]),
+        lastRequest: latest.requestedAt,
+        status,
+      };
+    })
+    .sort((a, b) => b.requested - a.requested);
+}
 
-/** Earned vs paid out, per month, oldest first (last 12 months). */
-export const sampleCommission = [
-  { month: "Jun", earned: 2900, paid: 2100 },
-  { month: "Jul", earned: 3300, paid: 2500 },
-  { month: "Aug", earned: 3100, paid: 2600 },
-  { month: "Sep", earned: 3800, paid: 3000 },
-  { month: "Oct", earned: 4100, paid: 3200 },
-  { month: "Nov", earned: 3900, paid: 3400 },
-  { month: "Dec", earned: 4200, paid: 3100 },
-  { month: "Jan", earned: 5100, paid: 3600 },
-  { month: "Feb", earned: 4800, paid: 4000 },
-  { month: "Mar", earned: 6200, paid: 4800 },
-  { month: "Apr", earned: 5700, paid: 4600 },
-  { month: "May", earned: 6900, paid: 5200 },
-];
-
-const people: Array<[string, string, number, number, number, AmbassadorStatus]> = [
-  ["Nana Ama Mensah", "nana.mensah@gmail.com", 38, 54200, 3200, "active"],
-  ["Kwame Owusu", "kwame.owusu@gmail.com", 31, 46800, 4000, "active"],
-  ["Akosua Boateng", "akosua.b@gmail.com", 24, 36900, 2500, "payout-due"],
-  ["Daniel Asare", "daniel.asare@gmail.com", 19, 28600, 1500, "active"],
-  ["Efua Sarpong", "efua.sarpong@gmail.com", 16, 22400, 1000, "active"],
-  ["Joseph Annan", "j.annan@gmail.com", 13, 18750, 1200, "inactive"],
-  ["Adwoa Darko", "adwoa.darko@gmail.com", 12, 17400, 900, "active"],
-  ["Yaw Ofori", "yaw.ofori@gmail.com", 11, 15950, 1100, "payout-due"],
-  ["Esi Quaye", "esi.quaye@gmail.com", 9, 13050, 600, "active"],
-  ["Kofi Badu", "kofi.badu@gmail.com", 8, 11600, 1000, "inactive"],
-  ["Abena Frimpong", "abena.f@gmail.com", 7, 10150, 400, "active"],
-  ["Kojo Ampofo", "kojo.ampofo@gmail.com", 6, 8700, 500, "active"],
-];
-
-export const sampleAmbassadors: Ambassador[] = people.map(([name, email, students, payments, withdrawn, status], i) => {
-  const commission = Math.round(payments * 0.1);
+/** The four stat cards. */
+export function statsFrom(payouts: PayoutRequest[]) {
+  const by = (s: PayoutStatus) => payouts.filter((r) => r.status === s);
+  const now = new Date();
+  const thisMonth = payouts.filter((r) => {
+    const d = new Date(r.requestedAt);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  });
   return {
-    id: `amb-${i + 1}`,
-    name,
-    email,
-    students,
-    studentPayments: payments,
-    commission,
-    rate: 10,
-    withdrawn,
-    available: Math.max(0, commission - withdrawn),
-    status,
-    joined: new Date(2025, (i * 2) % 12, 3 + i).toISOString(),
-    referralCode: `TC${name.split(" ")[0].toUpperCase().slice(0, 4)}${String(1000 + i * 37)}`,
+    ambassadors: new Set(payouts.map((p) => p.payeeId)).size,
+    requests: payouts.length,
+    requestsThisMonth: thisMonth.length,
+    paidOut: sum(by("Disbursed")),
+    paidCount: by("Disbursed").length,
+    awaitingReview: sum(by("Pending")),
+    awaitingReviewCount: by("Pending").length,
+    awaitingTransfer: sum(by("Approved")),
+    awaitingTransferCount: by("Approved").length,
   };
-});
+}
+
+/** Requested vs paid out per calendar month, oldest first, for the last `months` months. */
+export function monthlyFrom(payouts: PayoutRequest[], months: number) {
+  const now = new Date();
+  const buckets = Array.from({ length: months }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (months - 1 - i), 1);
+    return { key: `${d.getFullYear()}-${d.getMonth()}`, month: d.toLocaleDateString("en-US", { month: "short" }), requested: 0, paid: 0 };
+  });
+  const index = new Map(buckets.map((b, i) => [b.key, i]));
+  const keyOf = (iso: string) => {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${d.getMonth()}`;
+  };
+  for (const p of payouts) {
+    if (p.status !== "Rejected" && p.status !== "PendingOtp") {
+      const i = index.get(keyOf(p.requestedAt));
+      if (i !== undefined) buckets[i].requested += p.amountValue;
+    }
+    if (p.status === "Disbursed") {
+      const i = index.get(keyOf(p.disbursedAt ?? p.requestedAt));
+      if (i !== undefined) buckets[i].paid += p.amountValue;
+    }
+  }
+  return buckets;
+}
