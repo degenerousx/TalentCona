@@ -12,6 +12,10 @@ import { FilterChips, SearchInput, type FilterOption } from "@/components/ui/Too
 import { useAdmissionsSummary, useFundraising, useLoans, useOnboardingQueue, useReviewLoan, useSendReminder } from "./api";
 import { FundraisingCard, LoanCard, OnboardingCard } from "./cards";
 import type { FundraisingCampaign, LoanApplication, OnboardingApplicant, OnboardingStage } from "./data";
+import { useHashTab } from "@/lib/useHashTab";
+
+/** Tabs, in the URL hash so links (e.g. from notifications) can open one. */
+const ADMISSIONS_TABS = ["onboarding", "fundraising", "loans"] as const;
 
 type TabId = "onboarding" | "fundraising" | "loans";
 
@@ -216,7 +220,7 @@ function LoansTab() {
 }
 
 export function AdmissionsView() {
-  const [tab, setTab] = useState<TabId>("onboarding");
+  const [tab, setTab] = useHashTab(ADMISSIONS_TABS);
   const summary = useAdmissionsSummary();
 
   const tabs: TabItem<TabId>[] = [

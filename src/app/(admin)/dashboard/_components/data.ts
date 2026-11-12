@@ -34,19 +34,7 @@ export const GROWTH = {
   revenue: [45000, 52000, 58000, 67000, 78000, 92000],
 };
 
-export type Activity = {
-  text: string;
-  time: string;
-  kind: "student" | "payment" | "flag" | "mentor" | "success";
-};
-
-export const ACTIVITY: Activity[] = [
-  { text: "New student: Sarah Johnson enrolled in Web Dev Track", time: "2 min ago", kind: "student" },
-  { text: "Payment received: $500 from Michael Chen", time: "15 min ago", kind: "payment" },
-  { text: "Communities post flagged by AI moderation", time: "23 min ago", kind: "flag" },
-  { text: "New mentor: Dr. Emily Rodriguez joined", time: "1 hr ago", kind: "mentor" },
-  { text: "Fundraising campaign completed: Adebayo Ojo", time: "2 hrs ago", kind: "success" },
-];
+// Recent Activity comes from the notifications feed (components/notifications).
 
 // "Review" opens where each queue is handled: the Pending Reviews table on the
 // Mentors tab, and the Communities page (join requests are on its Members tab).

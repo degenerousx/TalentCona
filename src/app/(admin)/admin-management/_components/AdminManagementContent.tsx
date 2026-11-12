@@ -36,6 +36,10 @@ import {
 } from "./api";
 import type { Admin, AdminForm, Invitation } from "./data";
 import { ResetMfaDialog } from "./ResetMfaDialog";
+import { useHashTab } from "@/lib/useHashTab";
+
+/** Tabs, in the URL hash so links (e.g. from notifications) can open one. */
+const ADMIN_TABS = ["pending", "active"] as const;
 
 /** Privilege code → catalog label; falls back to "Manage support" style text until the catalog loads. */
 type RoleLabel = (privilege: string) => string;
@@ -58,7 +62,7 @@ function errorMessage(error: unknown) {
 }
 
 export default function AdminManagementContent() {
-  const [tab, setTab] = useState<"pending" | "active">("pending");
+  const [tab, setTab] = useHashTab(ADMIN_TABS);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const invitations = usePendingInvitations();

@@ -4,7 +4,10 @@ import Link from "next/link";
 import { WelcomeHeading } from "@/components/layout/CurrentAdmin";
 import GrowthChart from "./GrowthChart";
 import { useLiveDashboard } from "./LiveDashboard";
-import { ACTIVITY, GROWTH, PENDING_REVIEWS, PERFORMANCE, STATS, type Activity, type Stat } from "./data";
+import { useNotifications } from "@/components/notifications/useNotifications";
+import { ago } from "@/components/notifications/NotificationBell";
+import type { NotificationKind } from "@/components/notifications/sources";
+import { GROWTH, PENDING_REVIEWS, PERFORMANCE, STATS, type Stat } from "./data";
 import {
   CircleAlertIcon,
   CircleCheckIcon,
@@ -27,12 +30,14 @@ const STAT_ICONS = {
   trend: TrendingUpIcon,
 };
 
-const ACTIVITY_STYLE: Record<Activity["kind"], { bg: string; color: string; Icon: typeof UsersIcon }> = {
+const ACTIVITY_STYLE: Record<NotificationKind, { bg: string; color: string; Icon: typeof UsersIcon }> = {
   student: { bg: "#DBEAFE", color: "#155DFC", Icon: UsersIcon },
-  payment: { bg: "#DCFCE7", color: "#00A63E", Icon: CircleCheckIcon },
-  flag: { bg: "#FFE2E2", color: "#E7000B", Icon: CircleAlertIcon },
   mentor: { bg: "#DBEAFE", color: "#155DFC", Icon: UserCheckIcon },
-  success: { bg: "#DCFCE7", color: "#00A63E", Icon: CircleCheckIcon },
+  admin: { bg: "#E0E7FF", color: "#4F39F6", Icon: UserCheckIcon },
+  payout: { bg: "#DCFCE7", color: "#00A63E", Icon: CircleCheckIcon },
+  loan: { bg: "#FFEDD4", color: "#F54900", Icon: ClockIcon },
+  talent: { bg: "#FCE7F3", color: "#E60076", Icon: TrendingUpIcon },
+  activity: { bg: "#F3F4F6", color: "#4A5565", Icon: CircleAlertIcon },
 };
 
 function StatCard({ stat, value, title }: { stat: Stat; value: string; title?: string }) {
@@ -62,6 +67,8 @@ function StatCard({ stat, value, title }: { stat: Stat; value: string; title?: s
 
 export default function DashboardView() {
   const live = useLiveDashboard();
+  const feed = useNotifications();
+  const recent = feed.items.slice(0, 5);
   return (
     <div className={styles.dashboard}>
       <header className={styles.welcome}>
@@ -97,17 +104,35 @@ export default function DashboardView() {
         <section className={`${styles.panel} ${styles.activity}`} aria-labelledby="activity-title">
           <h2 id="activity-title" className={styles.panelTitle}>Recent Activity</h2>
           <ul className={styles.activityList}>
-            {ACTIVITY.map((item) => {
+            {recent.length === 0 && (
+              <li className={styles.activityItem}>
+                <p className={styles.activityTime}>{feed.loading ? "Loading activity…" : "No recent activity."}</p>
+              </li>
+            )}
+            {recent.map((item) => {
               const { bg, color, Icon } = ACTIVITY_STYLE[item.kind];
-              return (
-                <li key={item.text} className={styles.activityItem}>
+              const body = (
+                <>
                   <span className={styles.activityIcon} style={{ background: bg }}>
                     <Icon size={16} color={color} strokeWidth={2} />
                   </span>
                   <div>
-                    <p className={styles.activityText}>{item.text}</p>
-                    <p className={styles.activityTime}>{item.time}</p>
+                    <p className={styles.activityText}>
+                      {item.title}: {item.description}
+                    </p>
+                    {item.at && <p className={styles.activityTime}>{ago(item.at)}</p>}
                   </div>
+                </>
+              );
+              return (
+                <li key={item.id} className={styles.activityItem}>
+                  {item.href ? (
+                    <Link href={item.href} onClick={() => feed.markRead(item.id)} style={{ display: "contents" }}>
+                      {body}
+                    </Link>
+                  ) : (
+                    body
+                  )}
                 </li>
               );
             })}
