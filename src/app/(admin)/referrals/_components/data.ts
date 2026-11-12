@@ -17,6 +17,10 @@ export type PayoutRequest = {
   /** Naira (major units). */
   amountValue: number;
   bank: string;
+  /** Bank's sort/NIP code, when sent. */
+  bankCode: string;
+  /** The payee's student account id, when the backend sends it. */
+  studentId: string | null;
   accountName: string;
   /** Masked, e.g. "•••• 4375". */
   account: string;
@@ -32,6 +36,8 @@ export type AmbassadorStatus = "payout-due" | "approved" | "paid";
 /** One person, from all their payout requests. */
 export type Ambassador = {
   id: string;
+  /** For GET /students/admin/:studentId. */
+  studentId: string | null;
   name: string;
   email: string;
   requests: number;
@@ -72,6 +78,7 @@ export function ambassadorsFrom(payouts: PayoutRequest[]): Ambassador[] {
       const status: AmbassadorStatus = pending.length ? "payout-due" : approved.length ? "approved" : "paid";
       return {
         id,
+        studentId: list.find((r) => r.studentId)?.studentId ?? null,
         name: latest.name,
         email: latest.email,
         requests: list.length,

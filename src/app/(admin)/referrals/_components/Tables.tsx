@@ -2,11 +2,22 @@
 
 import { useMemo, useState } from "react";
 import { Check, Filter, Search } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/shadcn/popover";
-import { Modal } from "@/components/ui/Modal";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/shadcn/popover";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 import { cn } from "@/lib/cn";
-import { initialsOf, naira, statusLabel, type Ambassador, type AmbassadorStatus, type PayoutRequest } from "./data";
+import { AmbassadorPanel } from "./AmbassadorPanel";
+import {
+  initialsOf,
+  naira,
+  statusLabel,
+  type Ambassador,
+  type AmbassadorStatus,
+  type PayoutRequest,
+} from "./data";
 
 const avatarTones = [
   "bg-purple-100 text-purple-700",
@@ -19,7 +30,13 @@ const avatarTones = [
 
 export function Avatar({ name, index }: { name: string; index: number }) {
   return (
-    <span aria-hidden="true" className={cn("grid size-8 shrink-0 place-items-center rounded-full text-[11px] font-semibold", avatarTones[index % avatarTones.length])}>
+    <span
+      aria-hidden="true"
+      className={cn(
+        "grid size-8 shrink-0 place-items-center rounded-full text-[11px] font-semibold",
+        avatarTones[index % avatarTones.length],
+      )}
+    >
       {initialsOf(name)}
     </span>
   );
@@ -31,24 +48,35 @@ const statusTones: Record<AmbassadorStatus, string> = {
   paid: "bg-success-soft text-green-700",
 };
 
-const payoutLabel: Record<PayoutRequest["status"], string> = {
-  PendingOtp: "Awaiting OTP",
-  Pending: "Awaiting review",
-  Approved: "Approved",
-  Rejected: "Rejected",
-  Disbursed: "Paid",
-};
+const shortDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 
-const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-
-const th = "px-4 py-3 text-left text-[11px] leading-4 font-semibold tracking-wide text-slate-500 uppercase";
+const th =
+  "px-4 py-3 text-left text-[11px] leading-4 font-semibold tracking-wide text-slate-500 uppercase";
 const td = "px-4 py-3.5 text-sm leading-5 text-slate-900";
 
-function SearchBox({ value, onChange, placeholder, label }: { value: string; onChange: (v: string) => void; placeholder: string; label: string }) {
+function SearchBox({
+  value,
+  onChange,
+  placeholder,
+  label,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  label: string;
+}) {
   return (
     <label className="relative flex-1">
       <span className="sr-only">{label}</span>
-      <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+      <Search
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
+      />
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -59,7 +87,15 @@ function SearchBox({ value, onChange, placeholder, label }: { value: string; onC
   );
 }
 
-function FilterMenu<T extends string>({ value, options, onChange }: { value: T; options: { id: T; label: string }[]; onChange: (v: T) => void }) {
+function FilterMenu<T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T;
+  options: { id: T; label: string }[];
+  onChange: (v: T) => void;
+}) {
   const [open, setOpen] = useState(false);
   const active = options.find((o) => o.id === value);
   return (
@@ -71,7 +107,11 @@ function FilterMenu<T extends string>({ value, options, onChange }: { value: T; 
         >
           <Filter aria-hidden className="size-4" />
           Filters
-          {active && options[0].id !== value && <span className="rounded-full bg-primary-soft px-2 text-xs text-primary">{active.label}</span>}
+          {active && options[0].id !== value && (
+            <span className="rounded-full bg-primary-soft px-2 text-xs text-primary">
+              {active.label}
+            </span>
+          )}
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-52 p-1">
@@ -89,7 +129,9 @@ function FilterMenu<T extends string>({ value, options, onChange }: { value: T; 
                 className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm text-slate-900 hover:bg-slate-50"
               >
                 {o.label}
-                {o.id === value && <Check aria-hidden className="size-4 text-primary" />}
+                {o.id === value && (
+                  <Check aria-hidden className="size-4 text-primary" />
+                )}
               </button>
             </li>
           ))}
@@ -110,10 +152,20 @@ type AmbassadorsTableProps = {
   error: unknown;
   onRetry: () => void;
   retrying: boolean;
+  /** Switch to the Payout requests tab. */
+  onReviewPayouts: () => void;
 };
 
 /** Everyone who has requested a payout, with their totals; Manage shows their payout history. */
-export function AmbassadorsTable({ ambassadors, payouts, loading, error, onRetry, retrying }: AmbassadorsTableProps) {
+export function AmbassadorsTable({
+  ambassadors,
+  payouts,
+  loading,
+  error,
+  onRetry,
+  retrying,
+  onReviewPayouts,
+}: AmbassadorsTableProps) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | AmbassadorStatus>("all");
   const [page, setPage] = useState(0);
@@ -121,12 +173,20 @@ export function AmbassadorsTable({ ambassadors, payouts, loading, error, onRetry
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return ambassadors.filter((a) => (status === "all" || a.status === status) && (!q || `${a.name} ${a.email}`.toLowerCase().includes(q)));
+    return ambassadors.filter(
+      (a) =>
+        (status === "all" || a.status === status) &&
+        (!q || `${a.name} ${a.email}`.toLowerCase().includes(q)),
+    );
   }, [ambassadors, query, status]);
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE));
   const current = Math.min(page, pages - 1);
   const rows = filtered.slice(current * PAGE, current * PAGE + PAGE);
-  const history = selected ? payouts.filter((p) => p.payeeId === selected.id).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt)) : [];
+  const history = selected
+    ? payouts
+        .filter((p) => p.payeeId === selected.id)
+        .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
+    : [];
 
   return (
     <div className="flex flex-col">
@@ -161,13 +221,24 @@ export function AmbassadorsTable({ ambassadors, payouts, loading, error, onRetry
         </div>
       ) : error ? (
         <div className="px-4 pb-6">
-          <ErrorState error={error} title="Couldn't load ambassadors" onRetry={onRetry} retrying={retrying} />
+          <ErrorState
+            error={error}
+            title="Couldn't load ambassadors"
+            onRetry={onRetry}
+            retrying={retrying}
+          />
         </div>
       ) : rows.length === 0 ? (
         <div className="px-4 pb-6">
           <EmptyState
-            title={ambassadors.length ? "No ambassadors match" : "No ambassadors yet"}
-            description={ambassadors.length ? "Try another name, email or status." : "Ambassadors appear here once they request a payout of their referral earnings."}
+            title={
+              ambassadors.length ? "No ambassadors match" : "No ambassadors yet"
+            }
+            description={
+              ambassadors.length
+                ? "Try another name, email or status."
+                : "Ambassadors appear here once they request a payout of their referral earnings."
+            }
           />
         </div>
       ) : (
@@ -195,20 +266,37 @@ export function AmbassadorsTable({ ambassadors, payouts, loading, error, onRetry
                       <Avatar name={a.name} index={current * PAGE + i} />
                       <div className="flex min-w-0 flex-col">
                         <span className="font-medium">{a.name}</span>
-                        {a.email && <span className="truncate text-xs leading-4 text-primary">{a.email}</span>}
+                        {a.email && (
+                          <span className="truncate text-xs leading-4 text-primary">
+                            {a.email}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </td>
                   <td className={td}>{a.requests}</td>
                   <td className={td}>{naira(a.requested)}</td>
-                  <td className={cn(td, "font-semibold text-green-700")}>{naira(a.paidOut)}</td>
+                  <td className={cn(td, "font-semibold text-green-700")}>
+                    {naira(a.paidOut)}
+                  </td>
                   <td className={td}>{naira(a.outstanding)}</td>
                   <td className={td}>{shortDate(a.lastRequest)}</td>
                   <td className={td}>
-                    <span className={cn("rounded-full px-2.5 py-0.5 text-xs leading-4 font-medium", statusTones[a.status])}>{statusLabel[a.status]}</span>
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-0.5 text-xs leading-4 font-medium",
+                        statusTones[a.status],
+                      )}
+                    >
+                      {statusLabel[a.status]}
+                    </span>
                   </td>
                   <td className={cn(td, "text-right")}>
-                    <button type="button" onClick={() => setSelected(a)} className="text-sm font-medium text-primary hover:underline">
+                    <button
+                      type="button"
+                      onClick={() => setSelected(a)}
+                      className="text-sm font-medium text-primary hover:underline"
+                    >
                       Manage<span className="sr-only"> {a.name}</span>
                     </button>
                   </td>
@@ -221,7 +309,8 @@ export function AmbassadorsTable({ ambassadors, payouts, loading, error, onRetry
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3">
         <p className="text-xs leading-4 text-slate-500">
-          Showing {filtered.length ? current * PAGE + 1 : 0}–{current * PAGE + rows.length} of {filtered.length} ambassadors
+          Showing {filtered.length ? current * PAGE + 1 : 0}–
+          {current * PAGE + rows.length} of {filtered.length} ambassadors
         </p>
         <div className="flex gap-2">
           <button
@@ -244,37 +333,15 @@ export function AmbassadorsTable({ ambassadors, payouts, loading, error, onRetry
       </div>
 
       {selected && (
-        <Modal open size="md" onClose={() => setSelected(null)} title={selected.name} subtitle={selected.email || undefined}>
-          <dl className="grid gap-3 sm:grid-cols-3">
-            {[
-              ["Paid out", naira(selected.paidOut)],
-              ["Outstanding", naira(selected.outstanding)],
-              ["Requests", String(selected.requests)],
-            ].map(([label, value]) => (
-              <div key={label} className="rounded-lg bg-slate-50 p-3">
-                <dt className="text-xs leading-4 text-slate-500">{label}</dt>
-                <dd className="text-base leading-6 font-semibold text-slate-900">{value}</dd>
-              </div>
-            ))}
-          </dl>
-          <section aria-label="Payout history" className="flex flex-col gap-2">
-            <h3 className="text-sm leading-5 font-semibold text-slate-900">Payout history</h3>
-            <ul className="flex flex-col divide-y divide-slate-100 rounded-lg border border-slate-100">
-              {history.map((h) => (
-                <li key={h.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-sm leading-5">
-                  <span className="flex flex-col">
-                    <span className="font-semibold text-slate-900">{h.amount}</span>
-                    <span className="text-xs leading-4 text-slate-500">
-                      {shortDate(h.requestedAt)} · {h.bank} {h.account}
-                    </span>
-                  </span>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs leading-4 font-medium text-slate-700">{payoutLabel[h.status]}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-          <p className="text-xs leading-4 text-slate-500">Approve, reject or mark payouts as sent in the Payout requests tab.</p>
-        </Modal>
+        <AmbassadorPanel
+          ambassador={selected}
+          history={history}
+          onClose={() => setSelected(null)}
+          onReviewPayouts={() => {
+            setSelected(null);
+            onReviewPayouts();
+          }}
+        />
       )}
     </div>
   );

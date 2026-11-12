@@ -14,6 +14,7 @@
 | PATCH | `/withdrawals/admin/:id/approve` | Approve (`{}`) |
 | PATCH | `/withdrawals/admin/:id/reject` | Reject, with optional `{ note }` reason |
 | PATCH | `/withdrawals/admin/:id/disburse` | Mark as disbursed, with optional `{ note }` transfer reference |
+| GET | `/students/admin/:studentId` | Manage panel: name, email, joined date and account status, when the payee has a student account (403/404 → falls back to payout details) |
 
 Statuses: `PendingOtp`, `Pending`, `Approved`, `Rejected`, `Disbursed`. Amounts are minor units
 (`amount / minorUnit`), shown in naira.
@@ -29,8 +30,15 @@ user lists can't filter by ambassador. So the page is built from payout records:
 - **Payout overview chart:** amount requested (by request month, rejected excluded) vs paid out (by
   disbursement month), last 3/6/12 months.
 - **Ambassadors tab:** one row per person who has requested a payout: requests, requested, paid out,
-  outstanding, last request, status (Payout due / Awaiting transfer / Nothing due). **Manage**
-  shows their payout history. **Export report** downloads these rows.
+  outstanding, last request, status (Payout due / Awaiting transfer / Nothing due). **Export
+  report** downloads these rows.
+- **Manage panel** (`AmbassadorPanel.tsx`, from the "Ambassador Referral Admin Dashboard" design):
+  a right-side sheet with "Back to ambassadors", the person (profile from the students endpoint),
+  four figures (requests, requested, paid out, outstanding), **Bank details & evidence** from their
+  latest payout (bank, masked account number, account name, bank code, their note), and **Payout
+  history** ("View all" past four). The "…" menu emails them, copies their email, or opens their
+  payouts. The design's branch, verification date, uploaded document and **Referred students** list
+  have no admin API, so they're not shown; payout history takes the referred-students slot.
 - **Payout requests tab:** see `PayoutRequests.tsx`. Every action refreshes all of the above.
 
 When the backend adds ambassador/commission endpoints, add hooks to `api.ts` and bring back the
