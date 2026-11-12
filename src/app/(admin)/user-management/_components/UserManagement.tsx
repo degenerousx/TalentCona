@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useHashTab } from "@/lib/useHashTab";
 import { FunnelIcon, LaptopIcon, SearchIcon } from "@/components/icons";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
@@ -181,7 +181,11 @@ export default function UserManagement() {
         )}
 
         <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-          {tab === "students" ? <StudentsTable query={query} filters={filters} filtered={filterCount > 0} /> : tab === "mentors" ? <MentorsPanel /> : <PartnersPanel />}
+          {tab === "students" ? <StudentsTable query={query} filters={filters} filtered={filterCount > 0} /> : tab === "mentors" ? (
+            <Suspense fallback={<LoadingState className={styles.state} rows={4} label="Loading mentors…" />}>
+              <MentorsPanel />
+            </Suspense>
+          ) : <PartnersPanel />}
         </div>
       </section>
 

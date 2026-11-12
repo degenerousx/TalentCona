@@ -19,6 +19,19 @@ there is no sample data. All requests live in `_components/api.ts`.
 
 ## Notes
 
+- **Always current:** User Management queries are stale immediately, refetch when
+  the tab regains focus, and lists/counts poll every minute. New applications,
+  enrolments and other admins' changes show up without a reload.
+- **Summary cards** (Mentors tab) are links into the lists, kept in `?view=`:
+  `pending` (Pending Reviews only), `all`, `instructors`, `advisors`. The API
+  has no role filter, so the Instructors / Program Advisors lists read every
+  assigned mentor and check their per-program roles. Click the active card again
+  (or "Show everything") to clear it. The Dashboard's Mentor Applications
+  "Review" opens `?view=pending#mentors`.
+- **Dashboard:** Total/Active Students, Total/Assigned Mentors, the ratio and
+  the Mentor Applications count are live (see `dashboard/_components/LiveDashboard.tsx`);
+  the other dashboard figures are still design placeholders (no API).
+
 - Student Assign Mentor works per enrollment: options from `…/assignment-options`,
   current people from `…/assignment`, saved with `PATCH …/assignment { mentorId?, advisorId? }`.
 - `PUT /mentors/admin/:id/programs` replaces every program link, so Edit Role and

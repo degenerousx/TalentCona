@@ -54,8 +54,28 @@ type ApiProgram = { id: string; title: string; school?: { name: string } | null 
 
 // ---- Mapping ----------------------------------------------------------------
 
-/** Lists have no pagination UI; the backend's page size tops out at 100. */
+/** Lists have no pagination UI, so every page is read (the backend's page size tops out at 100). */
 const PAGE_SIZE = 100;
+
+/** Every page of a page/pageSize list. */
+async function allPages<T>(path: string): Promise<{ items: T[]; total: number }> {
+  const items: T[] = [];
+  let total = 0;
+  for (let page = 1; page <= 50; page++) {
+    const res = await api<ApiPage<T>>(path, { query: { page, pageSize: PAGE_SIZE } });
+    items.push(...res.items);
+    total = res.total;
+    if (items.length >= res.total || res.items.length < PAGE_SIZE) break;
+  }
+  return { items, total: Math.max(total, items.length) };
+}
+
+/**
+ * Invitations are accepted (and admins sign in) from other browsers, so these
+ * lists refetch when the tab regains focus and every minute: an accepted
+ * invite leaves Pending and the new admin appears under Active on its own.
+ */
+const LIVE = { staleTime: 0, refetchOnWindowFocus: true, refetchInterval: 60_000 } as const;
 
 function programOf(ref: ApiProgramRef) {
   const id = ref.program?.id ?? ref.programId ?? ref.id ?? "";
@@ -131,11 +151,10 @@ export function useRoles() {
 
 export function usePendingInvitations() {
   return useQuery({
+    ...LIVE,
     queryKey: keys.invitations,
     queryFn: async (): Promise<Page<Invitation>> => {
-      const res = await api<ApiPage<ApiInvitation>>("/admin-portal/team/invitations/pending", {
-        query: { page: 1, pageSize: PAGE_SIZE },
-      });
+      const res = await allPages<ApiInvitation>("/admin-portal/team/invitations/pending");
       return { items: res.items.map(toInvitation), total: res.total };
     },
   });
@@ -143,11 +162,10 @@ export function usePendingInvitations() {
 
 export function useTeamMembers() {
   return useQuery({
+    ...LIVE,
     queryKey: keys.members,
     queryFn: async (): Promise<Page<Admin>> => {
-      const res = await api<ApiPage<ApiMember>>("/admin-portal/team/members", {
-        query: { page: 1, pageSize: PAGE_SIZE },
-      });
+      const res = await allPages<ApiMember>("/admin-portal/team/members");
       return { items: res.items.map(toAdmin), total: res.total };
     },
   });
@@ -168,9 +186,14 @@ export function useProgramOptions(enabled: boolean) {
 
 // ---- Mutations --------------------------------------------------------------
 
+/** Refresh after a change. Both lists are refreshed: a member can appear as an invitation moves on. */
 function useInvalidate(key: readonly string[]) {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: key });
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: key }),
+      queryClient.invalidateQueries({ queryKey: key === keys.members ? keys.invitations : keys.members }),
+    ]);
 }
 
 export function useInviteAdmin() {

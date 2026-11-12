@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { WelcomeHeading } from "@/components/layout/CurrentAdmin";
 import GrowthChart from "./GrowthChart";
+import { useLiveDashboard } from "./LiveDashboard";
 import { ACTIVITY, GROWTH, PENDING_REVIEWS, PERFORMANCE, STATS, type Activity, type Stat } from "./data";
 import {
   CircleAlertIcon,
@@ -32,7 +35,7 @@ const ACTIVITY_STYLE: Record<Activity["kind"], { bg: string; color: string; Icon
   success: { bg: "#DCFCE7", color: "#00A63E", Icon: CircleCheckIcon },
 };
 
-function StatCard({ stat }: { stat: Stat }) {
+function StatCard({ stat, value, title }: { stat: Stat; value: string; title?: string }) {
   const Icon = STAT_ICONS[stat.icon];
   return (
     <div className={styles.stat}>
@@ -42,7 +45,9 @@ function StatCard({ stat }: { stat: Stat }) {
         </span>
         <span className={stat.badgeTone === "warning" ? styles.badgeWarning : styles.badge}>{stat.badge}</span>
       </div>
-      <p className={styles.statValue}>{stat.value}</p>
+      <p className={styles.statValue} title={title}>
+        {value}
+      </p>
       <div className={styles.statBottom}>
         <span className={styles.statLabel}>{stat.label}</span>
         {stat.href && (
@@ -56,6 +61,7 @@ function StatCard({ stat }: { stat: Stat }) {
 }
 
 export default function DashboardView() {
+  const live = useLiveDashboard();
   return (
     <div className={styles.dashboard}>
       <header className={styles.welcome}>
@@ -65,7 +71,12 @@ export default function DashboardView() {
 
       <section className={styles.stats} aria-label="Key metrics">
         {STATS.map((stat) => (
-          <StatCard key={stat.label} stat={stat} />
+          <StatCard
+            key={stat.label}
+            stat={stat}
+            value={stat.live ? live.stat[stat.live] : stat.value}
+            title={stat.live && !live.allowed ? "Needs the Manage users privilege" : undefined}
+          />
         ))}
       </section>
 
@@ -119,7 +130,15 @@ export default function DashboardView() {
                   </span>
                   <div>
                     <p className={styles.reviewTitle}>{review.title}</p>
-                    <p className={styles.reviewMeta}>{review.count} pending</p>
+                    <p className={styles.reviewMeta}>
+                      {!review.live
+                        ? `${review.count} pending`
+                        : live.pendingApplications !== undefined
+                          ? `${live.pendingApplications} pending`
+                          : live.pendingLoading
+                            ? "Loading…"
+                            : "—"}
+                    </p>
                   </div>
                 </div>
                 <Link href={review.href} className={styles.reviewButton}>

@@ -1,11 +1,17 @@
-// Placeholder figures from the design until the dashboard API exists.
+// The backend has no dashboard endpoint. Cards with `live` are filled from the
+// User Management API (see LiveDashboard.tsx); the rest are still the design's
+// placeholder figures.
 
 export type StatTone = "positive" | "warning";
+
+/** Cards filled from the backend. */
+export type LiveStat = "students" | "activeStudents" | "mentors" | "assignedMentors" | "ratio";
 
 export type Stat = {
   label: string;
   value: string;
   badge: string;
+  live?: LiveStat;
   badgeTone: StatTone;
   iconBg: string;
   icon: "users" | "cap" | "dollar" | "clock" | "trend";
@@ -13,11 +19,11 @@ export type Stat = {
 };
 
 export const STATS: Stat[] = [
-  { label: "Total Students", value: "1,247", badge: "+12%", badgeTone: "positive", iconBg: "#2B7FFF", icon: "users", href: "/user-management" },
-  { label: "Active Students", value: "2,847", badge: "+12%", badgeTone: "positive", iconBg: "#FFCC00", icon: "users", href: "/user-management" },
-  { label: "Total Mentors", value: "89", badge: "+5 new", badgeTone: "positive", iconBg: "#AD46FF", icon: "cap", href: "/user-management#mentors" },
-  { label: "Assigned Mentors", value: "89", badge: "Active", badgeTone: "positive", iconBg: "#00C950", icon: "cap", href: "/user-management#mentors" },
-  { label: "Mentor-Student Ratio", value: "1:25", badge: "Optimal", badgeTone: "positive", iconBg: "#CB30E0", icon: "cap" },
+  { label: "Total Students", value: "", badge: "Live", badgeTone: "positive", iconBg: "#2B7FFF", icon: "users", href: "/user-management", live: "students" },
+  { label: "Active Students", value: "", badge: "Live", badgeTone: "positive", iconBg: "#FFCC00", icon: "users", href: "/user-management", live: "activeStudents" },
+  { label: "Total Mentors", value: "", badge: "Live", badgeTone: "positive", iconBg: "#AD46FF", icon: "cap", href: "/user-management?view=all#mentors", live: "mentors" },
+  { label: "Assigned Mentors", value: "", badge: "Live", badgeTone: "positive", iconBg: "#00C950", icon: "cap", href: "/user-management#mentors", live: "assignedMentors" },
+  { label: "Mentor-Student Ratio", value: "", badge: "Live", badgeTone: "positive", iconBg: "#CB30E0", icon: "cap", live: "ratio" },
   { label: "Total Revenue", value: "$284,500", badge: "+8%", badgeTone: "positive", iconBg: "#00C0E8", icon: "dollar", href: "/financial-ops" },
   { label: "Active Loan Requests", value: "23", badge: "Monitoring", badgeTone: "warning", iconBg: "#FF6900", icon: "clock", href: "/financial-ops#loans" },
   { label: "Referral Growth", value: "342", badge: "1.8x viral", badgeTone: "positive", iconBg: "#FF2D55", icon: "trend", href: "/referrals" },
@@ -45,8 +51,9 @@ export const ACTIVITY: Activity[] = [
 // "Review" opens where each queue is handled: the Pending Reviews table on the
 // Mentors tab, and the Communities page (join requests are on its Members tab).
 export const PENDING_REVIEWS = [
-  { title: "Mentor Applications", count: 8, kind: "mentor" as const, href: "/user-management#mentors" },
-  { title: "Join Communities Requests", count: 5, kind: "community" as const, href: "/communities" },
+  // Mentor Applications' count comes from GET /mentors/admin/summary (LiveDashboard.tsx).
+  { title: "Mentor Applications", count: 0, kind: "mentor" as const, href: "/user-management?view=pending#mentors", live: true },
+  { title: "Join Communities Requests", count: 5, kind: "community" as const, href: "/communities", live: false },
 ];
 
 export const PERFORMANCE = [
