@@ -425,3 +425,12 @@
     padding: 0 14px;
   }
 }
+
+.tableState {
+  padding: 16px 0;
+}
+
+.muted {
+  color: #6a7282;
+  font-size: 14px;
+}

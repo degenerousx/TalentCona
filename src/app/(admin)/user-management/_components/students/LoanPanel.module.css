@@ -160,3 +160,23 @@
     min-width: 560px;
   }
 }
+
+.none {
+  margin: 0;
+  padding: 24px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #6a7282;
+}
+
+.note {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: #6a7282;
+}
+
+.pillPending {
+  background: #fef9c2;
+  color: #894b00;
+}

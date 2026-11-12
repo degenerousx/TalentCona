@@ -2,114 +2,129 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useHashTab } from "@/lib/useHashTab";
 import { FunnelIcon, LaptopIcon, SearchIcon } from "@/components/icons";
-import { STUDENTS, type PaymentMethod } from "./data/students";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
+import { shortDate, usePrograms, useStudents, type StudentRow } from "./api";
+import { EMPTY_FILTERS, activeFilterCount, studentQuery, type StudentFilters } from "./filters";
 import FilterPanel from "./shared/FilterPanel";
+import ListFooter from "./shared/ListFooter";
 import MentorsPanel from "./mentors/MentorsPanel";
 import PartnersPanel from "./partners/PartnersPanel";
-import { EMPTY_FILTERS, activeFilterCount, applyFilters, filterOptions, type StudentFilters } from "./data/studentFilters";
+import { useDebounced } from "./useDebounced";
 import styles from "./UserManagement.module.css";
 
 const TABS = ["students", "mentors", "partners"] as const;
 
-const PAYMENT_CLASS: Record<PaymentMethod, string> = {
-  Direct: styles.pillGreen,
-  Loan: styles.pillOrange,
-  Fundraising: styles.pillBlue,
-};
-
-function Person({ name }: { name: string | null }) {
-  return name ? <span className={styles.person}>{name}</span> : <span className={styles.unassigned}>Unassigned</span>;
+/** "Direct-Full" → green, "Fundraising…" → blue, anything loan-like → orange. */
+function paymentClass(label: string) {
+  const l = label.toLowerCase();
+  if (l.startsWith("direct")) return styles.pillGreen;
+  if (l.startsWith("fund")) return styles.pillBlue;
+  if (l.includes("loan")) return styles.pillOrange;
+  return styles.pillGray;
 }
 
-const FILTER_OPTIONS = filterOptions(STUDENTS);
+const statusClass = (s: string) => (s === "Active" ? styles.pillGreen : styles.pillGray);
 
-function StudentsTable({ query, filters }: { query: string; filters: StudentFilters }) {
+function StudentsTable({ query, filters, filtered }: { query: string; filters: StudentFilters; filtered: boolean }) {
   const router = useRouter();
-  const rows = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const filtered = applyFilters(STUDENTS, filters);
-    if (!q) return filtered;
-    return filtered.filter((s) => [s.name, s.email, s.program].some((v) => v.toLowerCase().includes(q)));
-  }, [query, filters]);
+  const search = useDebounced(query);
+  const list = useStudents(studentQuery(search, filters));
+  const rows: StudentRow[] = list.data?.pages.flatMap((p) => p.items) ?? [];
+
+  if (list.isPending) return <LoadingState className={styles.state} rows={6} label="Loading students…" />;
+  if (list.isError && !rows.length)
+    return (
+      <div className={styles.state}>
+        <ErrorState error={list.error} title="Couldn't load students" onRetry={() => void list.refetch()} retrying={list.isFetching} />
+      </div>
+    );
+  if (!rows.length)
+    return (
+      <div className={styles.state}>
+        <EmptyState
+          title={search.trim() || filtered ? "No students match" : "No students yet"}
+          description={search.trim() || filtered ? "Try another name, email or filter." : "Students appear here once they sign up."}
+        />
+      </div>
+    );
 
   return (
-    <div className={styles.tableWrap}>
-      <table className={styles.table}>
-        <colgroup>
-          <col style={{ width: 167 }} />
-          <col style={{ width: 140 }} />
-          <col style={{ width: 153 }} />
-          <col style={{ width: 91.71 }} />
-          <col />
-          <col style={{ width: 128 }} />
-          <col style={{ width: 117 }} />
-          <col />
-          <col />
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Program</th>
-            <th>Method of Payment</th>
-            <th>Amount Paid</th>
-            <th className={styles.thLaptop}>Laptop</th>
-            <th className={styles.thShift}>Instructor</th>
-            <th className={styles.thAdvisor}>Program Advisor</th>
-            <th className={styles.thShift}>Status</th>
-            <th className={styles.thActions}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((s) => (
-            <tr key={s.id} className={styles.row} onClick={() => router.push(`/user-management/${s.id}`)}>
-              <td>
-                <Link href={`/user-management/${s.id}`} className={styles.name} onClick={(e) => e.stopPropagation()}>
-                  {s.name}
-                </Link>
-                <span className={styles.email}>{s.email}</span>
-              </td>
-              <td className={styles.tdProgram}>
-                <span className={styles.program}>{s.program}</span>
-              </td>
-              <td>
-                <span className={`${styles.pill} ${PAYMENT_CLASS[s.payment]}`}>{s.payment}</span>
-              </td>
-              <td className={styles.amount}>${s.amountPaid}</td>
-              <td>
-                <span className={`${styles.pill} ${styles.pillLaptop} ${s.hasLaptop ? styles.pillGreen : styles.pillGray}`}>
-                  <LaptopIcon />
-                  {s.hasLaptop ? "Yes" : "No"}
-                </span>
-              </td>
-              <td>
-                <Person name={s.instructor} />
-              </td>
-              <td>
-                <Person name={s.advisor} />
-              </td>
-              <td>
-                <span className={`${styles.pill} ${s.status === "Active" ? styles.pillGreen : styles.pillGray}`}>{s.status}</span>
-              </td>
-              <td>
-                <Link href={`/user-management/${s.id}`} className={styles.manage} onClick={(e) => e.stopPropagation()}>
-                  Manage
-                </Link>
-              </td>
-            </tr>
-          ))}
-          {rows.length === 0 && (
+    <>
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
+          <colgroup>
+            <col style={{ width: 200 }} />
+            <col style={{ width: 170 }} />
+            <col style={{ width: 160 }} />
+            <col style={{ width: 120 }} />
+            <col style={{ width: 110 }} />
+            <col style={{ width: 130 }} />
+            <col style={{ width: 120 }} />
+            <col />
+          </colgroup>
+          <thead>
             <tr>
-              <td colSpan={9} className={styles.empty}>
-                {query.trim() ? <>No students match “{query}”.</> : "No students match the selected filters."}
-              </td>
+              <th>Student</th>
+              <th>Program</th>
+              <th>Method of Payment</th>
+              <th>Amount Paid</th>
+              <th className={styles.thLaptop}>Laptop</th>
+              <th>Joined</th>
+              <th>Status</th>
+              <th className={styles.thActions}>Actions</th>
             </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map((s) => (
+              <tr key={s.id} className={styles.row} onClick={() => router.push(`/user-management/${s.id}`)}>
+                <td>
+                  <Link href={`/user-management/${s.id}`} className={styles.name} onClick={(e) => e.stopPropagation()}>
+                    {s.name}
+                  </Link>
+                  <span className={styles.email}>{s.email}</span>
+                </td>
+                <td className={styles.tdProgram}>
+                  {s.programs.length ? (
+                    <span className={`${styles.program} ${styles.programList}`}>
+                      {s.programs.map((p) => (
+                        <span key={p.enrollmentId}>{p.title}</span>
+                      ))}
+                    </span>
+                  ) : (
+                    <span className={styles.muted}>Not enrolled</span>
+                  )}
+                </td>
+                <td>{s.payment ? <span className={`${styles.pill} ${paymentClass(s.payment)}`}>{s.payment}</span> : <span className={styles.muted}>—</span>}</td>
+                <td className={styles.amount}>{s.amountPaid ?? <span className={styles.muted}>—</span>}</td>
+                <td>
+                  {s.laptop === null ? (
+                    <span className={styles.muted}>—</span>
+                  ) : (
+                    <span className={`${styles.pill} ${styles.pillLaptop} ${s.laptop ? styles.pillGreen : styles.pillGray}`}>
+                      <LaptopIcon />
+                      {s.laptop ? "Yes" : "No"}
+                    </span>
+                  )}
+                </td>
+                <td className={styles.muted}>{shortDate(s.joinedAt) ?? "—"}</td>
+                <td>
+                  <span className={`${styles.pill} ${statusClass(s.status)}`}>{s.status}</span>
+                </td>
+                <td>
+                  <Link href={`/user-management/${s.id}`} className={styles.manage} onClick={(e) => e.stopPropagation()}>
+                    Manage
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <ListFooter shown={rows.length} noun="students" hasMore={!!list.hasNextPage} loading={list.isFetchingNextPage} onMore={() => void list.fetchNextPage()} />
+    </>
   );
 }
 
@@ -119,6 +134,7 @@ export default function UserManagement() {
   const [filters, setFilters] = useState<StudentFilters>(EMPTY_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterCount = activeFilterCount(filters);
+  const programs = usePrograms();
 
   return (
     <div className={styles.page}>
@@ -148,52 +164,32 @@ export default function UserManagement() {
           ))}
         </div>
 
-        {tab !== "mentors" && (
+        {tab === "students" && (
           <div className={styles.toolbar}>
             <label className={styles.search}>
               <span className={styles.searchIcon}>
                 <SearchIcon />
               </span>
-              <input
-                type="search"
-                placeholder={`Search ${tab}...`}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                aria-label={`Search ${tab}`}
-              />
+              <input type="search" placeholder="Search students..." value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search students" />
             </label>
-            {/* Only students have filters; the Partners design has search alone. */}
-            {tab === "students" && (
-              <button
-                type="button"
-                className={styles.filters}
-                onClick={() => setFiltersOpen(true)}
-                aria-haspopup="dialog"
-                aria-expanded={filtersOpen}
-              >
-                <FunnelIcon />
-                <span>Filters</span>
-                {filterCount > 0 && <span className={styles.filterCount}>{filterCount}</span>}
-              </button>
-            )}
+            <button type="button" className={styles.filters} onClick={() => setFiltersOpen(true)} aria-haspopup="dialog" aria-expanded={filtersOpen}>
+              <FunnelIcon />
+              <span>Filters</span>
+              {filterCount > 0 && <span className={styles.filterCount}>{filterCount}</span>}
+            </button>
           </div>
         )}
 
         <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-          {tab === "students" ? (
-            <StudentsTable query={query} filters={filters} />
-          ) : tab === "mentors" ? (
-            <MentorsPanel />
-          ) : (
-            <PartnersPanel query={query} />
-          )}
+          {tab === "students" ? <StudentsTable query={query} filters={filters} filtered={filterCount > 0} /> : tab === "mentors" ? <MentorsPanel /> : <PartnersPanel />}
         </div>
       </section>
 
       {filtersOpen && (
         <FilterPanel
           initial={filters}
-          options={FILTER_OPTIONS}
+          programs={(programs.data ?? []).map((p) => ({ value: p.id, label: p.title }))}
+          programsNote={programs.isPending ? "Loading programs…" : programs.isError ? "Couldn't load programs." : undefined}
           onClose={() => setFiltersOpen(false)}
           onApply={(f) => {
             setFilters(f);

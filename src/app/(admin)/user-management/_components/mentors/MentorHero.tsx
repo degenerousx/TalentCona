@@ -1,30 +1,53 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { BanIcon, MailIcon, MapPinIcon, PhoneIcon, SendIcon, SquarePenIcon } from "@/components/icons";
-import { AssignMentorToProgramModal, NotifyModal, SuspendModal, Toast, type MentorRoleOption } from "../shared/ActionModals";
-import { initials } from "../data/students";
-import { ASSIGNABLE_PROGRAMS, type MentorProfile } from "../data/mentors";
+import { BanIcon, MailIcon, MapPinIcon, SendIcon, SquarePenIcon } from "@/components/icons";
+import { AssignMentorToProgramModal, NotifyModal, SuspendModal, Toast, roleFlags, type MentorRoleOption } from "../shared/ActionModals";
+import {
+  errorText,
+  initials,
+  mergePrograms,
+  roleLabel,
+  shortDate,
+  useNotify,
+  usePrograms,
+  useReinstate,
+  useSetMentorPrograms,
+  useSuspend,
+  type MentorDetail,
+} from "../api";
 import hero from "../students/StudentHero.module.css";
 import styles from "./MentorProfile.module.css";
 
 /** Purple mentor header with Edit Role, Assign Mentor, Notify and Suspend, shared by the mentor pages. */
-export default function MentorHero({ mentor }: { mentor: MentorProfile }) {
-  const [status, setStatus] = useState<"Active" | "Suspended">(mentor.status);
-  const [modal, setModal] = useState<"assign" | "notify" | "suspend" | null>(null);
-  // Program title → this mentor's role there, starting from their current assignments.
-  const [roles, setRoles] = useState<Record<string, MentorRoleOption>>(() => {
-    const byProgram: Record<string, Set<string>> = {};
-    for (const a of mentor.current) (byProgram[a.program] ??= new Set()).add(a.role);
-    return Object.fromEntries(
-      Object.entries(byProgram).map(([program, set]) => [program, (set.size > 1 ? "Instructor & Program Advisor" : [...set][0]) as MentorRoleOption]),
-    );
-  });
-  const programs = [...new Set([...ASSIGNABLE_PROGRAMS.map((p) => p.title), ...mentor.current.map((a) => a.program)])].sort((a, b) => a.localeCompare(b));
+export default function MentorHero({ mentor }: { mentor: MentorDetail }) {
+  const [modal, setModal] = useState<"role" | "assign" | "notify" | "suspend" | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const close = useCallback(() => setModal(null), []);
   const clearToast = useCallback(() => setToast(null), []);
-  const suspended = status === "Suspended";
+  const notify = useNotify("mentors", mentor.id);
+  const suspend = useSuspend("mentors", mentor.id);
+  const reinstate = useReinstate("mentors", mentor.id);
+  const setPrograms = useSetMentorPrograms(mentor.id);
+  const allPrograms = usePrograms();
+
+  // Program id → this mentor's current role there.
+  const roles = Object.fromEntries(mentor.programs.map((p) => [p.programId, roleLabel(p) as MentorRoleOption]));
+  const currentOptions = mentor.programs.map((p) => ({ value: p.programId, label: p.title }));
+  const assignOptions = [
+    ...currentOptions,
+    ...(allPrograms.data ?? []).filter((p) => !roles[p.id]).map((p) => ({ value: p.id, label: p.title })),
+  ].sort((a, b) => a.label.localeCompare(b.label));
+  const titleOf = (id: string) => assignOptions.find((p) => p.value === id)?.label ?? "the program";
+  const save = async (programId: string, role: MentorRoleOption) => {
+    await setPrograms.mutateAsync(mergePrograms(mentor.programs, [{ programId, ...roleFlags(role) }]));
+    setModal(null);
+    setToast(`${mentor.name} is now ${role} on ${titleOf(programId)}.`);
+  };
+
+  const suspended = mentor.status === "Suspended";
+  const approved = mentor.application.status === "Approved" ? shortDate(mentor.application.reviewedAt) : null;
+  const applied = shortDate(mentor.application.submittedAt);
 
   return (
     <>
@@ -36,27 +59,34 @@ export default function MentorHero({ mentor }: { mentor: MentorProfile }) {
         <div className={hero.identity}>
           <h1 className={hero.name}>{mentor.name}</h1>
           <div className={hero.badges}>
-            <span className={suspended ? `${hero.badgeStatus} ${hero.badgeSuspended}` : hero.badgeStatus}>{status}</span>
-            <span className={hero.badgeOutline}>Joined: {mentor.joined}</span>
+            <span className={suspended ? `${hero.badgeStatus} ${hero.badgeSuspended}` : hero.badgeStatus} title={mentor.suspensionReason ?? undefined}>
+              {mentor.status}
+            </span>
+            {approved ? <span className={hero.badgeOutline}>Approved: {approved}</span> : applied && <span className={hero.badgeOutline}>Applied: {applied}</span>}
           </div>
           <ul className={hero.contacts}>
             <li>
               <MailIcon size={16} color="#FFFFFF" strokeWidth={2} />
               <a href={`mailto:${mentor.email}`}>{mentor.email}</a>
             </li>
-            <li>
-              <PhoneIcon size={16} color="#FFFFFF" strokeWidth={2} />
-              <a href={`tel:${mentor.phone.replace(/[^+\d]/g, "")}`}>{mentor.phone}</a>
-            </li>
-            <li>
-              <MapPinIcon size={16} color="#FFFFFF" strokeWidth={2} />
-              <span>{mentor.location}</span>
-            </li>
+            {mentor.application.country && (
+              <li>
+                <MapPinIcon size={16} color="#FFFFFF" strokeWidth={2} />
+                <span>{mentor.application.country}</span>
+              </li>
+            )}
           </ul>
         </div>
 
         <div className={hero.actions}>
-          <button type="button" className={`${hero.action} ${hero.actionAssign}`} onClick={() => setToast("Editing mentor roles is coming soon.")}>
+          <button
+            type="button"
+            className={`${hero.action} ${hero.actionAssign}`}
+            onClick={() => setModal("role")}
+            disabled={mentor.programs.length === 0}
+            title={mentor.programs.length ? undefined : "Assign the mentor to a program first"}
+            aria-haspopup="dialog"
+          >
             <SquarePenIcon size={16} color="#364153" strokeWidth={2} />
             Edit Role
           </button>
@@ -72,13 +102,16 @@ export default function MentorHero({ mentor }: { mentor: MentorProfile }) {
             <button
               type="button"
               className={hero.action}
-              onClick={() => {
-                setStatus("Active");
-                setToast(`${mentor.name} has been reactivated.`);
-              }}
+              disabled={reinstate.isPending}
+              onClick={() =>
+                reinstate.mutate(undefined, {
+                  onSuccess: () => setToast(`${mentor.name} has been reactivated.`),
+                  onError: (e) => setToast(`Couldn't reactivate: ${errorText(e)}`),
+                })
+              }
             >
               <BanIcon size={16} color="#364153" strokeWidth={2} />
-              Reactivate
+              {reinstate.isPending ? "Reactivating…" : "Reactivate"}
             </button>
           ) : (
             <button type="button" className={`${hero.action} ${hero.actionDanger}`} onClick={() => setModal("suspend")} aria-haspopup="dialog">
@@ -93,8 +126,8 @@ export default function MentorHero({ mentor }: { mentor: MentorProfile }) {
         <SuspendModal
           name={mentor.name}
           onClose={close}
-          onConfirm={() => {
-            setStatus("Suspended");
+          onConfirm={async (reason) => {
+            await suspend.mutateAsync(reason);
             setModal(null);
             setToast(`${mentor.name} has been suspended.`);
           }}
@@ -103,24 +136,18 @@ export default function MentorHero({ mentor }: { mentor: MentorProfile }) {
       {modal === "notify" && (
         <NotifyModal
           onClose={close}
-          onSend={() => {
+          onSend={async (subject, message) => {
+            await notify.mutateAsync({ subject, message });
             setModal(null);
             setToast(`Notification sent to ${mentor.name}.`);
           }}
         />
       )}
+      {modal === "role" && (
+        <AssignMentorToProgramModal title="Edit Role" mentorName={mentor.name} programs={currentOptions} current={roles} onClose={close} onSave={save} />
+      )}
       {modal === "assign" && (
-        <AssignMentorToProgramModal
-          mentorName={mentor.name}
-          programs={programs}
-          current={roles}
-          onClose={close}
-          onSave={(program, role) => {
-            setRoles((prev) => ({ ...prev, [program]: role }));
-            setModal(null);
-            setToast(`${mentor.name} assigned to ${program} as ${role}.`);
-          }}
-        />
+        <AssignMentorToProgramModal mentorName={mentor.name} programs={assignOptions} current={roles} onClose={close} onSave={save} />
       )}
       {toast && <Toast message={toast} onDone={clearToast} />}
     </>

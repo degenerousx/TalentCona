@@ -2,16 +2,19 @@
 
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { CalendarIcon, CheckboxIcon, ChevronDownBoldIcon, FilterIcon, SearchIcon, XIcon } from "@/components/icons";
-import { EMPTY_FILTERS, type StudentFilters } from "../data/studentFilters";
+import { EMPTY_FILTERS, LAPTOP_OPTIONS, PAYMENT_OPTIONS, STATUS_OPTIONS, type StudentFilters } from "../filters";
 import styles from "./FilterPanel.module.css";
 
-type Options = Record<"programs" | "statuses" | "methods" | "laptop" | "instructors" | "advisors", string[]>;
-type ListKey = keyof Options;
+/** A plain string is its own value and label. */
+export type FilterOption = string | { value: string; label: string };
+const norm = (o: FilterOption) => (typeof o === "string" ? { value: o, label: o } : o);
+
+type ListKey = "programs" | "statuses" | "methods" | "laptop";
 
 export type SelectProps = {
   label: string;
   allLabel: string;
-  options: string[];
+  options: FilterOption[];
   selected: string[];
   onChange: (next: string[]) => void;
   open: boolean;
@@ -19,9 +22,14 @@ export type SelectProps = {
   searchPlaceholder?: string;
   /** Let the list shrink to its options (the mentor rating lists are only 99px wide). */
   compact?: boolean;
+  /** The backend takes one value for this filter: picking an option replaces the previous one. */
+  single?: boolean;
+  /** Shown instead of the list while options load or fail. */
+  note?: string;
 };
 
-export function MultiSelect({ label, allLabel, options, selected, onChange, open, onToggle, searchPlaceholder, compact }: SelectProps) {
+export function MultiSelect({ label, allLabel, options: raw, selected, onChange, open, onToggle, searchPlaceholder, compact, single, note }: SelectProps) {
+  const options = raw.map(norm);
   const id = useId();
   const [search, setSearch] = useState("");
   const popRef = useRef<HTMLDivElement>(null);
@@ -32,9 +40,11 @@ export function MultiSelect({ label, allLabel, options, selected, onChange, open
   }, [open]);
 
   const q = search.trim().toLowerCase();
-  const visible = q ? options.filter((o) => o.toLowerCase().includes(q)) : options;
-  const summary = selected.length === 0 ? allLabel : selected.length === 1 ? selected[0] : `${selected.length} selected`;
-  const toggle = (o: string) => onChange(selected.includes(o) ? selected.filter((s) => s !== o) : [...selected, o]);
+  const visible = q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options;
+  const labelOf = (v: string) => options.find((o) => o.value === v)?.label ?? v;
+  const summary = selected.length === 0 ? allLabel : selected.length === 1 ? labelOf(selected[0]) : `${selected.length} selected`;
+  const toggle = (o: string) =>
+    onChange(selected.includes(o) ? selected.filter((s) => s !== o) : single ? [o] : [...selected, o]);
 
   return (
     <div className={styles.field}>
@@ -84,13 +94,19 @@ export function MultiSelect({ label, allLabel, options, selected, onChange, open
               {allLabel}
             </button>
             {visible.map((o) => (
-              <label key={o} className={styles.option}>
-                <input type="checkbox" className={styles.srOnly} checked={selected.includes(o)} onChange={() => toggle(o)} />
-                <CheckboxIcon checked={selected.includes(o)} />
-                <span>{o}</span>
+              <label key={o.value} className={styles.option}>
+                <input
+                  type={single ? "radio" : "checkbox"}
+                  className={styles.srOnly}
+                  checked={selected.includes(o.value)}
+                  onChange={() => toggle(o.value)}
+                  onClick={() => single && selected.includes(o.value) && toggle(o.value)}
+                />
+                <CheckboxIcon checked={selected.includes(o.value)} />
+                <span>{o.label}</span>
               </label>
             ))}
-            {visible.length === 0 && <p className={styles.noMatch}>No matches</p>}
+            {note ? <p className={styles.noMatch}>{note}</p> : visible.length === 0 && <p className={styles.noMatch}>No matches</p>}
           </div>
         )}
       </div>
@@ -274,12 +290,15 @@ export function FilterDrawer({
 
 export default function FilterPanel({
   initial,
-  options,
+  programs,
+  programsNote,
   onApply,
   onClose,
 }: {
   initial: StudentFilters;
-  options: Options;
+  programs: FilterOption[];
+  /** "Loading programs…" / error text for the Programs list. */
+  programsNote?: string;
   onApply: (f: StudentFilters) => void;
   onClose: () => void;
 }) {
@@ -289,16 +308,16 @@ export default function FilterPanel({
 
   const set = <K extends keyof StudentFilters>(key: K, value: StudentFilters[K]) => setDraft((d) => ({ ...d, [key]: value }));
 
-  const select = (key: ListKey, label: string, allLabel: string, searchPlaceholder?: string) => (
+  const select = (key: ListKey, label: string, allLabel: string, options: FilterOption[], extra: Partial<SelectProps> = {}) => (
     <MultiSelect
       label={label}
       allLabel={allLabel}
-      options={options[key]}
+      options={options}
       selected={draft[key]}
       onChange={(v) => set(key, v)}
       open={openList === key}
       onToggle={() => setOpenList((o) => (o === key ? null : key))}
-      searchPlaceholder={searchPlaceholder}
+      {...extra}
     />
   );
 
@@ -312,20 +331,18 @@ export default function FilterPanel({
         onFrom={(v) => set("joinFrom", v)}
         onTo={(v) => set("joinTo", v)}
       />
-      {select("programs", "Programs", "All Programs", "Search programs...")}
-      {select("statuses", "Status", "All Statuses")}
-      {select("methods", "Method of Payment", "All Methods")}
+      {select("programs", "Programs", "All Programs", programs, { searchPlaceholder: "Search programs...", note: programsNote })}
+      {select("statuses", "Status", "All Statuses", STATUS_OPTIONS, { single: true })}
+      {select("methods", "Method of Payment", "All Methods", PAYMENT_OPTIONS, { single: true })}
       <RangeField
-        label="Amount Paid"
+        label="Amount Paid (₦)"
         type="number"
         from={draft.amountFrom}
         to={draft.amountTo}
         onFrom={(v) => set("amountFrom", v)}
         onTo={(v) => set("amountTo", v)}
       />
-      {select("laptop", "Laptop Status", "All Statuses")}
-      {select("instructors", "Instructor", "All Instructors", "Search program instructors...")}
-      {select("advisors", "Program Advisor", "All Program Advisors", "Search program advisors...")}
+      {select("laptop", "Laptop Status", "All Statuses", LAPTOP_OPTIONS, { single: true })}
     </FilterDrawer>
   );
 }

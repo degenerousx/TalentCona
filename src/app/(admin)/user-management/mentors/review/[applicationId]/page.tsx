@@ -1,23 +1,12 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import MentorReview from "../../../_components/mentors/MentorReview";
-import { MENTOR_APPLICATIONS, getApplication } from "../../../_components/data/mentorApplications";
 
+/** `applicationId` is the mentor's user id: review actions are POST /mentors/admin/:mentorId/…. */
 type Params = { params: Promise<{ applicationId: string }> };
 
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return MENTOR_APPLICATIONS.map((a) => ({ applicationId: a.id }));
-}
-
-export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const application = getApplication((await params).applicationId);
-  return { title: `${application?.name ?? "Mentor"} · Mentor Details · TalentCona` };
-}
+export const metadata: Metadata = { title: "Mentor Details · TalentCona" };
 
 export default async function MentorReviewPage({ params }: Params) {
-  const application = getApplication((await params).applicationId);
-  if (!application) notFound();
-  return <MentorReview application={application} />;
+  const { applicationId } = await params;
+  return <MentorReview mentorId={applicationId} />;
 }

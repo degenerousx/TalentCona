@@ -370,3 +370,11 @@
     width: auto;
   }
 }
+
+.none {
+  margin: 0;
+  padding: 24px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #6a7282;
+}

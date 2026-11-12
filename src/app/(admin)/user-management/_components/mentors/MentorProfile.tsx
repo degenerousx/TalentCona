@@ -1,51 +1,43 @@
+"use client";
+
 import Link from "next/link";
 import MentorHero from "./MentorHero";
-import { programSlug, type MentorAssignment, type MentorProfile as Mentor } from "../data/mentors";
+import PageState from "../shared/PageState";
+import { roleLabel, shortDate, useMentor, type MentorDetail, type MentorProgramLink } from "../api";
 import styles from "./MentorProfile.module.css";
 
-function AssignmentCard({
-  a,
-  href,
-  featured,
-}: {
-  a: MentorAssignment;
-  /** Current programs link to the mentor's program page; history cards are static. */
-  href?: string;
-  featured?: boolean;
-}) {
-  const body = (
-    <>
-      <span className={styles.programTitle}>{a.program}</span>
+function AssignmentCard({ a, href, featured }: { a: MentorProgramLink; href: string; featured?: boolean }) {
+  return (
+    <Link href={href} className={`${styles.program} ${featured ? styles.programSelected : ""}`}>
+      <span className={styles.programTitle}>{a.title}</span>
       <span className={styles.meta}>
         <span>
-          Date Assigned: <strong>{a.dateAssigned}</strong>
+          Date Assigned: <strong>{shortDate(a.assignedAt) ?? "—"}</strong>
         </span>
         <span>
-          Role: <strong>{a.role}</strong>
+          Role: <strong>{roleLabel(a)}</strong>
         </span>
         <span>
           Number of Mentees: <strong>{a.mentees}</strong>
         </span>
-        {a.dateUnassigned && (
-          <span>
-            Date Unassigned: <strong>{a.dateUnassigned}</strong>
-          </span>
-        )}
       </span>
-    </>
-  );
-
-  return href ? (
-    <Link href={href} className={`${styles.program} ${featured ? styles.programSelected : ""}`}>
-      {body}
     </Link>
-  ) : (
-    <div className={styles.program}>{body}</div>
   );
 }
 
-export default function MentorProfile({ mentor }: { mentor: Mentor }) {
-  // The first current program is highlighted, as in the design.
+function Summary({ mentor }: { mentor: MentorDetail }) {
+  return (
+    <p className={styles.none}>
+      Mentees: <strong>{mentor.maxMentees != null ? `${mentor.mentees}/${mentor.maxMentees}` : mentor.mentees}</strong>
+      {" · "}Average rating: <strong>{mentor.ratingCount ? `${mentor.averageRating ?? 0}/5 (${mentor.ratingCount})` : "no ratings yet"}</strong>
+    </p>
+  );
+}
+
+export default function MentorProfile({ mentorId }: { mentorId: string }) {
+  const query = useMentor(mentorId);
+  const mentor = query.data;
+  if (!mentor) return <PageState query={query} noun="mentor" backHref="/user-management#mentors" />;
 
   return (
     <div className={styles.page}>
@@ -61,39 +53,21 @@ export default function MentorProfile({ mentor }: { mentor: Mentor }) {
         <h2 id="programs-assigned" className={styles.cardTitle}>
           Programs Assigned
         </h2>
+        <Summary mentor={mentor} />
 
         <div className={`${styles.group} ${styles.groupCurrent}`}>
-          <h3 className={styles.groupTitle}>Current Programs ({mentor.current.length})</h3>
-          {mentor.current.length > 0 ? (
+          <h3 className={styles.groupTitle}>Current Programs ({mentor.programs.length})</h3>
+          {mentor.programs.length > 0 ? (
             <div className={styles.programs}>
-              {mentor.current.map((a, i) => (
-                <AssignmentCard
-                  key={`${a.program}-${a.role}`}
-                  a={a}
-                  featured={i === 0}
-                  href={`/user-management/mentors/${mentor.id}/${programSlug(a.program)}`}
-                />
+              {mentor.programs.map((a, i) => (
+                <AssignmentCard key={a.programId} a={a} featured={i === 0} href={`/user-management/mentors/${mentor.id}/${a.programId}`} />
               ))}
             </div>
           ) : (
-            <p className={styles.none}>No programs assigned yet.</p>
-          )}
-        </div>
-
-        <div className={`${styles.group} ${styles.groupHistory}`}>
-          <h3 className={styles.groupTitle}>Assignment History ({mentor.history.length})</h3>
-          {mentor.history.length > 0 ? (
-            <div className={styles.programs}>
-              {mentor.history.map((a) => (
-                <AssignmentCard key={`${a.program}-${a.role}-${a.dateUnassigned}`} a={a} />
-              ))}
-            </div>
-          ) : (
-            <p className={styles.none}>No past assignments.</p>
+            <p className={styles.none}>No programs assigned yet. Use Assign Mentor above to add one.</p>
           )}
         </div>
       </section>
-
     </div>
   );
 }

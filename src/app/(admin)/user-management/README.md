@@ -1,48 +1,38 @@
 # User Management
 
-- **Route:** `/user-management`
-- **Design:** [Figma section "User management"](https://www.figma.com/design/q8WJ8duI2FR5mc7ESAcUhi/Talent-cona-Admin-Portal--Copy-?node-id=293-13034)
+Students, mentors and partners for admins with the `MANAGE_USERS` privilege.
+Every screen reads and writes the backend (Postman: Admin App → User Management);
+there is no sample data. All requests live in `_components/api.ts`.
 
-Only edit files inside this folder. Put this module's components in `_components/`.
-Stuff shared by several modules goes in `src/components/` — tell the team before changing it.
-Styling is CSS Modules (`*.module.css` next to each component), sized to the Figma frames.
+## Routes
 
-## Pages
-
-| Route | File | Screen |
+| Route | Shows | API |
 | --- | --- | --- |
-| `/user-management` | `page.tsx` → `_components/UserManagement.tsx` | Students / Mentors / Partners tabs (tab kept in the URL hash, e.g. `#mentors`) |
-| `/user-management/[studentId]` | `[studentId]/page.tsx` → `students/StudentProfile.tsx` | Student profile and program enrollments |
-| `/user-management/[studentId]/[programId]` | `…/[programId]/page.tsx` → `students/ProgramDetail.tsx` | Overview, Performance, Engagement, Loan, Campaign tabs |
-| `/user-management/mentors/[mentorId]` | `mentors/[mentorId]/page.tsx` → `mentors/MentorProfile.tsx` | Mentor profile, programs assigned |
-| `/user-management/mentors/[mentorId]/[programId]` | `…/[programId]/page.tsx` → `mentors/MentorProgram.tsx` | Mentor's program: Overview, Performance |
-| `/user-management/mentors/review/[applicationId]` | `mentors/review/…/page.tsx` → `mentors/MentorReview.tsx` | Review a mentor application |
-| `/user-management/mentors/assign/[mentorId]` | `mentors/assign/…/page.tsx` → `mentors/MentorAssign.tsx` | Assign a mentor to programs |
+| `/user-management` (Students tab) | Server-filtered, cursor-paged list | `GET /students/admin` |
+| `/user-management/:studentId` | Profile, program groups, Assign Mentor / Notify / Suspend / Reactivate | `GET /students/admin/:id`, `POST …/notify\|suspend\|reinstate` |
+| `/user-management/:studentId/:enrollmentId` | Overview + activity, Performance, Engagement, Loan, Campaign tabs | `GET …/enrollments/:eid[/performance\|engagement\|campaign]` |
+| `#mentors` tab | Summary cards; Pending, Assigned and Unassigned sections with filters | `GET /mentors/admin/summary`, `GET /mentors/admin?section=` |
+| `/user-management/mentors/:mentorId` | Profile, programs, Edit Role / Assign Mentor / Notify / Suspend | `GET /mentors/admin/:id`, `PUT …/programs`, `POST …/notify\|suspend\|reinstate` |
+| `/user-management/mentors/:mentorId/:programId` | Sessions, feedback, performance, mentees | `GET /mentors/admin/:id/programs/:programId` |
+| `/user-management/mentors/review/:mentorId` | Application review: rating, approve, reject, request changes | `PATCH …/rating`, `POST …/approve\|reject\|request-changes` |
+| `/user-management/mentors/assign/:mentorId` | Assign an approved mentor to programs | `PUT /mentors/admin/:id/programs` |
 
-`layout.tsx` cancels the shared `<main>` padding, because these pages set their own Figma padding.
+## Notes
 
-## `_components/`
+- Student Assign Mentor works per enrollment: options from `…/assignment-options`,
+  current people from `…/assignment`, saved with `PATCH …/assignment { mentorId?, advisorId? }`.
+- `PUT /mentors/admin/:id/programs` replaces every program link, so Edit Role and
+  Assign merge the change into the mentor's current programs first (`mergePrograms`).
+- Status, payment method, laptop, rating and capacity filters take one value each
+  in the API, so those lists are single-choice. Expertise is sent as a slug.
 
-```
-_components/
-├── UserManagement.tsx        list page with the three tabs
-├── students/                 student profile, program detail and its tab panels
-├── mentors/                  mentors tab, mentor profile/program, review and assign flows
-├── partners/                 partners tab
-├── shared/                   filter drawer, action modals, success / reject dialogs
-└── data/                     mock data and filter logic (students, mentors, partners, …)
-```
+## Gaps in the backend (shown honestly in the UI)
 
-Mock data lives in `data/`. Actions (approve, assign, suspend, …) only change browser state for now.
-
-### Assign Mentor (students and mentors)
-
-- **Student header → Assign Mentor:** pick a program, then its Instructor and Program Advisor
-  (`AssignMentorModal` in `shared/ActionModals.tsx`).
-- **Mentor header → Assign Mentor** (next to Edit Role): the same dialog, titled **"Assign Mentor to
-  a Program"** (`AssignMentorToProgramModal`). Pick a program (searchable), then the mentor's role in
-  it: Instructor, Program Advisor, or both. The summary lists the mentor per role; their current
-  role is preselected, and Save stays disabled when nothing would change.
-- Both still save in the page only, like the rest of this module. The backend endpoint for the
-  mentor version is `PUT /mentors/admin/{mentorId}/programs` ("Replace mentor and advisor eligibility
-  for programs"); wire it when the Mentors tab moves to the API (mentor ids here are sample ids).
+- **Partners:** no admin endpoint; only the public partnership/sponsorship forms.
+  The tab says so.
+- **Students list:** has no instructor/advisor fields, so those columns and
+  filters were removed. Instructor and advisor show on each program page.
+- **Loan tab:** no per-student loan endpoint. The tab reads every `/admin/loans`
+  page, picks the student's loan for this program, then its schedule from
+  `/loans/:loanId/repayments`. If that schedule is closed to admins, the tab says so.
+- **Mentor assignment history** and **mentor phone/joined date** aren't in the API.

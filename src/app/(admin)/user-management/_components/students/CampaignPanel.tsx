@@ -1,33 +1,35 @@
+"use client";
+
+import { useState } from "react";
 import { HeartIcon, Share2Icon } from "@/components/icons";
-import { campaignLink, campaignStory, type Student } from "../data/students";
+import PanelState from "../shared/PanelState";
+import { humanize, timeAgo, useCampaign } from "../api";
 import styles from "./CampaignPanel.module.css";
 
-const naira = (n: number) => `₦${n}`;
+const SHOWN = 5;
 
-export default function CampaignPanel({ student }: { student: Student }) {
-  const { campaign } = student;
-  const pct = campaign.goal > 0 ? Math.min(campaign.raised / campaign.goal, 1) * 100 : 0;
-  const link = campaignLink(campaign);
+export default function CampaignPanel({ studentId, enrollmentId }: { studentId: string; enrollmentId: string }) {
+  const query = useCampaign(studentId, enrollmentId);
+  const [all, setAll] = useState(false);
+  if (query.isPending || query.isError) return <PanelState query={query} noun="campaign" />;
+  const c = query.data;
+  if (!c) return <p className={styles.none}>No fundraising campaign funds this program.</p>;
+  const contributions = all ? c.contributions : c.contributions.slice(0, SHOWN);
 
   return (
     <div className={styles.panel}>
       <div className={styles.main}>
-        <section className={`${styles.card} ${styles.funding}`} aria-labelledby={`funding-${student.id}`}>
-          <h3 id={`funding-${student.id}`} className={styles.title}>Funding Progress</h3>
+        <section className={`${styles.card} ${styles.funding}`} aria-labelledby={`funding-${c.id}`}>
+          <h3 id={`funding-${c.id}`} className={styles.title}>
+            Funding Progress{c.status ? ` · ${humanize(c.status)}` : ""}
+          </h3>
           <div className={styles.fundingBody}>
-            <div
-              className={styles.track}
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={campaign.goal}
-              aria-valuenow={campaign.raised}
-              aria-label="Funding progress"
-            >
-              <div className={styles.fill} style={{ width: `${pct}%` }} />
+            <div className={styles.track} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={c.progress} aria-label="Funding progress">
+              <div className={styles.fill} style={{ width: `${c.progress}%` }} />
             </div>
             <div className={styles.fundingMeta}>
-              <span>{naira(campaign.raised)} raised</span>
-              <span>{naira(campaign.goal)} goal</span>
+              <span>{c.raised ?? "—"} raised</span>
+              <span>{c.goal ?? "—"} goal</span>
             </div>
           </div>
         </section>
@@ -37,20 +39,30 @@ export default function CampaignPanel({ student }: { student: Student }) {
             <Share2Icon size={20} color="#0B1026" strokeWidth={1.67} />
             <span>Campaign Link</span>
           </h3>
-          <input className={styles.input} type="text" value={link} readOnly aria-label="Campaign link" />
+          <input className={styles.input} type="text" value={c.link ?? "No link yet"} readOnly aria-label="Campaign link" />
         </section>
 
         <section className={`${styles.card} ${styles.story}`}>
           <h3 className={styles.title}>Campaign Story</h3>
           <div className={styles.storyBody}>
-            <p className={styles.storyText}>{campaignStory(student)}</p>
+            <p className={styles.storyText}>{c.story ?? "The student hasn't written a message."}</p>
             <div className={styles.field}>
               <p className={styles.fieldLabel}>Programs:</p>
-              <span className={styles.badge} title={campaign.programLabel}>{campaign.programLabel}</span>
+              {c.programs.length ? (
+                c.programs.map((p) => (
+                  <span key={p} className={styles.badge} title={p}>
+                    {p}
+                  </span>
+                ))
+              ) : (
+                <span className={styles.badge}>None</span>
+              )}
             </div>
             <div className={styles.field}>
               <p className={styles.fieldLabel}>Laptop:</p>
-              <span className={styles.badge} title={campaign.laptop ?? "Not requested"}>{campaign.laptop ?? "Not requested"}</span>
+              <span className={styles.badge} title={c.laptops.join(", ") || "Not requested"}>
+                {c.laptops.join(", ") || "Not requested"}
+              </span>
             </div>
           </div>
         </section>
@@ -63,33 +75,39 @@ export default function CampaignPanel({ student }: { student: Student }) {
             <span>Contributions</span>
           </h3>
           <p className={styles.supporters}>
-            {campaign.supporters} {campaign.supporters === 1 ? "supporter" : "supporters"}
+            {c.supporters} {c.supporters === 1 ? "supporter" : "supporters"}
           </p>
         </div>
 
         <ul className={styles.list}>
-          {campaign.contributions.length === 0 ? (
+          {contributions.length === 0 ? (
             <li className={styles.empty}>No contributions yet.</li>
           ) : (
-            campaign.contributions.map((c, i) => (
-              <li key={`${c.name}-${i}`} className={styles.item}>
-                <span className={styles.avatar} aria-hidden="true">{c.name.charAt(0)}</span>
+            contributions.map((x) => (
+              <li key={x.id} className={styles.item}>
+                <span className={styles.avatar} aria-hidden="true">
+                  {x.name.charAt(0).toUpperCase()}
+                </span>
                 <div className={styles.itemBody}>
                   <p className={styles.itemTop}>
-                    <span className={styles.name}>{c.name}</span>
-                    <span className={styles.amount}>{naira(c.amount)}</span>
+                    <span className={styles.name}>{x.name}</span>
+                    <span className={styles.amount}>{x.amount}</span>
                   </p>
-                  <p className={styles.message}>{c.message}</p>
-                  <p className={styles.ago}>{c.ago}</p>
+                  {x.message && <p className={styles.message}>{x.message}</p>}
+                  {x.at && <p className={styles.ago}>{timeAgo(x.at)}</p>}
                 </div>
               </li>
             ))
           )}
         </ul>
 
-        <p className={styles.more}>
-          <button type="button" className={styles.moreLink}>See More...</button>
-        </p>
+        {c.contributions.length > SHOWN && (
+          <p className={styles.more}>
+            <button type="button" className={styles.moreLink} onClick={() => setAll((v) => !v)}>
+              {all ? "Show less" : `See all ${c.contributions.length}…`}
+            </button>
+          </p>
+        )}
       </aside>
     </div>
   );
