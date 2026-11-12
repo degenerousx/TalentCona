@@ -17,6 +17,10 @@ import { RequestDetailsModal } from "./RequestDetailsModal";
 import { statusLabel, TalentCard } from "./TalentCard";
 import { TalentProfileModal } from "./TalentProfileModal";
 import { shortDate, type RequestStatus, type Talent, type TalentRequest, type TalentStatus } from "./data";
+import { useHashTab } from "@/lib/useHashTab";
+
+/** Tabs, in the URL hash so links (e.g. from notifications) can open one. */
+const TALENT_TABS = ["talents", "requests"] as const;
 
 type TabId = "talents" | "requests";
 
@@ -258,7 +262,7 @@ function RequestsPanel() {
 }
 
 export function TalentCornerView() {
-  const [tab, setTab] = useState<TabId>("talents");
+  const [tab, setTab] = useHashTab(TALENT_TABS);
 
   return (
     <div className="flex flex-col gap-6">

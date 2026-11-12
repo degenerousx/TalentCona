@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Download, Info } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster } from "@/components/shadcn/sonner";
@@ -12,6 +12,10 @@ import { ambassadorsFrom, naira, statusLabel } from "./data";
 import { CommissionChart, PendingPayoutCard, StatCards } from "./Overview";
 import { PayoutRequests } from "./PayoutRequests";
 import { AmbassadorsTable } from "./Tables";
+import { useHashTab } from "@/lib/useHashTab";
+
+/** Tabs, in the URL hash so links (e.g. from notifications) can open one. */
+const REFERRAL_TABS = ["ambassadors", "payouts"] as const;
 
 type TabId = "ambassadors" | "payouts";
 
@@ -21,7 +25,7 @@ type TabId = "ambassadors" | "payouts";
  * data it offers.
  */
 export function ReferralsView() {
-  const [tab, setTab] = useState<TabId>("ambassadors");
+  const [tab, setTab] = useHashTab(REFERRAL_TABS);
   const tabsRef = useRef<HTMLDivElement>(null);
   const pending = usePayoutRequests("Pending");
   const pendingItems = pending.data?.pages.flatMap((p) => p.items) ?? [];
