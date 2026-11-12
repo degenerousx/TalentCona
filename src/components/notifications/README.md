@@ -36,3 +36,16 @@ activity older than 7 days starts as read. Mark all as read marks what is
 listed; anything that arrives later is new.
 
 The Dashboard's Recent Activity panel shows the same feed.
+
+## Selecting and clearing
+
+Each notification has a checkbox; the header checkbox selects (or clears)
+every listed notification and shows a partial state when only some are
+ticked. **Clear selected** and **Clear all** first show an in-panel
+confirmation ("Are you sure…?") and only clear after **Yes, clear**; Cancel
+keeps everything and the selection. Closing the panel drops the selection.
+
+Cleared notifications are hidden for this admin in this browser (stored
+with the read state) and count as read; they don't come back on the next
+poll. New activity still appears. The Dashboard's Recent Activity hides them
+too.
