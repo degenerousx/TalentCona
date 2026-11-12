@@ -34,3 +34,15 @@ _components/
 ```
 
 Mock data lives in `data/`. Actions (approve, assign, suspend, …) only change browser state for now.
+
+### Assign Mentor (students and mentors)
+
+- **Student header → Assign Mentor:** pick a program, then its Instructor and Program Advisor
+  (`AssignMentorModal` in `shared/ActionModals.tsx`).
+- **Mentor header → Assign Mentor** (next to Edit Role): the same dialog, titled **"Assign Mentor to
+  a Program"** (`AssignMentorToProgramModal`). Pick a program (searchable), then the mentor's role in
+  it: Instructor, Program Advisor, or both. The summary lists the mentor per role; their current
+  role is preselected, and Save stays disabled when nothing would change.
+- Both still save in the page only, like the rest of this module. The backend endpoint for the
+  mentor version is `PUT /mentors/admin/{mentorId}/programs` ("Replace mentor and advisor eligibility
+  for programs"); wire it when the Mentors tab moves to the API (mentor ids here are sample ids).

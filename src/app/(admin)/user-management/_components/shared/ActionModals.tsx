@@ -329,6 +329,95 @@ export function AssignMentorModal({
   );
 }
 
+/** A mentor's role(s) in one program: "Instructor", "Program Advisor" or both. */
+export const MENTOR_ROLE_OPTIONS = ["Instructor", "Program Advisor", "Instructor & Program Advisor"] as const;
+export type MentorRoleOption = (typeof MENTOR_ROLE_OPTIONS)[number];
+
+/**
+ * Mentor version of Assign Mentor: pick a program, then this mentor's role in
+ * it. Same dialog, selects, summary and buttons as the student one.
+ */
+export function AssignMentorToProgramModal({
+  mentorName,
+  programs,
+  current,
+  onClose,
+  onSave,
+}: {
+  mentorName: string;
+  programs: string[];
+  /** Program title → the mentor's existing role there, to preselect. */
+  current: Record<string, MentorRoleOption>;
+  onClose: () => void;
+  onSave: (program: string, role: MentorRoleOption) => void;
+}) {
+  const [program, setProgram] = useState("");
+  const [role, setRole] = useState<MentorRoleOption | "">("");
+  const [open, setOpen] = useState<"program" | "role" | null>(null);
+  const toggle = (k: NonNullable<typeof open>) => () => setOpen((o) => (o === k ? null : k));
+  const existing = program ? current[program] : undefined;
+  const roles = role === "Instructor & Program Advisor" ? ["Instructor", "Program Advisor"] : role ? [role] : [];
+
+  return (
+    <Modal title="Assign Mentor to a Program" onClose={onClose}>
+      <form
+        className={`${styles.form} ${styles.assignForm}`}
+        onMouseDown={(e) => {
+          if (open && !(e.target as HTMLElement).closest(`.${styles.selectWrap}`)) setOpen(null);
+        }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (program && role) onSave(program, role);
+        }}
+      >
+        <div className={styles.selects}>
+          <Select
+            label="Program"
+            placeholder="Select program"
+            options={programs}
+            value={program}
+            onChange={(v) => {
+              setProgram(v);
+              setRole(current[v] ?? "");
+            }}
+            open={open === "program"}
+            onToggle={toggle("program")}
+            searchPlaceholder="Search programs..."
+          />
+          <Select
+            label="Role"
+            placeholder="Select role"
+            options={[...MENTOR_ROLE_OPTIONS]}
+            value={role}
+            onChange={(v) => setRole(v as MentorRoleOption)}
+            open={open === "role"}
+            onToggle={toggle("role")}
+          />
+        </div>
+
+        {program && roles.length > 0 && (
+          <div className={styles.summary}>
+            <h4 className={styles.summaryTitle}>Assign Mentor:</h4>
+            <ul className={styles.summaryList}>
+              {roles.map((r) => (
+                <li key={r}>
+                  <span className={styles.summaryName}>{mentorName}</span>
+                  <span className={styles.summaryMeta}>
+                    {program} - <strong>{r}</strong>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {existing && existing !== role && <p className={styles.summaryMeta}>Currently: {existing}</p>}
+          </div>
+        )}
+
+        <Buttons confirm="Save" disabled={!program || !role || existing === role} onCancel={onClose} />
+      </form>
+    </Modal>
+  );
+}
+
 /** Short confirmation shown after an action completes. */
 export function Toast({ message, onDone }: { message: string; onDone: () => void }) {
   useEffect(() => {
