@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { naira, type PayoutRequest, type PayoutStatus } from "./data";
 
 /**
@@ -20,6 +20,7 @@ type ApiWithdrawal = {
   minorUnit: number;
   status: PayoutStatus;
   bankName?: string | null;
+  bankCode?: string | null;
   accountNumber?: string | null;
   accountName?: string | null;
   note?: string | null;
@@ -45,6 +46,8 @@ function toPayout(w: ApiWithdrawal): PayoutRequest {
     amount: w.currency === "NGN" ? naira(value) : `${w.currency} ${Math.round(value).toLocaleString()}`,
     amountValue: value,
     bank: w.bankName || "-",
+    bankCode: w.bankCode || "",
+    studentId: w.studentId || null,
     accountName: w.accountName || "",
     account: acct ? `•••• ${acct.slice(-4)}` : "-",
     status: w.status,
@@ -106,5 +109,55 @@ export function usePayoutAction() {
         body: note?.trim() ? { note: note.trim() } : {},
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.all }),
+  });
+}
+
+/** GET /students/admin/:studentId (Postman "User Management → Students → Single Student Overview"). */
+export type StudentProfile = {
+  fullName: string | null;
+  email: string | null;
+  phoneNumber: string | null;
+  location: string;
+  joinedAt: string | null;
+  accountLabel: string | null;
+};
+
+type ApiStudent = {
+  fullName?: string | null;
+  email?: string | null;
+  phoneNumber?: string | null;
+  city?: string | null;
+  stateRegion?: string | null;
+  country?: string | null;
+  joinedAt?: string | null;
+  accountLabel?: string | null;
+};
+
+/**
+ * The payee's account, when they are a student account (payouts carry their
+ * studentId). Resolves to null — not an error — when there is none, e.g. a
+ * mentor or ambassador account the students endpoint doesn't cover.
+ */
+export function useStudentProfile(studentId: string | null) {
+  return useQuery({
+    queryKey: ["referrals", "student", studentId ?? ""],
+    enabled: !!studentId,
+    retry: false,
+    queryFn: async (): Promise<StudentProfile | null> => {
+      try {
+        const s = await api<ApiStudent>(`/students/admin/${encodeURIComponent(studentId!)}`, { expectedStatuses: [403, 404] });
+        return {
+          fullName: s.fullName ?? null,
+          email: s.email ?? null,
+          phoneNumber: s.phoneNumber ?? null,
+          location: [s.city, s.stateRegion, s.country].filter(Boolean).join(", "),
+          joinedAt: s.joinedAt ?? null,
+          accountLabel: s.accountLabel ?? null,
+        };
+      } catch (e) {
+        if (e instanceof ApiError && (e.status === 404 || e.status === 403)) return null;
+        throw e;
+      }
+    },
   });
 }

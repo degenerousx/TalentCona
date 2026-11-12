@@ -105,6 +105,10 @@ export function ReferralsView() {
                 error={all.isError && !all.data ? all.error : null}
                 onRetry={() => void all.refetch()}
                 retrying={all.isFetching}
+                onReviewPayouts={() => {
+                  setTab("payouts");
+                  tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
               /> : <PayoutRequests />}
           </TabPanel>
         </Card>

@@ -50,6 +50,8 @@ export type RequestOptions = {
    */
   auth?: boolean;
   signal?: AbortSignal;
+  /** Statuses the caller handles itself (e.g. 404 for "no such record"): thrown as usual, but not logged. */
+  expectedStatuses?: number[];
 };
 
 function url(path: string, query?: Query) {
@@ -103,6 +105,7 @@ async function send<T>(path: string, opts: RequestOptions): Promise<T> {
   // retries, and wrong credentials at login (the form says so). In dev, Next
   // shows every console.error as an error overlay.
   const expected =
+    opts.expectedStatuses?.includes(error.status) ||
     (error.status === 401 && (path === "/auth/refresh" || refreshesOn401(path, opts))) ||
     (path === "/auth/login" && (error.status === 400 || error.status === 401));
   if (!expected) {
