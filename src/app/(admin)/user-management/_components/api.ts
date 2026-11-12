@@ -1124,3 +1124,71 @@ export function useMentorCount(section: MentorSection, enabled = true) {
     queryFn: () => countPages("/mentors/admin", { section }),
   });
 }
+
+// ---- Find a user by email (every place admins can see) -------------------------------
+
+export type LookupHit = {
+  where: "pending" | "assigned" | "unassigned" | "student";
+  id: string;
+  name: string;
+  email: string;
+  /** Mentor application status / student account status. */
+  status: string | null;
+  href: string;
+};
+
+const LOOKUP_WHERE: Record<LookupHit["where"], string> = {
+  pending: "Mentors → Pending Reviews",
+  assigned: "Mentors → Assigned Mentors",
+  unassigned: "Mentors → Unassigned Mentors",
+  student: "Students",
+};
+export const lookupWhere = (w: LookupHit["where"]) => LOOKUP_WHERE[w];
+
+/**
+ * Searches the three mentor sections and the students list (all search name
+ * and email server-side) for one person. The admin API has no section for
+ * mentors who haven't submitted their application (Draft) or verified their
+ * email, so those can't be found here — the dialog says so.
+ */
+export function useUserLookup(term: string) {
+  const q = term.trim();
+  return useQuery({
+    ...FRESH,
+    queryKey: ["user-management", "lookup", q.toLowerCase()],
+    enabled: q.length >= 3,
+    retry: false,
+    queryFn: async (): Promise<LookupHit[]> => {
+      const sections: MentorSection[] = ["pending", "assigned", "unassigned"];
+      const [mentorPages, studentPage] = await Promise.all([
+        Promise.all(sections.map((section) => api<CursorPage<Loose>>("/mentors/admin", { query: { section, search: q, limit: 20 } }))),
+        api<CursorPage<ApiStudentRow>>("/students/admin", { query: { search: q, limit: 20 } }),
+      ]);
+      const mentors = await Promise.all(
+        mentorPages.flatMap((page, i) =>
+          page.items.map(async (m): Promise<LookupHit> => {
+            const where = sections[i];
+            const detail = await api<Loose>(`/mentors/admin/${enc(String(m.id))}`).catch(() => null);
+            return {
+              where,
+              id: String(m.id),
+              name: str(m.fullName) ?? str(m.email) ?? "Unnamed",
+              email: str(m.email) ?? "",
+              status: str((detail?.application as Loose | undefined)?.status),
+              href: where === "pending" ? `/user-management/mentors/review/${enc(String(m.id))}` : where === "unassigned" ? `/user-management/mentors/assign/${enc(String(m.id))}` : `/user-management/mentors/${enc(String(m.id))}`,
+            };
+          }),
+        ),
+      );
+      const students: LookupHit[] = studentPage.items.map((s) => ({
+        where: "student",
+        id: s.id,
+        name: s.fullName || s.email,
+        email: s.email,
+        status: s.accountLabel,
+        href: `/user-management/${enc(s.id)}`,
+      }));
+      return [...mentors, ...students];
+    },
+  });
+}

@@ -416,3 +416,38 @@
   flex-direction: column;
   gap: 2px;
 }
+
+/* ---- Find a user ---- */
+.headerRow {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.findButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid #d1d5dc;
+  background: #ffffff;
+  color: #101828;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.findButton:hover {
+  border-color: #722fff;
+  color: #722fff;
+}

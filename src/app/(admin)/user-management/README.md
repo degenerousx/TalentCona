@@ -39,7 +39,19 @@ there is no sample data. All requests live in `_components/api.ts`.
 - Status, payment method, laptop, rating and capacity filters take one value each
   in the API, so those lists are single-choice. Expertise is sent as a slug.
 
+## Find a user
+
+The **Find a user** button (page header) searches Students and all three
+mentor sections by name or email and says where the person is. A mentor only
+appears to admins after verifying their email, completing every application
+step and pressing **Submit**: until then the application is a `Draft`, and
+`GET /mentors/admin` requires `section=pending|assigned|unassigned`, none of
+which include drafts. The dialog explains this when nothing matches.
+
 ## Gaps in the backend (shown honestly in the UI)
+
+- **Unsubmitted mentor sign-ups:** no admin endpoint lists Draft applications or
+  unverified mentor accounts, so they can't be shown anywhere yet.
 
 - **Partners:** no admin endpoint; only the public partnership/sponsorship forms.
   The tab says so.

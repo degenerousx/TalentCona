@@ -9,6 +9,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 import { shortDate, usePrograms, useStudents, type StudentRow } from "./api";
 import { EMPTY_FILTERS, activeFilterCount, studentQuery, type StudentFilters } from "./filters";
 import FilterPanel from "./shared/FilterPanel";
+import FindUserDialog from "./shared/FindUserDialog";
 import ListFooter from "./shared/ListFooter";
 import MentorsPanel from "./mentors/MentorsPanel";
 import PartnersPanel from "./partners/PartnersPanel";
@@ -133,14 +134,21 @@ export default function UserManagement() {
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<StudentFilters>(EMPTY_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [findOpen, setFindOpen] = useState(false);
   const filterCount = activeFilterCount(filters);
   const programs = usePrograms();
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>User Management</h1>
-        <p className={styles.subtitle}>Manage students, mentors, and partners</p>
+      <header className={`${styles.header} ${styles.headerRow}`}>
+        <div className={styles.headerText}>
+          <h1 className={styles.title}>User Management</h1>
+          <p className={styles.subtitle}>Manage students, mentors, and partners</p>
+        </div>
+        <button type="button" className={styles.findButton} onClick={() => setFindOpen(true)} aria-haspopup="dialog">
+          <SearchIcon />
+          Find a user
+        </button>
       </header>
 
       <section className={styles.card}>
@@ -189,6 +197,7 @@ export default function UserManagement() {
         </div>
       </section>
 
+      {findOpen && <FindUserDialog onClose={() => setFindOpen(false)} />}
       {filtersOpen && (
         <FilterPanel
           initial={filters}
