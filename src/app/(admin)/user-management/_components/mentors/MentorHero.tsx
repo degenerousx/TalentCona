@@ -2,16 +2,25 @@
 
 import { useCallback, useState } from "react";
 import { BanIcon, MailIcon, MapPinIcon, PhoneIcon, SendIcon, SquarePenIcon } from "@/components/icons";
-import { NotifyModal, SuspendModal, Toast } from "../shared/ActionModals";
+import { AssignMentorToProgramModal, NotifyModal, SuspendModal, Toast, type MentorRoleOption } from "../shared/ActionModals";
 import { initials } from "../data/students";
-import type { MentorProfile } from "../data/mentors";
+import { ASSIGNABLE_PROGRAMS, type MentorProfile } from "../data/mentors";
 import hero from "../students/StudentHero.module.css";
 import styles from "./MentorProfile.module.css";
 
-/** Purple mentor header with Edit Role, Notify and Suspend, shared by the mentor pages. */
+/** Purple mentor header with Edit Role, Assign Mentor, Notify and Suspend, shared by the mentor pages. */
 export default function MentorHero({ mentor }: { mentor: MentorProfile }) {
   const [status, setStatus] = useState<"Active" | "Suspended">(mentor.status);
-  const [modal, setModal] = useState<"notify" | "suspend" | null>(null);
+  const [modal, setModal] = useState<"assign" | "notify" | "suspend" | null>(null);
+  // Program title → this mentor's role there, starting from their current assignments.
+  const [roles, setRoles] = useState<Record<string, MentorRoleOption>>(() => {
+    const byProgram: Record<string, Set<string>> = {};
+    for (const a of mentor.current) (byProgram[a.program] ??= new Set()).add(a.role);
+    return Object.fromEntries(
+      Object.entries(byProgram).map(([program, set]) => [program, (set.size > 1 ? "Instructor & Program Advisor" : [...set][0]) as MentorRoleOption]),
+    );
+  });
+  const programs = [...new Set([...ASSIGNABLE_PROGRAMS.map((p) => p.title), ...mentor.current.map((a) => a.program)])].sort((a, b) => a.localeCompare(b));
   const [toast, setToast] = useState<string | null>(null);
   const close = useCallback(() => setModal(null), []);
   const clearToast = useCallback(() => setToast(null), []);
@@ -50,6 +59,10 @@ export default function MentorHero({ mentor }: { mentor: MentorProfile }) {
           <button type="button" className={`${hero.action} ${hero.actionAssign}`} onClick={() => setToast("Editing mentor roles is coming soon.")}>
             <SquarePenIcon size={16} color="#364153" strokeWidth={2} />
             Edit Role
+          </button>
+          <button type="button" className={`${hero.action} ${hero.actionAssign}`} onClick={() => setModal("assign")} aria-haspopup="dialog">
+            <SquarePenIcon size={16} color="#364153" strokeWidth={2} />
+            Assign Mentor
           </button>
           <button type="button" className={hero.action} onClick={() => setModal("notify")} aria-haspopup="dialog">
             <SendIcon size={16} color="#364153" strokeWidth={2} />
@@ -93,6 +106,19 @@ export default function MentorHero({ mentor }: { mentor: MentorProfile }) {
           onSend={() => {
             setModal(null);
             setToast(`Notification sent to ${mentor.name}.`);
+          }}
+        />
+      )}
+      {modal === "assign" && (
+        <AssignMentorToProgramModal
+          mentorName={mentor.name}
+          programs={programs}
+          current={roles}
+          onClose={close}
+          onSave={(program, role) => {
+            setRoles((prev) => ({ ...prev, [program]: role }));
+            setModal(null);
+            setToast(`${mentor.name} assigned to ${program} as ${role}.`);
           }}
         />
       )}
