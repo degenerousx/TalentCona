@@ -16,7 +16,8 @@ const FIRST_USE_WINDOW_MS = 7 * 24 * 3_600_000;
 // ---- Read state ----------------------------------------------------------------
 // The backend has nowhere to store "read", so it lives in this browser, per admin.
 
-type ReadState = { since: number; read: string[] };
+/** `cleared`: notifications the admin removed from their list (never shown again). */
+type ReadState = { since: number; read: string[]; cleared?: string[] };
 
 const storageKey = (adminId: string | null) => `tc-notifications:${adminId ?? "me"}`;
 const READ_EVENT = "tc-notifications-read";
@@ -39,7 +40,10 @@ function loadState(adminId: string | null): ReadState {
 function saveState(adminId: string | null, state: ReadState) {
   try {
     // Keep the newest ids only; old ones have long left every source.
-    localStorage.setItem(storageKey(adminId), JSON.stringify({ ...state, read: state.read.slice(-500) }));
+    localStorage.setItem(
+      storageKey(adminId),
+      JSON.stringify({ ...state, read: state.read.slice(-1000), cleared: (state.cleared ?? []).slice(-1000) }),
+    );
   } catch {
     // Read state just won't persist.
   }
@@ -56,6 +60,8 @@ export type NotificationsState = {
   failed: string[];
   markRead: (id: string) => void;
   markAllRead: () => void;
+  /** Remove these notifications from the list for good (they also count as read). */
+  clear: (ids: string[]) => void;
   refresh: () => void;
 };
 
@@ -94,12 +100,13 @@ export function useNotifications(): NotificationsState {
   const dataKey = results.map((r) => r.dataUpdatedAt).join(",");
   const items = useMemo(() => {
     const read = new Set(state?.read ?? []);
+    const cleared = new Set(state?.cleared ?? []);
     const since = state?.since ?? 0;
     const seen = new Set<string>();
     const all: (AppNotification & { unread: boolean })[] = [];
     for (const r of results) {
       for (const n of r.data ?? []) {
-        if (seen.has(n.id)) continue;
+        if (seen.has(n.id) || cleared.has(n.id)) continue;
         seen.add(n.id);
         all.push({ ...n, unread: !read.has(n.id) && (n.at === null || timeOf(n) > since) });
       }
@@ -122,6 +129,19 @@ export function useNotifications(): NotificationsState {
     saveState(adminId, { ...current, read: [...new Set([...current.read, ...items.map((n) => n.id)])] });
   }, [adminId, items]);
 
+  const clear = useCallback(
+    (ids: string[]) => {
+      if (!ids.length) return;
+      const current = loadState(adminId);
+      saveState(adminId, {
+        ...current,
+        read: [...new Set([...current.read, ...ids])],
+        cleared: [...new Set([...(current.cleared ?? []), ...ids])],
+      });
+    },
+    [adminId],
+  );
+
   const refresh = useCallback(() => results.forEach((r) => void r.refetch()), [results]);
 
   return {
@@ -131,6 +151,7 @@ export function useNotifications(): NotificationsState {
     failed: sources.filter((_, i) => results[i]?.isError).map((s) => s.label),
     markRead,
     markAllRead,
+    clear,
     refresh,
   };
 }
