@@ -36,7 +36,8 @@ export class ApiError extends Error {
   }
 }
 
-export type Query = Record<string, string | number | boolean | null | undefined>;
+/** Arrays are sent as repeated keys (`programIds=a&programIds=b`). */
+export type Query = Record<string, string | number | boolean | null | undefined | readonly string[]>;
 
 export type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -59,7 +60,8 @@ function url(path: string, query?: Query) {
   if (!query) return base;
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
-    if (value != null && value !== "") params.set(key, String(value));
+    if (Array.isArray(value)) for (const v of value) params.append(key, v);
+    else if (value != null && value !== "") params.set(key, String(value));
   }
   const qs = params.toString();
   return qs ? `${base}?${qs}` : base;

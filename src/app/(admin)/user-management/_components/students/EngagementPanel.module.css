@@ -107,3 +107,46 @@
     padding-bottom: 24px;
   }
 }
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  line-height: 20px;
+  color: #101828;
+}
+
+.itemMeta {
+  font-size: 12px;
+  line-height: 16px;
+  color: #6a7282;
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #d1d5dc;
+}
+
+.dotOn {
+  background: #00a63e;
+}

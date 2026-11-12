@@ -2,36 +2,33 @@
 
 import { useCallback, useState } from "react";
 import { BanIcon, MailIcon, MapPinIcon, PhoneIcon, SendIcon, SquarePenIcon } from "@/components/icons";
-import { AssignMentorModal, NotifyModal, SuspendModal, Toast, type Assignment } from "../shared/ActionModals";
-import { MENTOR_POOL, initials, type Student, type StudentStatus } from "../data/students";
+import { AssignMentorModal, NotifyModal, SuspendModal, Toast } from "../shared/ActionModals";
+import { errorText, initials, shortDate, useNotify, useReinstate, useSuspend, type StudentDetail } from "../api";
 import styles from "./StudentHero.module.css";
 
-/** Purple student header: avatar, name, badges, contact details and actions. */
+/** Purple student header: avatar, name, badges, contact details and actions, all backed by the API. */
 export default function StudentHero({
   student,
   subtitle,
-  programId,
+  enrollmentId,
 }: {
-  student: Student;
+  student: StudentDetail;
   subtitle?: string;
-  /** Program the page is showing, preselected in Assign Mentor. */
-  programId?: string;
+  /** Enrollment the page is showing, preselected in Assign Mentor. */
+  enrollmentId?: string;
 }) {
-  const [status, setStatus] = useState<StudentStatus>(student.status);
   const [modal, setModal] = useState<"assign" | "notify" | "suspend" | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const close = useCallback(() => setModal(null), []);
   const clearToast = useCallback(() => setToast(null), []);
+  const notify = useNotify("students", student.id);
+  const suspend = useSuspend("students", student.id);
+  const reinstate = useReinstate("students", student.id);
 
-  const programs = student.currentPrograms;
-  const [assignments, setAssignments] = useState<Record<string, Assignment>>(() =>
-    Object.fromEntries(programs.map((p) => [p.title, { instructor: p.mentor?.name ?? "", advisor: p.advisor?.name ?? "" }])),
-  );
-  const people = [...new Set([...MENTOR_POOL, ...Object.values(assignments).flatMap((a) => [a.instructor, a.advisor])])]
-    .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b));
-  const initialProgram = (programs.find((p) => p.id === programId) ?? programs[0])?.title ?? "";
-  const suspended = status === "Suspended";
+  const enrollments = student.current;
+  const initialEnrollment = (enrollments.find((e) => e.enrollmentId === enrollmentId) ?? enrollments[0])?.enrollmentId ?? "";
+  const suspended = student.status === "Suspended";
+  const joined = shortDate(student.joinedAt);
 
   return (
     <section className={styles.hero} aria-label="Student">
@@ -43,22 +40,28 @@ export default function StudentHero({
         <h1 className={styles.name}>{student.name}</h1>
         {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
         <div className={styles.badges}>
-          <span className={suspended ? `${styles.badgeStatus} ${styles.badgeSuspended}` : styles.badgeStatus}>{status}</span>
-          <span className={styles.badgeOutline}>Joined: {student.joined}</span>
+          <span className={suspended ? `${styles.badgeStatus} ${styles.badgeSuspended}` : styles.badgeStatus} title={student.suspensionReason ?? undefined}>
+            {student.status}
+          </span>
+          {joined && <span className={styles.badgeOutline}>Joined: {joined}</span>}
         </div>
         <ul className={styles.contacts}>
           <li>
             <MailIcon size={16} color="#FFFFFF" strokeWidth={2} />
             <a href={`mailto:${student.email}`}>{student.email}</a>
           </li>
-          <li>
-            <PhoneIcon size={16} color="#FFFFFF" strokeWidth={2} />
-            <a href={`tel:${student.phone.replace(/[^+\d]/g, "")}`}>{student.phone}</a>
-          </li>
-          <li>
-            <MapPinIcon size={16} color="#FFFFFF" strokeWidth={2} />
-            <span>{student.location}</span>
-          </li>
+          {student.phone && (
+            <li>
+              <PhoneIcon size={16} color="#FFFFFF" strokeWidth={2} />
+              <a href={`tel:${student.phone.replace(/[^+\d]/g, "")}`}>{student.phone}</a>
+            </li>
+          )}
+          {student.location && (
+            <li>
+              <MapPinIcon size={16} color="#FFFFFF" strokeWidth={2} />
+              <span>{student.location}</span>
+            </li>
+          )}
         </ul>
       </div>
 
@@ -67,7 +70,8 @@ export default function StudentHero({
           type="button"
           className={`${styles.action} ${styles.actionAssign}`}
           onClick={() => setModal("assign")}
-          disabled={programs.length === 0}
+          disabled={enrollments.length === 0}
+          title={enrollments.length ? undefined : "The student has no current program"}
           aria-haspopup="dialog"
         >
           <SquarePenIcon size={16} color="#364153" strokeWidth={2} />
@@ -81,21 +85,19 @@ export default function StudentHero({
           <button
             type="button"
             className={styles.action}
-            onClick={() => {
-              setStatus("Active");
-              setToast(`${student.name} has been reactivated.`);
-            }}
+            disabled={reinstate.isPending}
+            onClick={() =>
+              reinstate.mutate(undefined, {
+                onSuccess: () => setToast(`${student.name} has been reactivated.`),
+                onError: (e) => setToast(`Couldn't reactivate: ${errorText(e)}`),
+              })
+            }
           >
             <BanIcon size={16} color="#364153" strokeWidth={2} />
-            Reactivate
+            {reinstate.isPending ? "Reactivating…" : "Reactivate"}
           </button>
         ) : (
-          <button
-            type="button"
-            className={`${styles.action} ${styles.actionDanger}`}
-            onClick={() => setModal("suspend")}
-            aria-haspopup="dialog"
-          >
+          <button type="button" className={`${styles.action} ${styles.actionDanger}`} onClick={() => setModal("suspend")} aria-haspopup="dialog">
             <BanIcon size={16} color="#C10007" strokeWidth={2} />
             Suspend
           </button>
@@ -106,8 +108,8 @@ export default function StudentHero({
         <SuspendModal
           name={student.name}
           onClose={close}
-          onConfirm={() => {
-            setStatus("Suspended");
+          onConfirm={async (reason) => {
+            await suspend.mutateAsync(reason);
             setModal(null);
             setToast(`${student.name} has been suspended.`);
           }}
@@ -116,7 +118,8 @@ export default function StudentHero({
       {modal === "notify" && (
         <NotifyModal
           onClose={close}
-          onSend={() => {
+          onSend={async (subject, message) => {
+            await notify.mutateAsync({ subject, message });
             setModal(null);
             setToast(`Notification sent to ${student.name}.`);
           }}
@@ -124,13 +127,11 @@ export default function StudentHero({
       )}
       {modal === "assign" && (
         <AssignMentorModal
-          programs={programs.map((p) => p.title)}
-          initialProgram={initialProgram}
-          assignments={assignments}
-          people={people}
+          studentId={student.id}
+          enrollments={enrollments.map((e) => ({ enrollmentId: e.enrollmentId, title: e.title }))}
+          initialEnrollment={initialEnrollment}
           onClose={close}
-          onSave={(program, a) => {
-            setAssignments((prev) => ({ ...prev, [program]: a }));
+          onSaved={(program) => {
             setModal(null);
             setToast(`Mentor assignment saved for ${program}.`);
           }}

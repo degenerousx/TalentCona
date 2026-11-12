@@ -1,35 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import {
-  AwardIcon,
-  BriefcaseIcon,
-  CircleCheckIcon,
-  CircleXIcon,
-  ClockIcon,
-  GraduationCapIcon,
-  LinkIcon,
-  RatingStarIcon,
-  TrophyIcon,
-} from "@/components/icons";
-import { RATING_LABELS, applicantInitials, type MentorApplication } from "../data/mentorApplications";
-import styles from "./MentorReview.module.css";
+import { AwardIcon, BriefcaseIcon, CircleCheckIcon, CircleXIcon, ClockIcon, GraduationCapIcon, LinkIcon, RatingStarIcon, TrophyIcon } from "@/components/icons";
+import { errorText, humanize, timeAgo, useMentor, useRateMentor, useReviewMentor, type ReviewAction } from "../api";
+import { RATING_LABELS, applicantInitials, isAwaitingReview } from "./reviewParts";
+import PageState from "../shared/PageState";
 import RejectDialog from "../shared/RejectDialog";
 import SuccessDialog from "../shared/SuccessDialog";
-
-type Decision = "pending" | "approved" | "rejected";
-
-const DECISION_BADGE: Record<Decision, { label: string; className: string }> = {
-  pending: { label: "Pending Review", className: styles.pending },
-  approved: { label: "Approved", className: styles.approved },
-  rejected: { label: "Rejected", className: styles.rejected },
-};
+import styles from "./MentorReview.module.css";
 
 /** Clickable 1–5 trophy scale for the reviewer's own rating. */
-function TrophyRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+function TrophyRating({ value, onChange, disabled }: { value: number; onChange: (v: number) => void; disabled?: boolean }) {
   const [hover, setHover] = useState(0);
-  const shown = hover || value;
+  const shown = (!disabled && hover) || value;
   return (
     <div className={styles.scale} role="radiogroup" aria-label="Rate this application" onMouseLeave={() => setHover(0)}>
       {[1, 2, 3, 4, 5].map((n) => (
@@ -40,6 +25,7 @@ function TrophyRating({ value, onChange }: { value: number; onChange: (v: number
           aria-checked={value === n}
           aria-label={`${n} out of 5`}
           className={styles.trophy}
+          disabled={disabled}
           onMouseEnter={() => setHover(n)}
           onFocus={() => setHover(n)}
           onBlur={() => setHover(0)}
@@ -52,20 +38,39 @@ function TrophyRating({ value, onChange }: { value: number; onChange: (v: number
   );
 }
 
-export default function MentorReview({ application: a }: { application: MentorApplication }) {
-  const [rating, setRating] = useState(a.adminRating);
-  const [decision, setDecision] = useState<Decision>("pending");
-  const [dialog, setDialog] = useState<string | null>(null);
-  const [rejecting, setRejecting] = useState(false);
-  const [feedback, setFeedback] = useState("");
-  const closeDialog = useCallback(() => setDialog(null), []);
-  const closeReject = useCallback(() => setRejecting(false), []);
-  const badge = DECISION_BADGE[decision];
+const SUCCESS: Record<ReviewAction, string> = {
+  approve: "Mentorship Application Approved Successfully !",
+  reject: "Mentorship Application Rejected Successfully !",
+  "request-changes": "Changes Requested Successfully !",
+};
 
-  const decide = (d: Exclude<Decision, "pending">) => {
-    setDecision(d);
-    setDialog(`Mentorship Application ${d === "approved" ? "Approved" : "Rejected"} Successfully !`);
+/** Pending application: details, admin rating (PATCH /rating) and the approve / reject / request-changes decision. */
+export default function MentorReview({ mentorId }: { mentorId: string }) {
+  const router = useRouter();
+  const query = useMentor(mentorId);
+  const rate = useRateMentor(mentorId);
+  const review = useReviewMentor(mentorId);
+  const [dialog, setDialog] = useState<"reject" | "changes" | null>(null);
+  const [done, setDone] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const closeDialog = useCallback(() => setDialog(null), []);
+  const finish = useCallback(() => router.push("/user-management#mentors"), [router]);
+
+  const m = query.data;
+  if (!m) return <PageState query={query} noun="mentor application" backHref="/user-management#mentors" />;
+  const a = m.application;
+  const pending = isAwaitingReview(a.status);
+  const rating = rate.isPending ? (rate.variables ?? 0) : (a.adminRating ?? 0);
+  const system = a.systemRating != null ? Math.round(a.systemRating) : null;
+
+  const decide = async (action: ReviewAction, reason?: string) => {
+    setActionError(null);
+    await review.mutateAsync({ action, reason });
+    setDialog(null);
+    setDone(SUCCESS[action]);
   };
+
+  const badgeClass = a.status === "Approved" ? styles.approved : a.status === "Rejected" ? styles.rejected : styles.pending;
 
   return (
     <div className={styles.page}>
@@ -78,46 +83,46 @@ export default function MentorReview({ application: a }: { application: MentorAp
         Mentor Details
       </h1>
 
-      <section className={styles.card} aria-label={`${a.name}'s application`}>
+      <section className={styles.card} aria-label={`${m.name}'s application`}>
         <header className={styles.head}>
           <div className={styles.who}>
             <span className={styles.avatar} aria-hidden="true">
-              {applicantInitials(a.name)}
+              {applicantInitials(m.name)}
             </span>
             <div className={styles.identity}>
-              <h2 className={styles.name}>{a.name}</h2>
-              <a href={`mailto:${a.email}`} className={styles.email}>
-                {a.email}
+              <h2 className={styles.name}>{m.name}</h2>
+              <a href={`mailto:${m.email}`} className={styles.email}>
+                {m.email}
               </a>
-              <span className={styles.submitted}>
-                <ClockIcon size={12} color="#455A64" strokeWidth={2} />
-                Submitted {a.submitted}
-              </span>
+              {a.submittedAt && (
+                <span className={styles.submitted}>
+                  <ClockIcon size={12} color="#455A64" strokeWidth={2} />
+                  Submitted {timeAgo(a.submittedAt)}
+                </span>
+              )}
             </div>
           </div>
-          <span className={`${styles.badge} ${badge.className}`}>
-            {decision === "pending" && <ClockIcon size={12} color="#894B00" strokeWidth={2} />}
-            {badge.label}
+          <span className={`${styles.badge} ${badgeClass}`}>
+            {pending && <ClockIcon size={12} color="#894B00" strokeWidth={2} />}
+            {pending ? "Pending Review" : humanize(a.status)}
           </span>
         </header>
 
-        <p className={styles.bio}>{a.bio}</p>
+        <p className={styles.bio}>{a.bio ?? "No bio provided."}</p>
 
         <dl className={styles.details}>
           <div className={styles.detail}>
             <dt>Education</dt>
             <dd>
               <GraduationCapIcon size={16} color="#722FFF" strokeWidth={1.67} />
-              <span>{a.education}</span>
+              <span>{a.education ?? "Not provided"}</span>
             </dd>
           </div>
           <div className={styles.detail}>
             <dt>Experience</dt>
             <dd>
               <AwardIcon size={16} color="#722FFF" strokeWidth={1.67} />
-              <span>
-                {a.experience} {a.experience === 1 ? "year" : "years"}
-              </span>
+              <span>{a.experience != null ? `${a.experience} ${a.experience === 1 ? "year" : "years"}` : "Not provided"}</span>
             </dd>
           </div>
           <div className={styles.detail}>
@@ -125,9 +130,11 @@ export default function MentorReview({ application: a }: { application: MentorAp
             <dd>
               <BriefcaseIcon size={16} color="#722FFF" strokeWidth={1.67} />
               <ul className={styles.chips}>
+                {a.expertise.length === 0 && <li className={styles.chip}>Not provided</li>}
                 {a.expertise.map((e) => (
-                  <li key={e.skill} className={styles.chip}>
-                    {e.skill} -{e.years} {e.years === 1 ? "Year" : "Years"}
+                  <li key={e.label} className={styles.chip}>
+                    {e.label}
+                    {e.years ? ` -${e.years} ${e.years === 1 ? "Year" : "Years"}` : ""}
                   </li>
                 ))}
               </ul>
@@ -135,75 +142,110 @@ export default function MentorReview({ application: a }: { application: MentorAp
           </div>
         </dl>
 
-        <div className={styles.links}>
-          <a href={a.portfolio} target="_blank" rel="noreferrer" className={styles.link}>
-            <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
-            Portfolio
-          </a>
-          <a href={a.linkedin} target="_blank" rel="noreferrer" className={styles.link}>
-            <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
-            LinkedIn
-          </a>
-        </div>
+        {(a.link || a.introVideo || a.documents.length > 0) && (
+          <div className={styles.links}>
+            {a.link && (
+              <a href={a.link} target="_blank" rel="noreferrer" className={styles.link}>
+                <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
+                LinkedIn / Portfolio
+              </a>
+            )}
+            {a.introVideo && (
+              <a href={a.introVideo} target="_blank" rel="noreferrer" className={styles.link}>
+                <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
+                Intro video
+              </a>
+            )}
+            {a.documents.map((d) => (
+              <a key={d.url} href={d.url} target="_blank" rel="noreferrer" className={styles.link}>
+                <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
+                {d.label}
+              </a>
+            ))}
+          </div>
+        )}
 
         <div className={styles.ratings}>
           <div className={styles.ratingCol}>
             <h3 className={styles.ratingTitle}>System Rating</h3>
             <div className={styles.ratingRow}>
-              <div className={styles.scale} aria-label={`System rating ${a.systemRating} out of 5`}>
+              <div className={styles.scale} aria-label={system != null ? `System rating ${system} out of 5` : "No system rating"}>
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <RatingStarIcon key={n} on={n <= a.systemRating} />
+                  <RatingStarIcon key={n} on={system != null && n <= system} />
                 ))}
               </div>
-              <span className={`${styles.score} ${styles.scoreStars}`}>{a.systemRating}/5</span>
+              <span className={`${styles.score} ${styles.scoreStars}`}>{system != null ? `${system}/5` : "—"}</span>
             </div>
-            <p className={styles.ratingText}>{RATING_LABELS[a.systemRating]}</p>
+            <p className={styles.ratingText}>{a.systemRatingSummary ?? RATING_LABELS[system ?? 0]}</p>
           </div>
 
           <div className={styles.ratingCol}>
             <h3 className={styles.ratingTitle}>Rate This Application</h3>
             <div className={styles.ratingRow}>
-              <TrophyRating value={rating} onChange={setRating} />
+              <TrophyRating
+                value={rating}
+                disabled={!pending || rate.isPending}
+                onChange={(v) => {
+                  setActionError(null);
+                  rate.mutate(v, { onError: (e) => setActionError(`Couldn't save the rating: ${errorText(e)}`) });
+                }}
+              />
               <span className={`${styles.score} ${styles.scoreTrophies}`}>{rating}/5</span>
             </div>
-            <p className={styles.ratingText}>{RATING_LABELS[rating]}</p>
+            <p className={styles.ratingText} aria-live="polite">
+              {rate.isPending ? "Saving rating…" : RATING_LABELS[rating]}
+            </p>
           </div>
         </div>
 
+        {actionError && (
+          <p role="alert" className={styles.ratingText} style={{ color: "#C10007" }}>
+            {actionError}
+          </p>
+        )}
+
         <footer className={styles.footer}>
-          {decision === "pending" ? (
+          {pending ? (
             <div className={styles.actions}>
-              <button type="button" className={styles.reject} onClick={() => setRejecting(true)}>
+              <button type="button" className={styles.reject} onClick={() => setDialog("reject")} disabled={review.isPending}>
                 <CircleXIcon size={16} color="#F44336" strokeWidth={1.67} />
                 Reject
               </button>
-              <button type="button" className={styles.approve} onClick={() => decide("approved")} disabled={rating === 0} title={rating === 0 ? "Rate the application first" : undefined}>
+              <button type="button" className={styles.undo} onClick={() => setDialog("changes")} disabled={review.isPending}>
+                Request changes
+              </button>
+              <button
+                type="button"
+                className={styles.approve}
+                disabled={rating === 0 || review.isPending || rate.isPending}
+                title={rating === 0 ? "Rate the application first" : undefined}
+                onClick={() => void decide("approve").catch((e) => setActionError(`Couldn't approve: ${errorText(e)}`))}
+              >
                 <CircleCheckIcon size={16} color="#FFFFFF" strokeWidth={1.67} />
-                Approve
+                {review.isPending && review.variables?.action === "approve" ? "Approving…" : "Approve"}
               </button>
             </div>
           ) : (
-            <div className={styles.actions}>
-              <button type="button" className={styles.undo} onClick={() => setDecision("pending")}>
-                Undo decision
-              </button>
-            </div>
+            <p className={styles.ratingText}>
+              {a.status === "Rejected" && a.rejectionReason ? `Rejected: ${a.rejectionReason}` : `This application was ${humanize(a.status).toLowerCase()}`}
+              {a.reviewedAt ? ` ${timeAgo(a.reviewedAt)}.` : "."}
+            </p>
           )}
         </footer>
       </section>
 
-      {rejecting && (
+      {dialog === "reject" && <RejectDialog onClose={closeDialog} onSubmit={(text) => decide("reject", text)} />}
+      {dialog === "changes" && (
         <RejectDialog
-          initial={feedback}
-          onClose={closeReject}
-          onSubmit={(text) => {
-            setFeedback(text);
-            setRejecting(false);
-            decide("rejected");
-          }}
+          title="Request Changes"
+          label="What should the mentor change?"
+          placeholder="Explain what needs updating before the application can be approved..."
+          required
+          onClose={closeDialog}
+          onSubmit={(text) => decide("request-changes", text)}
         />
       )}
-      {dialog && <SuccessDialog title={dialog} onClose={closeDialog} />}
+      {done && <SuccessDialog title={done} onClose={finish} />}
     </div>
   );
 }

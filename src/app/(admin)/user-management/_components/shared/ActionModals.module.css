@@ -406,3 +406,22 @@ textarea.field {
     min-height: 0;
   }
 }
+
+/* Request failed: shown above the buttons. */
+.error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #ffc9c9;
+  color: #c10007;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: #4a5565;
+}

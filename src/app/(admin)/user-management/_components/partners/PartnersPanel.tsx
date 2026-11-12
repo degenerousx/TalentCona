@@ -1,25 +1,21 @@
-import { PARTNERS } from "../data/partners";
-import styles from "./PartnersPanel.module.css";
+import { Handshake } from "lucide-react";
+import { EmptyState } from "@/components/ui/States";
+import styles from "../UserManagement.module.css";
 
-export default function PartnersPanel({ query }: { query: string }) {
-  const q = query.trim().toLowerCase();
-  const partners = q ? PARTNERS.filter((p) => [p.name, p.description].some((v) => v.toLowerCase().includes(q))) : PARTNERS;
-
-  if (partners.length === 0) {
-    return <p className={styles.empty}>{q ? <>No partners match “{query}”.</> : "No partners yet."}</p>;
-  }
-
+/**
+ * The backend has no admin endpoint for partners yet: Postman only has the
+ * public landing-page forms (POST /partnership-requests and
+ * /sponsorship-requests), with nothing to list them. So this says so instead
+ * of showing sample organisations.
+ */
+export default function PartnersPanel() {
   return (
-    <ul className={styles.grid}>
-      {partners.map((p) => (
-        <li key={p.id} className={styles.card}>
-          <span className={styles.logo} style={{ background: p.color }} aria-hidden="true">
-            {p.name.charAt(0)}
-          </span>
-          <h3 className={styles.name}>{p.name}</h3>
-          <p className={styles.description}>{p.description}</p>
-        </li>
-      ))}
-    </ul>
+    <div className={styles.state}>
+      <EmptyState
+        icon={Handshake}
+        title="Partners aren't available yet"
+        description="Partnership and sponsorship requests are collected from the website, but the backend doesn't offer an admin list of partners yet. They'll appear here once that endpoint exists."
+      />
+    </div>
   );
 }

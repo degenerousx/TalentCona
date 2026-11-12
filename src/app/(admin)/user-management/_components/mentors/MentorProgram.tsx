@@ -2,57 +2,48 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import {
-  ActivityIcon,
-  AwardIcon,
-  CalendarIcon,
-  ClockIcon,
-  FileTextIcon,
-  MessageSquareIcon,
-  UsersIcon,
-  VideoIcon,
-} from "@/components/icons";
+import { AwardIcon, CalendarIcon, ClockIcon, FileTextIcon, MessageSquareIcon, UsersIcon, VideoIcon } from "@/components/icons";
 import MentorHero from "./MentorHero";
 import MentorPerformance from "./MentorPerformance";
-import { DEFAULT_MENTOR_ACTIVITY, type MentorActivityKind, type MentorAssignment, type MentorProfile } from "../data/mentors";
+import PageState from "../shared/PageState";
+import PanelState from "../shared/PanelState";
+import { clockTime, minutesLabel, roleLabel, useMentor, useMentorProgram, type MentorDetail, type MentorProgramDetail } from "../api";
 import base from "../students/ProgramDetail.module.css";
 import styles from "./MentorProgram.module.css";
 
 const TABS = ["overview", "performance"] as const;
 type Tab = (typeof TABS)[number];
 
-const ACTIVITY_ICON: Record<MentorActivityKind, React.ReactNode> = {
-  session: <VideoIcon size={16} color="#00A63E" />,
-  feedback: <FileTextIcon size={16} color="#9810FA" />,
-  meeting: <UsersIcon size={16} color="#4F39F6" />,
-  login: <ActivityIcon size={16} color="#4A5565" />,
-  submission: <FileTextIcon size={16} color="#155DFC" />,
-  message: <MessageSquareIcon size={16} color="#155DFC" />,
-};
-
-function Overview({ mentor }: { mentor: MentorProfile }) {
-  const activity = mentor.activity ?? DEFAULT_MENTOR_ACTIVITY;
+function Overview({ mentor, detail }: { mentor: MentorDetail; detail: MentorProgramDetail }) {
   return (
     <div className={`${base.overview} ${styles.overview}`}>
       <div className={base.activity}>
         <h2 className={base.heading}>Recent Activity</h2>
-        <ul className={base.activityList}>
-          {activity.map((a) => (
-            <li key={`${a.title}-${a.date}-${a.time}`} className={base.activityItem}>
-              <span className={base.activityIcon}>{ACTIVITY_ICON[a.kind]}</span>
-              <div className={base.activityBody}>
-                <p className={base.activityTitle}>{a.title}</p>
-                <p className={base.activityMeta}>
-                  <CalendarIcon size={14} color="#4A5565" strokeWidth={1.67} />
-                  <time dateTime={a.date}>{a.date}</time>
-                  <ClockIcon size={14} color="#4A5565" strokeWidth={1.67} />
-                  <span>{a.time}</span>
-                </p>
-              </div>
-              <span className={base.status}>{a.status}</span>
-            </li>
-          ))}
-        </ul>
+        {detail.activity.length === 0 ? (
+          <p className={base.emptyNote}>No sessions or feedback in this program yet.</p>
+        ) : (
+          <ul className={base.activityList}>
+            {detail.activity.map((a) => (
+              <li key={a.id} className={base.activityItem}>
+                <span className={base.activityIcon}>
+                  {a.kind === "session" ? <VideoIcon size={16} color="#00A63E" /> : <FileTextIcon size={16} color="#9810FA" />}
+                </span>
+                <div className={base.activityBody}>
+                  <p className={base.activityTitle}>{a.title}</p>
+                  {a.at && (
+                    <p className={base.activityMeta}>
+                      <CalendarIcon size={14} color="#4A5565" strokeWidth={1.67} />
+                      <time dateTime={a.at}>{a.at.slice(0, 10)}</time>
+                      <ClockIcon size={14} color="#4A5565" strokeWidth={1.67} />
+                      <span>{clockTime(a.at)}</span>
+                    </p>
+                  )}
+                </div>
+                {a.status && <span className={base.status}>{a.status}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <aside className={base.side}>
@@ -62,9 +53,11 @@ function Overview({ mentor }: { mentor: MentorProfile }) {
             <span>Expertise</span>
           </h3>
           <ul className={styles.chips}>
-            {mentor.expertise.map((e) => (
-              <li key={e.skill} className={styles.chip}>
-                {e.skill} - {e.years} {e.years === 1 ? "year" : "years"}
+            {mentor.application.expertise.length === 0 && <li className={styles.chip}>Not provided</li>}
+            {mentor.application.expertise.map((e) => (
+              <li key={e.label} className={styles.chip}>
+                {e.label}
+                {e.years ? ` - ${e.years} ${e.years === 1 ? "year" : "years"}` : ""}
               </li>
             ))}
           </ul>
@@ -75,7 +68,7 @@ function Overview({ mentor }: { mentor: MentorProfile }) {
             <ClockIcon size={18} color="#9810FA" strokeWidth={1.5} />
             <span>Avg Session</span>
           </h3>
-          <p className={base.infoText}>{mentor.avgSession}</p>
+          <p className={base.infoText}>{minutesLabel(detail.averageDuration) ?? "No sessions yet"}</p>
         </div>
 
         <div className={`${base.info} ${base.infoLaptop}`}>
@@ -83,35 +76,42 @@ function Overview({ mentor }: { mentor: MentorProfile }) {
             <MessageSquareIcon size={18} color="#00A63E" strokeWidth={1.5} />
             <span>Response Time</span>
           </h3>
-          <p className={base.infoText}>{mentor.responseTime}</p>
+          <p className={base.infoText}>{minutesLabel(detail.averageResponse) ?? "Not measured yet"}</p>
         </div>
 
         <div className={`${base.info} ${base.infoActive}`}>
           <h3 className={base.infoTitle}>
-            <ActivityIcon size={18} color="#4A5565" strokeWidth={1.5} />
-            <span>Last Active</span>
+            <UsersIcon size={18} color="#4A5565" strokeWidth={1.5} />
+            <span>Mentees</span>
           </h3>
-          <p className={base.infoText}>{mentor.lastActive}</p>
+          <p className={base.infoText}>{detail.mentees.length}</p>
         </div>
       </aside>
     </div>
   );
 }
 
-export default function MentorProgram({ mentor, assignment }: { mentor: MentorProfile; assignment: MentorAssignment }) {
+export default function MentorProgram({ mentorId, programId }: { mentorId: string; programId: string }) {
   const [tab, setTab] = useState<Tab>("overview");
+  const mentorQuery = useMentor(mentorId);
+  const programQuery = useMentorProgram(mentorId, programId);
+  const mentor = mentorQuery.data;
+  const backHref = `/user-management/mentors/${mentorId}`;
+  if (!mentor) return <PageState query={mentorQuery} noun="mentor" backHref="/user-management#mentors" />;
+  const link = mentor.programs.find((p) => p.programId === programId);
+  const detail = programQuery.data;
 
   return (
     <div className={base.page}>
       <div className={base.backRow}>
-        <Link href={`/user-management/mentors/${mentor.id}`} className={base.back}>
+        <Link href={backHref} className={base.back}>
           ← Back
         </Link>
       </div>
 
       <MentorHero mentor={mentor} />
 
-      <section className={base.card} aria-label={`${assignment.program} (${assignment.role})`}>
+      <section className={base.card} aria-label={link ? `${link.title} (${roleLabel(link)})` : "Program"}>
         <div className={base.tabs} role="tablist" aria-label="Mentor program details">
           {TABS.map((t) => (
             <button
@@ -129,13 +129,18 @@ export default function MentorProgram({ mentor, assignment }: { mentor: MentorPr
           ))}
         </div>
 
-        {/* Every panel is rendered and toggled with `hidden`, so the markup works without JS too. */}
-        <div role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" hidden={tab !== "overview"}>
-          <Overview mentor={mentor} />
-        </div>
-        <div role="tabpanel" id="panel-performance" aria-labelledby="tab-performance" hidden={tab !== "performance"}>
-          <MentorPerformance mentor={mentor} />
-        </div>
+        {!detail ? (
+          <PanelState query={programQuery} noun="this program" />
+        ) : (
+          <>
+            <div role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" hidden={tab !== "overview"}>
+              <Overview mentor={mentor} detail={detail} />
+            </div>
+            <div role="tabpanel" id="panel-performance" aria-labelledby="tab-performance" hidden={tab !== "performance"}>
+              <MentorPerformance detail={detail} />
+            </div>
+          </>
+        )}
       </section>
     </div>
   );

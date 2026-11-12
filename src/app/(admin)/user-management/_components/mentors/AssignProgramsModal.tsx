@@ -3,7 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, RoleDefinitions } from "./AssignParts";
-import { ASSIGNABLE_PROGRAMS, type MentorRole } from "../data/mentors";
+export type MentorRole = "Instructor" | "Program Advisor";
+export type AssignableProgram = { id: string; title: string; track: string };
 import assign from "./MentorAssign.module.css";
 import styles from "./AssignProgramsModal.module.css";
 
@@ -15,19 +16,24 @@ export type ProgramRoles = Record<string, MentorRole | null>;
 /** Confirms which programs a mentor joins, one role per program. */
 export default function AssignProgramsModal({
   mentorName,
+  programs,
   initial,
   onCancel,
   onConfirm,
 }: {
   mentorName: string;
+  programs: AssignableProgram[];
   initial: ProgramRoles;
   onCancel: () => void;
-  onConfirm: (roles: Record<string, MentorRole>) => void;
+  /** Runs the request; a failure keeps the modal open with the error. */
+  onConfirm: (roles: Record<string, MentorRole>) => Promise<unknown>;
 }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const titleId = useId();
   const ref = useRef<HTMLDivElement>(null);
   const [roles, setRoles] = useState<ProgramRoles>(initial);
-  const chosen = ASSIGNABLE_PROGRAMS.filter((p) => p.id in roles);
+  const chosen = programs.filter((p) => p.id in roles);
   const ready = chosen.length > 0 && chosen.every((p) => roles[p.id]);
 
   useEffect(() => {
@@ -58,7 +64,7 @@ export default function AssignProgramsModal({
           <RoleDefinitions />
 
           <ul className={assign.programs} aria-label="Programs">
-            {ASSIGNABLE_PROGRAMS.map((p) => {
+            {programs.filter((p) => p.id in initial).map((p) => {
               const on = p.id in roles;
               return (
                 <li key={p.id} className={`${assign.program} ${on ? assign.programOn : ""}`}>
@@ -103,18 +109,33 @@ export default function AssignProgramsModal({
           </div>
         </div>
 
+        {error && (
+          <p role="alert" className={styles.error}>
+            {error}
+          </p>
+        )}
         <footer className={styles.foot}>
-          <button type="button" className={styles.cancel} onClick={onCancel}>
+          <button type="button" className={styles.cancel} onClick={onCancel} disabled={busy}>
             Cancel
           </button>
           <button
             type="button"
             className={styles.confirm}
-            disabled={!ready}
+            disabled={!ready || busy}
             title={ready ? undefined : "Choose a role for every selected program"}
-            onClick={() => onConfirm(Object.fromEntries(chosen.map((p) => [p.id, roles[p.id] as MentorRole])))}
+            onClick={async () => {
+              setBusy(true);
+              setError(null);
+              try {
+                await onConfirm(Object.fromEntries(chosen.map((p) => [p.id, roles[p.id] as MentorRole])));
+              } catch (e) {
+                setError(e instanceof Error && e.message ? e.message : "Something went wrong. Please try again.");
+              } finally {
+                setBusy(false);
+              }
+            }}
           >
-            Confirm Assignment
+            {busy ? "Assigning…" : "Confirm Assignment"}
           </button>
         </footer>
       </div>

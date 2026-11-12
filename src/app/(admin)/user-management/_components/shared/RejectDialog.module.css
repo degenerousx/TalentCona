@@ -187,3 +187,19 @@
     flex: 1 1 0;
   }
 }
+
+.error {
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #ffc9c9;
+  color: #c10007;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

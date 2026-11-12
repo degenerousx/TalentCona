@@ -3,53 +3,49 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import {
-  AwardIcon,
-  BriefcaseIcon,
-  ClockIcon,
-  LinkIcon,
-  SearchIcon,
-  StarIcon,
-  TrophyIcon,
-} from "@/components/icons";
+import { AwardIcon, BriefcaseIcon, ClockIcon, LinkIcon, SearchIcon, StarIcon, TrophyIcon } from "@/components/icons";
+import { ErrorState, LoadingState } from "@/components/ui/States";
 import { Check, RoleDefinitions } from "./AssignParts";
-import AssignProgramsModal from "./AssignProgramsModal";
-import RejectDialog from "../shared/RejectDialog";
-import ReviewApplicationModal from "./ReviewApplicationModal";
-import type { AssignableMentor } from "../data/assignableMentors";
-import { applicantInitials } from "../data/mentorApplications";
-import { ASSIGNABLE_PROGRAMS, type MentorRole } from "../data/mentors";
+import AssignProgramsModal, { type AssignableProgram, type MentorRole } from "./AssignProgramsModal";
+import PageState from "../shared/PageState";
+import SuccessDialog from "../shared/SuccessDialog";
+import { mergePrograms, timeAgo, useMentor, usePrograms, useSetMentorPrograms } from "../api";
+import { applicantInitials } from "./reviewParts";
 import review from "./MentorReview.module.css";
 import styles from "./MentorAssign.module.css";
-import SuccessDialog from "../shared/SuccessDialog";
 
 const ROLES: MentorRole[] = ["Instructor", "Program Advisor"];
 
 /** Program id → the roles chosen for it (possibly none yet). */
 type Selection = Record<string, MentorRole[]>;
 
-export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }) {
+/**
+ * Assign an approved, unassigned mentor to programs:
+ * pick programs and roles → confirm → PUT /mentors/admin/:id/programs → success.
+ */
+export default function MentorAssign({ mentorId }: { mentorId: string }) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
+  const query = useMentor(mentorId);
+  const programsQuery = usePrograms();
+  const save = useSetMentorPrograms(mentorId);
+  const [search, setSearch] = useState("");
   const [selection, setSelection] = useState<Selection>({});
-  /** Assign → Assign Programs → Review Application → (Reject Application) → success. */
-  const [step, setStep] = useState<"page" | "programs" | "review" | "reject">("page");
-  const [rating, setRating] = useState(m.adminRating);
-  const [feedback, setFeedback] = useState("");
+  const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState<string | null>(null);
-  const backToPage = useCallback(() => setStep("page"), []);
-  const backToReview = useCallback(() => setStep("review"), []);
-  const finish = useCallback(() => router.push("/user-management#mentors"), [router]);
+  const backToPage = useCallback(() => setConfirming(false), []);
+  const finish = useCallback(() => router.push(`/user-management/mentors/${mentorId}`), [router, mentorId]);
 
-  const q = query.trim().toLowerCase();
-  const programs = q ? ASSIGNABLE_PROGRAMS.filter((p) => `${p.title} ${p.track}`.toLowerCase().includes(q)) : ASSIGNABLE_PROGRAMS;
-  const chosen = ASSIGNABLE_PROGRAMS.filter((p) => selection[p.id]);
+  const m = query.data;
+  if (!m) return <PageState query={query} noun="mentor" backHref="/user-management#mentors" />;
+  const a = m.application;
+  const all: AssignableProgram[] = (programsQuery.data ?? []).map((p) => ({ id: p.id, title: p.title, track: p.school }));
+  const q = search.trim().toLowerCase();
+  const programs = q ? all.filter((p) => `${p.title} ${p.track}`.toLowerCase().includes(q)) : all;
+  const chosen = all.filter((p) => selection[p.id]);
 
-  const toggleProgram = (id: string) =>
-    setSelection(({ [id]: current, ...rest }) => (current ? rest : { ...rest, [id]: [] }));
+  const toggleProgram = (id: string) => setSelection(({ [id]: current, ...rest }) => (current ? rest : { ...rest, [id]: [] }));
   // One role per program, as in the Assign Programs modal: picking a role replaces the other one.
-  const toggleRole = (id: string, role: MentorRole) =>
-    setSelection((s) => ({ ...s, [id]: s[id]?.includes(role) ? [] : [role] }));
+  const toggleRole = (id: string, role: MentorRole) => setSelection((s) => ({ ...s, [id]: s[id]?.includes(role) ? [] : [role] }));
 
   return (
     <div className={review.page}>
@@ -73,28 +69,22 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
               <a href={`mailto:${m.email}`} className={review.email}>
                 {m.email}
               </a>
-              <span className={review.submitted}>
-                <ClockIcon size={12} color="#455A64" strokeWidth={2} />
-                Approved {m.approved}
-              </span>
+              {a.reviewedAt && (
+                <span className={review.submitted}>
+                  <ClockIcon size={12} color="#455A64" strokeWidth={2} />
+                  Approved {timeAgo(a.reviewedAt)}
+                </span>
+              )}
             </div>
           </div>
         </header>
 
-        {(m.portfolio || m.linkedin) && (
+        {a.link && (
           <div className={review.links}>
-            {m.portfolio && (
-              <a href={m.portfolio} target="_blank" rel="noreferrer" className={review.link}>
-                <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
-                Portfolio
-              </a>
-            )}
-            {m.linkedin && (
-              <a href={m.linkedin} target="_blank" rel="noreferrer" className={review.link}>
-                <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
-                LinkedIn
-              </a>
-            )}
+            <a href={a.link} target="_blank" rel="noreferrer" className={review.link}>
+              <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
+              LinkedIn / Portfolio
+            </a>
           </div>
         )}
 
@@ -103,23 +93,21 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
             <dt>Experience</dt>
             <dd className={styles.statWide}>
               <AwardIcon size={16} color="#722FFF" strokeWidth={1.33} />
-              <span>
-                {m.experience} {m.experience === 1 ? "year" : "years"}
-              </span>
+              <span>{a.experience != null ? `${a.experience} ${a.experience === 1 ? "year" : "years"}` : "—"}</span>
             </dd>
           </div>
           <div className={styles.stat}>
             <dt>System Rating</dt>
             <dd>
               <StarIcon />
-              <span className={styles.score}>{m.systemRating}</span>
+              <span className={styles.score}>{a.systemRating ?? "—"}</span>
             </dd>
           </div>
           <div className={styles.stat}>
             <dt>Admin Rating</dt>
             <dd>
               <TrophyIcon />
-              <span className={styles.score}>{rating || "—"}</span>
+              <span className={styles.score}>{a.adminRating ?? "—"}</span>
             </dd>
           </div>
         </dl>
@@ -130,9 +118,11 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
             <dd>
               <BriefcaseIcon size={16} color="#722FFF" strokeWidth={1.33} />
               <ul className={review.chips}>
-                {m.expertise.map((e) => (
-                  <li key={e.skill} className={review.chip}>
-                    {e.skill} -{e.years} {e.years === 1 ? "Year" : "Years"}
+                {a.expertise.length === 0 && <li className={review.chip}>Not provided</li>}
+                {a.expertise.map((e) => (
+                  <li key={e.label} className={review.chip}>
+                    {e.label}
+                    {e.years ? ` -${e.years} ${e.years === 1 ? "Year" : "Years"}` : ""}
                   </li>
                 ))}
               </ul>
@@ -147,7 +137,7 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
             <span className={styles.searchIcon}>
               <SearchIcon size={20} />
             </span>
-            <input type="search" placeholder="Search Programs..." value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search programs" />
+            <input type="search" placeholder="Search Programs..." value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search programs" />
           </label>
 
           <ul className={styles.programs} aria-label="Programs">
@@ -175,7 +165,19 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
                 </li>
               );
             })}
-            {programs.length === 0 && <li className={styles.noMatch}>No programs match “{query}”.</li>}
+            {programsQuery.isPending && (
+              <li>
+                <LoadingState variant="inline" label="Loading programs…" />
+              </li>
+            )}
+            {programsQuery.isError && (
+              <li>
+                <ErrorState error={programsQuery.error} title="Couldn't load programs" onRetry={() => void programsQuery.refetch()} retrying={programsQuery.isFetching} />
+              </li>
+            )}
+            {programsQuery.isSuccess && programs.length === 0 && (
+              <li className={styles.noMatch}>{q ? <>No programs match “{search}”.</> : "No programs exist yet."}</li>
+            )}
           </ul>
 
           <div className={styles.summary} aria-live="polite">
@@ -202,7 +204,7 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
               className={styles.assignButton}
               disabled={chosen.length === 0}
               title={chosen.length ? undefined : "Choose a program first"}
-              onClick={() => setStep("programs")}
+              onClick={() => setConfirming(true)}
             >
               Assign
             </button>
@@ -210,41 +212,22 @@ export default function MentorAssign({ mentor: m }: { mentor: AssignableMentor }
         </footer>
       </section>
 
-      {step === "programs" && (
+      {confirming && (
         <AssignProgramsModal
           mentorName={m.name}
+          programs={chosen}
           initial={Object.fromEntries(chosen.map((p) => [p.id, selection[p.id][0] ?? null]))}
           onCancel={backToPage}
-          onConfirm={(confirmed) => {
+          onConfirm={async (confirmed) => {
+            const changes = Object.entries(confirmed).map(([programId, role]) => ({
+              programId,
+              mentor: role === "Instructor",
+              advisor: role === "Program Advisor",
+            }));
+            await save.mutateAsync(mergePrograms(m.programs, changes));
             setSelection(Object.fromEntries(Object.entries(confirmed).map(([id, role]) => [id, [role]])));
-            setStep("review");
-          }}
-        />
-      )}
-      {step === "review" && (
-        <ReviewApplicationModal
-          mentor={m}
-          initialRating={rating}
-          onClose={backToPage}
-          onApprove={(r) => {
-            setRating(r);
-            setStep("page");
-            setDone("Mentorship Application Approved & Assigned Successfully !");
-          }}
-          onReject={(r) => {
-            setRating(r);
-            setStep("reject");
-          }}
-        />
-      )}
-      {step === "reject" && (
-        <RejectDialog
-          initial={feedback}
-          onClose={backToReview}
-          onSubmit={(text) => {
-            setFeedback(text);
-            setStep("page");
-            setDone("Mentorship Application Rejected Successfully !");
+            setConfirming(false);
+            setDone(`${m.name} Assigned Successfully !`);
           }}
         />
       )}

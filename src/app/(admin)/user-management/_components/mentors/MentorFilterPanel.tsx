@@ -1,15 +1,31 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { CAPACITIES } from "../data/mentors";
-import { FilterDrawer, MultiSelect, RangeField, TextField } from "../shared/FilterPanel";
+import { FilterDrawer, MultiSelect, RangeField, TextField, type FilterOption } from "../shared/FilterPanel";
 import {
+  CAPACITY_OPTIONS,
   EMPTY_ASSIGNED_FILTERS,
   EMPTY_CANDIDATE_FILTERS,
   RATING_OPTIONS,
   type AssignedFilters,
   type CandidateFilters,
-} from "../data/mentorFilters";
+} from "../filters";
+
+/** Common expertise areas from the mentor application (the API filters by their slug). */
+const EXPERTISE_SUGGESTIONS = [
+  "Frontend Development",
+  "Backend Development",
+  "Full Stack Development",
+  "Mobile Development",
+  "UI/UX Design",
+  "Data Science",
+  "DevOps",
+  "System Architecture",
+  "API Development",
+  "Code Review",
+  "Agile/Scrum",
+  "Game Development",
+];
 
 /** Keeps one dropdown open at a time within a drawer. */
 function useOpenList<K extends string>() {
@@ -22,13 +38,11 @@ function useOpenList<K extends string>() {
 /** Pending Reviews (system rating only) and Unassigned Mentors (plus admin rating). */
 export function CandidateFilterPanel({
   initial,
-  expertise,
   withAdminRating,
   onApply,
   onClose,
 }: {
   initial: CandidateFilters;
-  expertise: string[];
   withAdminRating: boolean;
   onApply: (f: CandidateFilters) => void;
   onClose: () => void;
@@ -46,7 +60,7 @@ export function CandidateFilterPanel({
       onReset={() => setDraft(EMPTY_CANDIDATE_FILTERS)}
       onApply={() => onApply(draft)}
     >
-      <TextField label="Expertise" value={draft.expertise} onChange={(v) => set("expertise", v)} suggestions={expertise} />
+      <TextField label="Expertise" value={draft.expertise} onChange={(v) => set("expertise", v)} suggestions={EXPERTISE_SUGGESTIONS} />
       <RangeField
         label="Total Experience"
         type="number"
@@ -64,6 +78,7 @@ export function CandidateFilterPanel({
         open={openList === "system"}
         onToggle={toggle("system")}
         compact
+        single
       />
       {withAdminRating && (
         <MultiSelect
@@ -75,6 +90,7 @@ export function CandidateFilterPanel({
           open={openList === "admin"}
           onToggle={toggle("admin")}
           compact
+          single
         />
       )}
     </FilterDrawer>
@@ -84,11 +100,14 @@ export function CandidateFilterPanel({
 export function AssignedFilterPanel({
   initial,
   programs,
+  programsNote,
   onApply,
   onClose,
 }: {
   initial: AssignedFilters;
-  programs: string[];
+  programs: FilterOption[];
+  /** "Loading programs…" / error text for the Programs list. */
+  programsNote?: string;
   onApply: (f: AssignedFilters) => void;
   onClose: () => void;
 }) {
@@ -121,17 +140,19 @@ export function AssignedFilterPanel({
         onChange={(v) => set("programs", v)}
         open={openList === "programs"}
         onToggle={toggle("programs")}
-        compact
+        searchPlaceholder="Search programs..."
+        note={programsNote}
       />
       <MultiSelect
         label="Capacity"
         allLabel="All"
-        options={CAPACITIES}
+        options={CAPACITY_OPTIONS}
         selected={draft.capacities}
         onChange={(v) => set("capacities", v)}
         open={openList === "capacity"}
         onToggle={toggle("capacity")}
         compact
+        single
       />
       <RangeField
         label="Number of Mentees"
@@ -150,6 +171,7 @@ export function AssignedFilterPanel({
         open={openList === "rating"}
         onToggle={toggle("rating")}
         compact
+        single
       />
     </FilterDrawer>
   );

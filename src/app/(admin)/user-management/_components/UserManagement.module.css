@@ -371,3 +371,48 @@
     padding: 0 14px;
   }
 }
+
+/* ---- API states ---- */
+.state {
+  padding: 16px 24px 24px;
+}
+
+.loadMoreRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px;
+  border-top: 0.89px solid #e5e7eb;
+  font-size: 13px;
+  line-height: 18px;
+  color: #4a5565;
+}
+
+.loadMore {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid #d1d5dc;
+  background: #ffffff;
+  color: #101828;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.loadMore:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.muted {
+  color: #6a7282;
+  font-size: 14px;
+}
+
+.programList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
