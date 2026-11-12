@@ -29,6 +29,15 @@ type Loose = Record<string, unknown>;
 const PAGE_SIZE = 20;
 const enc = encodeURIComponent;
 
+/**
+ * Users change outside this tab (a mentor submits an application, a student
+ * enrols, another admin approves someone), so User Management never trusts
+ * its cache: data is stale at once, refetched when the tab regains focus,
+ * and lists and counts also poll while the page is open.
+ */
+const FRESH = { staleTime: 0, refetchOnWindowFocus: true } as const;
+const LIVE = { ...FRESH, refetchInterval: 60_000 } as const;
+
 // ---- Formatting ---------------------------------------------------------------
 
 /** "₦315,000" from a minor-unit amount. */
@@ -207,6 +216,7 @@ const dayBound = (d: string | undefined, end: boolean) => (d ? new Date(`${d}T${
 
 export function useStudents(q: StudentQuery) {
   return useInfiniteQuery({
+    ...LIVE,
     queryKey: ["user-management", "students", "list", q],
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam }) => {
@@ -296,6 +306,7 @@ const studentKey = (id: string) => ["user-management", "students", "detail", id]
 
 export function useStudent(id: string) {
   return useQuery({
+    ...FRESH,
     queryKey: studentKey(id),
     retry: (count, e) => !(e instanceof ApiError && (e.status === 404 || e.status === 400)) && count < 2,
     queryFn: async (): Promise<StudentDetail> => {
@@ -356,6 +367,7 @@ type ApiEnrollment = {
 /** Overview (from the first page) plus the activity timeline, page by page. */
 export function useEnrollment(studentId: string, enrollmentId: string) {
   const query = useInfiniteQuery({
+    ...FRESH,
     queryKey: ["user-management", "students", "enrollment", studentId, enrollmentId],
     initialPageParam: null as string | null,
     retry: (count, e) => !(e instanceof ApiError && (e.status === 404 || e.status === 400)) && count < 2,
@@ -647,6 +659,7 @@ const assignmentKey = (studentId: string, enrollmentId: string) => ["user-manage
 
 export function useAssignment(studentId: string, enrollmentId: string | null) {
   return useQuery({
+    ...FRESH,
     queryKey: assignmentKey(studentId, enrollmentId ?? ""),
     enabled: !!enrollmentId,
     queryFn: async () => {
@@ -685,6 +698,8 @@ export function useUpdateAssignment(studentId: string) {
       void qc.invalidateQueries({ queryKey: assignmentKey(studentId, enrollmentId) });
       void qc.invalidateQueries({ queryKey: ["user-management", "students", "enrollment", studentId, enrollmentId] });
       void qc.invalidateQueries({ queryKey: studentKey(studentId) });
+      // Mentee counts and capacity change for the mentors involved.
+      void qc.invalidateQueries({ queryKey: ["user-management", "mentors"] });
     },
   });
 }
@@ -725,8 +740,10 @@ export function useReinstate(kind: AccountKind, id: string) {
 
 // ---- Mentors: summary and list -------------------------------------------------------------
 
-export function useMentorSummary() {
+export function useMentorSummary(enabled = true) {
   return useQuery({
+    ...LIVE,
+    enabled,
     queryKey: ["user-management", "mentors", "summary"],
     queryFn: () => api<{ pendingReviewCount: number; totalMentors: number; mentorCount: number; programAdvisorCount: number }>("/mentors/admin/summary"),
   });
@@ -794,6 +811,7 @@ export type MentorQuery = {
 
 export function useMentors(section: MentorSection, q: MentorQuery) {
   return useInfiniteQuery({
+    ...LIVE,
     queryKey: ["user-management", "mentors", "list", section, q],
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam }) => {
@@ -819,6 +837,48 @@ export function useMentors(section: MentorSection, q: MentorQuery) {
       return { ...page, items: page.items.map(toMentorRow) };
     },
     getNextPageParam: (last) => (last.hasNext ? last.nextCursor : null),
+  });
+}
+
+export type MentorRoleView = "instructors" | "advisors";
+
+/**
+ * Mentors who are Instructors (or Program Advisors) on at least one program.
+ * GET /mentors/admin has no role filter, so every assigned mentor is read and
+ * their per-program roles checked: from the row when it carries the
+ * mentor/advisor flags, otherwise from GET /mentors/admin/:id.
+ */
+export function useMentorsByRole(role: MentorRoleView | null) {
+  return useQuery({
+    ...LIVE,
+    enabled: !!role,
+    queryKey: ["user-management", "mentors", "list", "role", role ?? ""],
+    queryFn: async (): Promise<MentorRow[]> => {
+      const flag = role === "instructors" ? "mentor" : "advisor";
+      const raw: Loose[] = [];
+      let cursor: string | null = null;
+      for (let i = 0; i < 50; i++) {
+        const page: CursorPage<Loose> = await api<CursorPage<Loose>>("/mentors/admin", { query: { section: "assigned", limit: 100, cursor } });
+        raw.push(...page.items);
+        if (!page.hasNext || !page.nextCursor) break;
+        cursor = page.nextCursor;
+      }
+      const out: MentorRow[] = [];
+      for (let i = 0; i < raw.length; i += 6) {
+        const rows = await Promise.all(
+          raw.slice(i, i + 6).map(async (r) => {
+            const progs = Array.isArray(r.programs) ? (r.programs as unknown[]) : [];
+            const flagged = progs.length > 0 && progs.every((p) => p && typeof p === "object" && typeof (p as Loose)[flag] === "boolean");
+            const titles = flagged
+              ? progs.filter((p) => (p as Loose)[flag] === true).map((p) => nameOf(p) ?? "Program")
+              : toMentorDetail(await api<Loose>(`/mentors/admin/${enc(String(r.id))}`)).programs.filter((p) => p[flag]).map((p) => p.title);
+            return titles.length ? { ...toMentorRow(r), programs: titles } : null;
+          }),
+        );
+        out.push(...rows.filter((x): x is MentorRow => !!x));
+      }
+      return out.sort((a, b) => a.name.localeCompare(b.name));
+    },
   });
 }
 
@@ -919,6 +979,7 @@ const toMentorDetail = (m: Loose): MentorDetail => {
 
 export function useMentor(id: string) {
   return useQuery({
+    ...FRESH,
     queryKey: mentorKey(id),
     retry: (count, e) => !(e instanceof ApiError && (e.status === 404 || e.status === 400)) && count < 2,
     queryFn: async () => toMentorDetail(await api<Loose>(`/mentors/admin/${enc(id)}`, { expectedStatuses: [404] })),
@@ -1023,3 +1084,43 @@ export function mergePrograms(current: MentorProgramLink[], changes: { programId
 
 /** Readable message for a failed mutation. */
 export const errorText = (e: unknown) => (e instanceof Error && e.message ? e.message : "Something went wrong. Please try again.");
+
+// ---- Counts (dashboard) -----------------------------------------------------------
+
+/** Lists have no total, so counts page through them; past the cap they read "1,000+". */
+const COUNT_CAP_PAGES = 10;
+export type Count = { value: number; capped: boolean };
+
+async function countPages(path: string, query: Query): Promise<Count> {
+  let value = 0;
+  let cursor: string | null = null;
+  for (let i = 0; i < COUNT_CAP_PAGES; i++) {
+    const page: CursorPage<unknown> = await api<CursorPage<unknown>>(path, { query: { ...query, limit: 100, cursor } });
+    value += page.items.length;
+    if (!page.hasNext || !page.nextCursor) return { value, capped: false };
+    cursor = page.nextCursor;
+  }
+  return { value, capped: true };
+}
+
+export const countLabel = (c: Count | undefined) => (c ? `${c.value.toLocaleString()}${c.capped ? "+" : ""}` : undefined);
+
+/** Students, optionally only those with this account status. */
+export function useStudentCount(accountStatus?: "Active" | "Inactive" | "Suspended", enabled = true) {
+  return useQuery({
+    ...LIVE,
+    enabled,
+    queryKey: ["user-management", "students", "list", "count", accountStatus ?? "all"],
+    queryFn: () => countPages("/students/admin", { accountStatus }),
+  });
+}
+
+/** Mentors in one directory section. */
+export function useMentorCount(section: MentorSection, enabled = true) {
+  return useQuery({
+    ...LIVE,
+    enabled,
+    queryKey: ["user-management", "mentors", "list", "count", section],
+    queryFn: () => countPages("/mentors/admin", { section }),
+  });
+}

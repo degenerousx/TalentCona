@@ -434,3 +434,50 @@
   color: #6a7282;
   font-size: 14px;
 }
+
+/* ---- Clickable summary cards ---- */
+button.stat {
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+button.stat:hover {
+  border-color: #c4b4ff;
+}
+
+button.stat:focus-visible {
+  outline: 2px solid #722fff;
+  outline-offset: 2px;
+}
+
+button.stat.statActive {
+  border: 1.5px solid #722fff;
+  box-shadow: 0 0 0 3px rgba(114, 47, 255, 0.12);
+}
+
+.viewBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 24px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #f5f3ff;
+  color: #4d179a;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.viewClear {
+  border: 0;
+  background: none;
+  color: #722fff;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+}
