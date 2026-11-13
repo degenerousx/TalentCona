@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Icon } from "./AppIcon";
 import { NAV_ITEMS } from "@/config/navigation";
 import { logout } from "@/lib/auth";
@@ -16,11 +16,24 @@ const LOGOUT_ICON = {
   body: '<path d="M10 12L19 12M17 14L19 12L17 10M15 16L15 19C15 20.1046 14.1046 21 13 21L7 21C5.89543 21 5 20.1046 5 19L5 5C5 3.89543 5.89543 3 7 3L13 3C14.1046 3 15 3.89543 15 5L15 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
 };
 
+/** Below this width the sidebar starts collapsed (icons only) so pages keep their room. */
+const NARROW = "(max-width: 1023px)";
+const subscribeNarrow = (onChange: () => void) => {
+  const mq = window.matchMedia(NARROW);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+};
+const isNarrow = () => window.matchMedia(NARROW).matches;
+
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const session = useSession();
-  const [collapsed, setCollapsed] = useState(false);
+  const narrow = useSyncExternalStore(subscribeNarrow, isNarrow, () => false);
+  // The admin's own toggle, remembered per screen size: crossing the breakpoint
+  // goes back to that size's default (collapsed when narrow, open when wide).
+  const [choice, setChoice] = useState<{ narrow: boolean; collapsed: boolean } | null>(null);
+  const collapsed = choice && choice.narrow === narrow ? choice.collapsed : narrow;
   const [loggingOut, setLoggingOut] = useState(false);
   const activeRef = useRef<HTMLElement | null>(null);
   // Callback ref so the same ref works for both the <Link> and <div> branches.
@@ -120,7 +133,7 @@ export default function Sidebar() {
 
       <button
         type="button"
-        onClick={() => setCollapsed((c) => !c)}
+        onClick={() => setChoice({ narrow, collapsed: !collapsed })}
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         className="absolute top-60 -right-4 z-10 flex size-10 items-center justify-center rounded-full bg-primary text-white"
       >

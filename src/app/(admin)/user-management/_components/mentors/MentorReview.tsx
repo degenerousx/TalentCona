@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AwardIcon, BriefcaseIcon, CircleCheckIcon, CircleXIcon, ClockIcon, GraduationCapIcon, LinkIcon, RatingStarIcon, TrophyIcon } from "@/components/icons";
 import { errorText, humanize, timeAgo, useMentor, useRateMentor, useReviewMentor, type ReviewAction } from "../api";
 import { RATING_LABELS, applicantInitials, isAwaitingReview } from "./reviewParts";
@@ -51,10 +51,19 @@ export default function MentorReview({ mentorId }: { mentorId: string }) {
   const rate = useRateMentor(mentorId);
   const review = useReviewMentor(mentorId);
   const [dialog, setDialog] = useState<"reject" | "changes" | null>(null);
-  const [done, setDone] = useState<string | null>(null);
+  /** Success message, and where closing it goes: Approve continues to program assignment. */
+  const [done, setDone] = useState<{ title: string; next: string } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const closeDialog = useCallback(() => setDialog(null), []);
-  const finish = useCallback(() => router.push("/user-management#mentors"), [router]);
+  const finish = useCallback(() => {
+    if (done) router.push(done.next);
+  }, [router, done]);
+  // The success message shows briefly, then moves on by itself (closing it moves on sooner).
+  useEffect(() => {
+    if (!done) return;
+    const t = setTimeout(finish, 1800);
+    return () => clearTimeout(t);
+  }, [done, finish]);
 
   const m = query.data;
   if (!m) return <PageState query={query} noun="mentor application" backHref="/user-management#mentors" />;
@@ -67,7 +76,11 @@ export default function MentorReview({ mentorId }: { mentorId: string }) {
     setActionError(null);
     await review.mutateAsync({ action, reason });
     setDialog(null);
-    setDone(SUCCESS[action]);
+    setDone({
+      title: SUCCESS[action],
+      // After approval the next step is assigning programs (the Mentor Details assign page).
+      next: action === "approve" ? `/user-management/mentors/assign/${encodeURIComponent(mentorId)}` : "/user-management#mentors",
+    });
   };
 
   const badgeClass = a.status === "Approved" ? styles.approved : a.status === "Rejected" ? styles.rejected : styles.pending;
@@ -245,7 +258,7 @@ export default function MentorReview({ mentorId }: { mentorId: string }) {
           onSubmit={(text) => decide("request-changes", text)}
         />
       )}
-      {done && <SuccessDialog title={done} onClose={finish} />}
+      {done && <SuccessDialog title={done.title} onClose={finish} />}
     </div>
   );
 }

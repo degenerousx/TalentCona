@@ -11,7 +11,8 @@ import styles from "./AssignProgramsModal.module.css";
 const ROLES: MentorRole[] = ["Instructor", "Program Advisor"];
 
 /** Program id → its role (null while the program is ticked but no role is chosen). */
-export type ProgramRoles = Record<string, MentorRole | null>;
+/** Program id → its roles (empty while the program is ticked but no role is chosen yet). */
+export type ProgramRoles = Record<string, MentorRole[]>;
 
 /** Confirms which programs a mentor joins, one role per program. */
 export default function AssignProgramsModal({
@@ -26,7 +27,7 @@ export default function AssignProgramsModal({
   initial: ProgramRoles;
   onCancel: () => void;
   /** Runs the request; a failure keeps the modal open with the error. */
-  onConfirm: (roles: Record<string, MentorRole>) => Promise<unknown>;
+  onConfirm: (roles: Record<string, MentorRole[]>) => Promise<unknown>;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +35,7 @@ export default function AssignProgramsModal({
   const ref = useRef<HTMLDivElement>(null);
   const [roles, setRoles] = useState<ProgramRoles>(initial);
   const chosen = programs.filter((p) => p.id in roles);
-  const ready = chosen.length > 0 && chosen.every((p) => roles[p.id]);
+  const ready = chosen.length > 0 && chosen.every((p) => roles[p.id].length > 0);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCancel();
@@ -48,7 +49,7 @@ export default function AssignProgramsModal({
     };
   }, [onCancel]);
 
-  const toggleProgram = (id: string) => setRoles(({ [id]: current, ...rest }) => (current !== undefined ? rest : { ...rest, [id]: null }));
+  const toggleProgram = (id: string) => setRoles(({ [id]: current, ...rest }) => (current !== undefined ? rest : { ...rest, [id]: [] }));
 
   return createPortal(
     <div className={styles.overlay} onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
@@ -76,15 +77,18 @@ export default function AssignProgramsModal({
                     </span>
                   </label>
                   {on && (
-                    <div className={assign.roleChoices} role="radiogroup" aria-label={`Role in ${p.title}`}>
+                    <div className={assign.roleChoices} role="group" aria-label={`Role in ${p.title}`}>
                       {ROLES.map((r) => (
                         <label key={r} className={assign.roleChoice}>
-                          <input
-                            type="radio"
-                            name={`${titleId}-${p.id}`}
-                            className={styles.radio}
-                            checked={roles[p.id] === r}
-                            onChange={() => setRoles((s) => ({ ...s, [p.id]: r }))}
+                          <Check
+                            checked={roles[p.id].includes(r)}
+                            label={`${r} in ${p.title}`}
+                            onChange={() =>
+                              setRoles((s) => ({
+                                ...s,
+                                [p.id]: s[p.id].includes(r) ? s[p.id].filter((x) => x !== r) : ROLES.filter((x) => x === r || s[p.id].includes(x)),
+                              }))
+                            }
                           />
                           <span>{r}</span>
                         </label>
@@ -101,7 +105,7 @@ export default function AssignProgramsModal({
             <ul className={assign.summaryList}>
               {chosen.map((p) => (
                 <li key={p.id}>
-                  • {p.title} - {roles[p.id] ? <b>{roles[p.id]}</b> : <span className={assign.summaryMissing}>choose a role</span>}
+                  • {p.title} - {roles[p.id]?.length ? <b>{roles[p.id].join(" & ")}</b> : <span className={assign.summaryMissing}>choose a role</span>}
                 </li>
               ))}
               {chosen.length === 0 && <li className={assign.summaryEmpty}>No programs selected yet.</li>}
@@ -127,7 +131,7 @@ export default function AssignProgramsModal({
               setBusy(true);
               setError(null);
               try {
-                await onConfirm(Object.fromEntries(chosen.map((p) => [p.id, roles[p.id] as MentorRole])));
+                await onConfirm(Object.fromEntries(chosen.map((p) => [p.id, roles[p.id]])));
               } catch (e) {
                 setError(e instanceof Error && e.message ? e.message : "Something went wrong. Please try again.");
               } finally {

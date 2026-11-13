@@ -78,7 +78,8 @@
 }
 
 .name {
-  height: 28px;
+  /* Fixed 28px row on desktop (as designed); long names may wrap on narrow screens. */
+  min-height: 28px;
   margin: 0 0 2px;
   font-size: 18px;
   font-weight: 600;
@@ -88,6 +89,8 @@
 }
 
 .email {
+  max-width: 100%;
+  overflow-wrap: anywhere;
   font-size: 14px;
   line-height: 20px;
   color: #0f172a;
