@@ -17,6 +17,17 @@ there is no sample data. All requests live in `_components/api.ts`.
 | `/user-management/mentors/review/:mentorId` | Application review: rating, approve, reject, request changes | `PATCH …/rating`, `POST …/approve\|reject\|request-changes` |
 | `/user-management/mentors/assign/:mentorId` | Assign an approved mentor to programs | `PUT /mentors/admin/:id/programs` |
 
+## Approve → assign
+
+On the review page, **Approve** (`POST /mentors/admin/:id/approve`) shows the
+success message, then opens **Mentor Details → assign**
+(`/user-management/mentors/assign/:id`) on its own. There the admin picks
+programs and one or both roles (Instructor, Program Advisor), confirms, and
+`PUT /mentors/admin/:id/programs` saves them, then the mentor's profile opens.
+The assign page starts from the mentor's current programs, and the PUT sends
+the full resulting list, so unticking a program removes it. Reject and
+Request changes return to the mentors list.
+
 ## Notes
 
 - **Always current:** User Management queries are stale immediately, refetch when

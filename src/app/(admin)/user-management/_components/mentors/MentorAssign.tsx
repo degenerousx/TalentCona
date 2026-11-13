@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AwardIcon, BriefcaseIcon, ClockIcon, LinkIcon, SearchIcon, StarIcon, TrophyIcon } from "@/components/icons";
 import { ErrorState, LoadingState } from "@/components/ui/States";
 import { Check, RoleDefinitions } from "./AssignParts";
@@ -19,9 +19,21 @@ const ROLES: MentorRole[] = ["Instructor", "Program Advisor"];
 /** Program id → the roles chosen for it (possibly none yet). */
 type Selection = Record<string, MentorRole[]>;
 
+/** The mentor's current program links as a selection, so the page opens on what they already have. */
+const selectionOf = (links: { programId: string; mentor: boolean; advisor: boolean }[]): Selection =>
+  Object.fromEntries(
+    links.map((l) => [l.programId, [...(l.mentor ? ["Instructor" as const] : []), ...(l.advisor ? ["Program Advisor" as const] : [])]]),
+  );
+
+/** "LinkedIn" for a LinkedIn URL, otherwise "Portfolio". */
+const linkLabel = (url: string) => (/linkedin\.com/i.test(url) ? "LinkedIn" : "Portfolio");
+
 /**
- * Assign an approved, unassigned mentor to programs:
- * pick programs and roles → confirm → PUT /mentors/admin/:id/programs → success.
+ * Assign an approved mentor to programs (also where Approve on the review
+ * page lands): pick programs and one or both roles → confirm →
+ * PUT /mentors/admin/:id/programs → success. The page starts from the
+ * mentor's current programs, and the PUT sends the full resulting list
+ * (the endpoint replaces it), so unticking a program removes it.
  */
 export default function MentorAssign({ mentorId }: { mentorId: string }) {
   const router = useRouter();
@@ -29,23 +41,33 @@ export default function MentorAssign({ mentorId }: { mentorId: string }) {
   const programsQuery = usePrograms();
   const save = useSetMentorPrograms(mentorId);
   const [search, setSearch] = useState("");
-  const [selection, setSelection] = useState<Selection>({});
+  // null until the admin changes something: until then the mentor's current programs are shown.
+  const [edited, setEdited] = useState<Selection | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const backToPage = useCallback(() => setConfirming(false), []);
   const finish = useCallback(() => router.push(`/user-management/mentors/${mentorId}`), [router, mentorId]);
+  // Like the review page: the success message shows briefly, then opens the mentor's profile.
+  useEffect(() => {
+    if (!done) return;
+    const t = setTimeout(finish, 1800);
+    return () => clearTimeout(t);
+  }, [done, finish]);
 
   const m = query.data;
   if (!m) return <PageState query={query} noun="mentor" backHref="/user-management#mentors" />;
   const a = m.application;
+  const selection = edited ?? selectionOf(m.programs);
+  const setSelection = (fn: (s: Selection) => Selection) => setEdited(fn(selection));
   const all: AssignableProgram[] = (programsQuery.data ?? []).map((p) => ({ id: p.id, title: p.title, track: p.school }));
   const q = search.trim().toLowerCase();
   const programs = q ? all.filter((p) => `${p.title} ${p.track}`.toLowerCase().includes(q)) : all;
   const chosen = all.filter((p) => selection[p.id]);
 
   const toggleProgram = (id: string) => setSelection(({ [id]: current, ...rest }) => (current ? rest : { ...rest, [id]: [] }));
-  // One role per program, as in the Assign Programs modal: picking a role replaces the other one.
-  const toggleRole = (id: string, role: MentorRole) => setSelection((s) => ({ ...s, [id]: s[id]?.includes(role) ? [] : [role] }));
+  // A mentor can hold one or both roles in a program.
+  const toggleRole = (id: string, role: MentorRole) =>
+    setSelection((s) => ({ ...s, [id]: s[id]?.includes(role) ? s[id].filter((r) => r !== role) : ROLES.filter((r) => r === role || s[id]?.includes(r)) }));
 
   return (
     <div className={review.page}>
@@ -79,12 +101,20 @@ export default function MentorAssign({ mentorId }: { mentorId: string }) {
           </div>
         </header>
 
-        {a.link && (
+        {(a.link || a.introVideo) && (
           <div className={review.links}>
-            <a href={a.link} target="_blank" rel="noreferrer" className={review.link}>
-              <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
-              LinkedIn / Portfolio
-            </a>
+            {a.link && (
+              <a href={a.link} target="_blank" rel="noreferrer" className={review.link}>
+                <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
+                {linkLabel(a.link)}
+              </a>
+            )}
+            {a.introVideo && (
+              <a href={a.introVideo} target="_blank" rel="noreferrer" className={review.link}>
+                <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
+                Intro video
+              </a>
+            )}
           </div>
         )}
 
@@ -216,16 +246,22 @@ export default function MentorAssign({ mentorId }: { mentorId: string }) {
         <AssignProgramsModal
           mentorName={m.name}
           programs={chosen}
-          initial={Object.fromEntries(chosen.map((p) => [p.id, selection[p.id][0] ?? null]))}
+          initial={Object.fromEntries(chosen.map((p) => [p.id, selection[p.id]]))}
           onCancel={backToPage}
           onConfirm={async (confirmed) => {
-            const changes = Object.entries(confirmed).map(([programId, role]) => ({
-              programId,
-              mentor: role === "Instructor",
-              advisor: role === "Program Advisor",
-            }));
+            // The PUT replaces every link: send the confirmed programs, drop current ones
+            // the admin unticked here, and keep any current link this page doesn't list.
+            const listed = new Set(all.map((p) => p.id));
+            const changes = [
+              ...m.programs.filter((l) => listed.has(l.programId) && !confirmed[l.programId]).map((l) => ({ programId: l.programId, mentor: false, advisor: false })),
+              ...Object.entries(confirmed).map(([programId, roles]) => ({
+                programId,
+                mentor: roles.includes("Instructor"),
+                advisor: roles.includes("Program Advisor"),
+              })),
+            ];
             await save.mutateAsync(mergePrograms(m.programs, changes));
-            setSelection(Object.fromEntries(Object.entries(confirmed).map(([id, role]) => [id, [role]])));
+            setEdited(confirmed);
             setConfirming(false);
             setDone(`${m.name} Assigned Successfully !`);
           }}
