@@ -44,7 +44,11 @@ const SUCCESS: Record<ReviewAction, string> = {
   "request-changes": "Changes Requested Successfully !",
 };
 
-/** Pending application: details, admin rating (PATCH /rating) and the approve / reject / request-changes decision. */
+/**
+ * Pending application: details, admin rating (PATCH /rating), Reject and
+ * Request changes. Approve opens the assign page, which approves the
+ * application only once programs and roles are confirmed there.
+ */
 export default function MentorReview({ mentorId }: { mentorId: string }) {
   const router = useRouter();
   const query = useMentor(mentorId);
@@ -78,8 +82,7 @@ export default function MentorReview({ mentorId }: { mentorId: string }) {
     setDialog(null);
     setDone({
       title: SUCCESS[action],
-      // After approval the next step is assigning programs (the Mentor Details assign page).
-      next: action === "approve" ? `/user-management/mentors/assign/${encodeURIComponent(mentorId)}` : "/user-management#mentors",
+      next: "/user-management#mentors",
     });
   };
 
@@ -232,10 +235,11 @@ export default function MentorReview({ mentorId }: { mentorId: string }) {
                 className={styles.approve}
                 disabled={rating === 0 || review.isPending || rate.isPending}
                 title={rating === 0 ? "Rate the application first" : undefined}
-                onClick={() => void decide("approve").catch((e) => setActionError(`Couldn't approve: ${errorText(e)}`))}
+                // Approval happens on the assign page, once programs and roles are chosen.
+                onClick={() => router.push(`/user-management/mentors/assign/${encodeURIComponent(mentorId)}`)}
               >
                 <CircleCheckIcon size={16} color="#FFFFFF" strokeWidth={1.67} />
-                {review.isPending && review.variables?.action === "approve" ? "Approving…" : "Approve"}
+                Approve
               </button>
             </div>
           ) : (
