@@ -20,7 +20,8 @@ export default function MainScroll({ children }: { children: React.ReactNode }) 
   // children (e.g. DataTable's 720px minimum) scroll inside their own box
   // instead of stretching the page sideways.
   return (
-    <main ref={ref} className="min-w-0 flex-1 overflow-y-auto px-12 py-8">
+    // 16px gutters on phones, the design's 48px from md up (modules that cancel it match: -mx-4 md:-mx-12).
+    <main ref={ref} className="min-w-0 flex-1 overflow-y-auto px-4 py-6 md:px-12 md:py-8">
       {children}
     </main>
   );
