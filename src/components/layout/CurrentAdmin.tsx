@@ -1,6 +1,7 @@
 "use client";
 
 import { useCurrentAdmin } from "@/lib/currentAdmin";
+import { useSession } from "@/lib/session";
 
 /** Initials avatar for the signed-in admin (the API has no profile photos). */
 export function AdminAvatar() {
@@ -28,5 +29,25 @@ export function WelcomeHeading({ className, emojiClassName }: { className?: stri
     <h1 className={className}>
       {firstName ? `Welcome, ${firstName}!` : "Welcome!"} <span className={emojiClassName}>👋</span>
     </h1>
+  );
+}
+
+/**
+ * Header identity, as in the Audit & System Logs mockup: "Super Admin · Full access",
+ * or the admin's name and how many privileges they hold.
+ */
+export function AdminIdentity() {
+  const session = useSession();
+  const { name, email } = useCurrentAdmin();
+  const admin = session?.admin;
+  if (!admin) return null;
+  const count = admin.privileges.length;
+  const title = admin.isSuperAdmin ? "Super Admin" : (name ?? email ?? "Admin");
+  const subtitle = admin.isSuperAdmin ? "Full access" : `${count} ${count === 1 ? "privilege" : "privileges"}`;
+  return (
+    <span className="hidden min-w-0 flex-col sm:flex">
+      <span className="max-w-[180px] truncate text-[13px] leading-4 font-medium text-slate-900">{title}</span>
+      <span className="text-[11px] leading-4 text-slate-500">{subtitle}</span>
+    </span>
   );
 }

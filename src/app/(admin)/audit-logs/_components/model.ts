@@ -174,7 +174,8 @@ export function toEvent(raw: unknown, index: number): AuditEvent {
   const targetName = str(entity?.fullName) ?? str(entity?.name) ?? str(entity?.title) ?? str(entity?.email) ?? str(pick(meta, "targetName", "title", "name", "email"));
   // The person's own type (Student, Ambassador…) reads better than the record type (Payment, Withdrawal…).
   const personType = str(pick(entity, "userType", "role", "type"));
-  const targetKind = personType ? humanize(personType) : entityType ? humanize(entityType) : null;
+  // As in the design: "Evelyn Tetteh · Student" for people, just the name otherwise ("Personal payout account").
+  const targetKind = personType ? humanize(personType) : targetName ? null : entityType ? humanize(entityType) : null;
   const id = str(e.id) ?? `${action}-${index}`;
   const ua = str(pick(e, "userAgent", "ua")) ?? str(pick(meta, "userAgent"));
   const { before, after } = beforeAfter(e, meta);
