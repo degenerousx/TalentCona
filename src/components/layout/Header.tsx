@@ -1,6 +1,6 @@
 import Image from "next/image";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { AdminAvatar } from "./CurrentAdmin";
+import { AdminAvatar, AdminIdentity } from "./CurrentAdmin";
 
 export default function Header() {
   return (
@@ -8,7 +8,10 @@ export default function Header() {
       <Image src="/logo.png" alt="Talent Cona" width={124} height={48} priority />
       <div className="flex items-center gap-5">
         <NotificationBell />
-        <AdminAvatar />
+        <span className="flex items-center gap-2.5">
+          <AdminAvatar />
+          <AdminIdentity />
+        </span>
       </div>
     </header>
   );

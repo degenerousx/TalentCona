@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Check, ChevronDown, ChevronRight, Clock, Download, Filter, Landmark, Search, Settings, Users } from "lucide-react";
+import { Bell, Check, ChevronDown, ChevronRight, Clock, Download, Landmark, ListFilter, Search, Settings, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/shadcn/popover";
 import { Toaster } from "@/components/shadcn/sonner";
@@ -17,12 +17,13 @@ const ROWS = 20;
 /** While filtering, older events are loaded until a page is full or this many pages are in. */
 const MAX_FILTER_PAGES = 10;
 
+// Pill colours measured from the mockup.
 const TYPE_TONE: Record<LogType, string> = {
-  Change: "bg-indigo-50 text-indigo-600",
-  Critical: "bg-red-50 text-red-600",
+  Change: "bg-[#EEF0FF] text-[#4F46E5]",
+  Critical: "bg-[#FFE4E6] text-[#E11D48]",
   Access: "bg-slate-100 text-slate-600",
-  Security: "bg-amber-50 text-amber-700",
-  Approval: "bg-green-50 text-green-700",
+  Security: "bg-[#FFEDD5] text-[#C2410C]",
+  Approval: "bg-[#DCFCE7] text-[#15803D]",
 };
 
 const fmt = (n: number) => n.toLocaleString("en-US");
@@ -49,34 +50,36 @@ function matches(e: AuditEvent, f: Filters) {
   return true;
 }
 
+/** Stat card: 180px tall, 20px padding, 40px icon tile, 14px label, 24px value, 13px caption (mockup ÷ 0.732). */
 function StatCard({ icon, tone, label, value, caption, captionTone }: { icon: React.ReactNode; tone: string; label: string; value: string; caption: string; captionTone?: string }) {
   return (
-    <Card tone="hairline" className="flex flex-col gap-1 p-4">
-      <span className={cn("mb-3 grid size-8 place-items-center rounded-md", tone)}>{icon}</span>
-      <p className="text-xs leading-4 text-slate-600">{label}</p>
-      <p className="text-xl leading-7 font-semibold text-heading">{value}</p>
-      <p className={cn("text-[11px] leading-4 text-slate-500", captionTone)}>{caption}</p>
+    <Card tone="hairline" className="flex min-h-[180px] flex-col p-5">
+      <span className={cn("grid size-10 place-items-center rounded-lg", tone)}>{icon}</span>
+      <p className="mt-[18px] text-sm leading-5 text-slate-600">{label}</p>
+      <p className="mt-2 text-2xl leading-8 font-bold text-heading">{value}</p>
+      <p className={cn("mt-1 text-[13px] leading-[18px] text-slate-500", captionTone)}>{caption}</p>
     </Card>
   );
 }
 
+/** Before / After / Session context box: 101px tall. */
 function Box({ title, tone, children }: { title: string; tone: "before" | "after" | "session"; children: React.ReactNode }) {
   return (
     <div
       className={cn(
-        "min-h-[72px] rounded-md border bg-white px-3 py-3",
-        tone === "before" ? "border-red-300" : tone === "after" ? "border-green-300" : "border-slate-200",
+        "min-h-[101px] rounded-md border bg-white px-4 py-4",
+        tone === "before" ? "border-[#FCA5A5]" : tone === "after" ? "border-[#86EFAC]" : "border-slate-200",
       )}
     >
       <p
         className={cn(
-          "mb-1.5 text-[10px] leading-3",
-          tone === "before" ? "font-semibold text-red-600" : tone === "after" ? "font-semibold text-green-700" : "text-slate-500",
+          "text-xs leading-4",
+          tone === "before" ? "font-semibold tracking-wide text-[#DC2626]" : tone === "after" ? "font-semibold tracking-wide text-[#15803D]" : "text-slate-500",
         )}
       >
         {title}
       </p>
-      {children}
+      <div className="mt-2.5">{children}</div>
     </div>
   );
 }
@@ -89,9 +92,9 @@ function MoreFilters({ value, onChange }: { value: Filters; onChange: (f: Filter
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex h-9 w-full shrink-0 items-center justify-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-xs font-medium text-slate-900 hover:bg-slate-50 sm:w-auto"
+          className="flex h-[42px] w-full shrink-0 items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 text-sm text-slate-900 hover:bg-slate-50 whitespace-nowrap sm:w-[134px]"
         >
-          <Filter aria-hidden className="size-3.5" />
+          <ListFilter aria-hidden className="size-4" />
           More filters
           {count > 0 && <span className="grid size-4 place-items-center rounded-full bg-primary text-[10px] text-white">{count}</span>}
         </button>
@@ -139,7 +142,7 @@ function MoreFilters({ value, onChange }: { value: Filters; onChange: (f: Filter
   );
 }
 
-const select = "h-9 rounded-md border border-gray-200 bg-white px-2.5 text-xs text-slate-900 focus:border-primary focus:outline-none";
+const select = "h-[42px] rounded-md border border-gray-300 bg-white px-3 text-sm text-slate-900 focus:border-primary focus:outline-none";
 
 /** Audit & System Logs, from the design: stats, security banner, and the platform activity log. */
 export function AuditLogsView() {
@@ -197,6 +200,9 @@ export function AuditLogsView() {
   const critical = day.filter((e) => e.type === "Critical");
   const attention = security.length + critical.length;
   const loadingStat = recent.isPending ? "…" : recent.isError ? "—" : null;
+  // "Changed user role and blocked failed login attempts in the last 24 hours." (from the events themselves)
+  const kinds = [...new Set([...critical, ...security].map((e) => e.activity.toLowerCase()))].slice(0, 2);
+  const bannerText = kinds.length ? `${kinds.join(" and ").replace(/^./, (c) => c.toUpperCase())} in the last 24 hours.` : "";
 
   const review = () => {
     setF({ ...EMPTY, types: ["Security", "Critical"] });
@@ -236,81 +242,76 @@ export function AuditLogsView() {
 
   return (
     // min-w-0: inside the flex shell the wide table would otherwise widen the page; it scrolls in its card instead.
-    <div className="mx-auto flex w-full max-w-[1100px] min-w-0 flex-col gap-5">
+    <div className="mx-auto flex w-full max-w-[1136px] min-w-0 flex-col gap-7">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-primary-soft px-2 py-0.5 text-[10px] leading-4 font-semibold tracking-wide text-primary uppercase">Super admin only</span>
+            <span className="rounded-full bg-[#F3E8FF] px-2.5 py-0.5 text-[11px] leading-4 font-semibold tracking-wide text-[#5B21B6] uppercase">Super admin only</span>
             <span className="flex items-center gap-1 text-[11px] leading-4 text-slate-500">
-              <Check aria-hidden className="size-3 text-green-600" /> Immutable activity record
+              <Check aria-hidden className="size-3" /> Immutable activity record
             </span>
           </div>
-          <h1 className="text-[28px] leading-[1.3] font-bold text-heading">Audit &amp; System Logs</h1>
-          <p className="text-sm leading-5 text-slate-900">Monitor platform activity, administrative changes, and security events</p>
+          <h1 className="mt-3.5 text-[32px] leading-[1.3] font-bold text-heading">Audit &amp; System Logs</h1>
+          <p className="mt-1 text-base leading-5 text-slate-900">Monitor platform activity, administrative changes, and security events</p>
         </div>
         <button
           type="button"
           onClick={() => void exportLog()}
           disabled={exporting}
-          className="flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 disabled:opacity-70"
+          className="flex h-[42px] items-center gap-2 rounded-md bg-primary px-[22px] text-base font-medium text-white shadow-sm hover:bg-primary/90 disabled:opacity-70"
         >
           <Download aria-hidden className="size-4" />
           {exporting ? "Exporting…" : "Export audit log"}
         </button>
       </div>
 
-      <section aria-label="Summary" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section aria-label="Summary" className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          icon={<Clock aria-hidden className="size-4 text-indigo-600" />}
-          tone="bg-indigo-50"
+          icon={<Clock aria-hidden className="size-[18px] text-[#6D28D9]" />}
+          tone="bg-[#EDE9FE]"
           label="Events today"
           value={loadingStat ?? `${fmt(today.length)}${r?.capped ? "+" : ""}`}
           caption="Across all platform modules"
         />
         <StatCard
-          icon={<Users aria-hidden className="size-4 text-indigo-600" />}
-          tone="bg-indigo-50"
+          icon={<Users aria-hidden className="size-[18px] text-[#6D28D9]" />}
+          tone="bg-[#EDE9FE]"
           label="Active administrators"
           value={!canSeeAdmins ? "—" : admins.data ? fmt(admins.data.active) : admins.isError ? "—" : "…"}
           caption={!canSeeAdmins ? "Needs the Manage Admins privilege" : admins.data ? `${admins.data.today} signed in today` : " "}
         />
         <StatCard
-          icon={<Settings aria-hidden className="size-4 text-indigo-600" />}
-          tone="bg-indigo-50"
+          icon={<Settings aria-hidden className="size-[18px] text-[#6D28D9]" />}
+          tone="bg-[#EDE9FE]"
           label="Admin changes"
           value={loadingStat ?? fmt(adminChanges.length)}
-          caption={`${highImpact} high-impact ${highImpact === 1 ? "change" : "changes"} today`}
+          caption={`${highImpact} high-impact ${highImpact === 1 ? "change" : "changes"}`}
         />
         <StatCard
-          icon={<Landmark aria-hidden className="size-4 text-red-600" />}
-          tone="bg-red-50"
+          icon={<Landmark aria-hidden className="size-[18px] text-[#DC2626]" />}
+          tone="bg-[#FEE2E2]"
           label="Security events"
           value={loadingStat ?? fmt(security.length)}
-          caption={attention ? `${attention} require attention (24h)` : "Nothing needs attention"}
-          captionTone={attention ? "text-red-600" : undefined}
+          caption={attention ? `${attention} require attention` : "Nothing needs attention"}
+          captionTone={attention ? "text-[#DC2626]" : undefined}
         />
       </section>
 
       {attention > 0 && (
-        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50/60 px-4 py-3">
-          <div className="flex items-start gap-3">
-            <span className="grid size-8 shrink-0 place-items-center rounded-md bg-red-100">
-              <Bell aria-hidden className="size-4 text-red-600" />
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#FECACA] bg-[#FFF8F7] px-5 py-6">
+          <div className="flex items-center gap-4">
+            <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-[#FEE2E2]">
+              <Bell aria-hidden className="size-5 text-[#DC2626]" />
             </span>
             <div>
-              <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-heading">
+              <p className="flex flex-wrap items-center gap-2 text-base leading-6 font-semibold text-[#7F1D1D]">
                 {attention} security {attention === 1 ? "event needs" : "events need"} review
-                <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] leading-3 font-semibold text-white">Attention</span>
+                <span className="rounded-full bg-[#EF4444] px-2 py-0.5 text-[10px] leading-3 font-semibold text-white">Attention</span>
               </p>
-              <p className="text-xs leading-4 text-slate-700">
-                {[critical.length ? `${critical.length} high-impact ${critical.length === 1 ? "change was" : "changes were"} made (e.g. ${critical[0].activity.toLowerCase()})` : null, security.length ? `${security.length} security ${security.length === 1 ? "event was" : "events were"} recorded (e.g. ${security[0].activity.toLowerCase()})` : null]
-                  .filter(Boolean)
-                  .join(" and ")}{" "}
-                in the last 24 hours.
-              </p>
+              <p className="text-sm leading-5 text-slate-700">{bannerText}</p>
             </div>
           </div>
-          <button type="button" onClick={review} className="h-8 rounded-md border border-red-300 bg-white px-3 text-xs font-medium text-red-600 hover:bg-red-50">
+          <button type="button" onClick={review} className="h-10 rounded-md border border-[#FCA5A5] bg-white px-4 text-sm text-[#B91C1C] hover:bg-red-50">
             Review security events
           </button>
         </div>
@@ -318,69 +319,79 @@ export function AuditLogsView() {
 
       <div ref={tableRef} className="scroll-mt-4">
         <Card tone="hairline" className="overflow-hidden">
-          <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 px-4 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-6 py-6">
             <div>
-              <h2 className="text-base leading-6 font-semibold text-heading">Platform activity</h2>
-              <p className="text-xs leading-4 text-slate-600">A complete record of actions performed by admins, users, and the system</p>
+              <h2 className="text-lg leading-7 font-semibold text-heading">Platform activity</h2>
+              <p className="text-sm leading-5 text-slate-600">A complete record of actions performed by admins, users, and the system</p>
             </div>
-            <p className="flex items-center gap-1.5 text-[10px] leading-4 text-slate-500" aria-live="polite">
-              <span className={cn("size-1.5 rounded-full", log.isError ? "bg-red-500" : "bg-green-500")} aria-hidden />
+            <p className="flex items-center gap-2 text-[11px] leading-4 text-slate-500" aria-live="polite">
+              <span className={cn("size-2 rounded-full", log.isError ? "bg-red-500" : "bg-[#22C55E]")} aria-hidden />
               {log.isError ? "Connection lost" : "Live monitoring"}
-              <span aria-hidden>·</span>
+              <span aria-hidden className="text-slate-300">·</span>
               Last updated {agoShort(log.dataUpdatedAt) || "…"}
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 border-b border-slate-100 px-4 py-4 sm:flex-row">
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-[26px] sm:flex-row sm:gap-4">
             <label className="relative flex-1">
               <span className="sr-only">Search audit log</span>
-              <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-slate-400" />
+              <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-slate-500" />
               <input
                 value={filters.search}
                 onChange={(e) => setF({ ...filters, search: e.target.value })}
                 placeholder="Search actor, action, target, or log ID…"
-                className="h-9 w-full rounded-md border border-gray-200 bg-white pr-3 pl-8 text-xs text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none"
+                className="h-[42px] w-full rounded-md border border-gray-300 bg-white pr-3 pl-10 text-sm text-slate-900 placeholder:text-slate-500 focus:border-primary focus:outline-none"
               />
             </label>
-            <div className="grid grid-cols-2 gap-2 sm:flex">
-              <select aria-label="Users" value={filters.role} onChange={(e) => setF({ ...filters, role: e.target.value })} className={cn(select, "w-full sm:w-32")}>
+            <div className="grid grid-cols-1 gap-3 sm:flex sm:gap-4">
+              <select aria-label="Users" value={filters.role} onChange={(e) => setF({ ...filters, role: e.target.value })} className={cn(select, "w-full sm:w-[161px]")}>
                 <option value="">All users</option>
-                {ACTOR_ROLES.map((r) => (
-                  <option key={r}>{r}</option>
+                {ACTOR_ROLES.map((role) => (
+                  <option key={role}>{role}</option>
                 ))}
               </select>
-              <select aria-label="Modules" value={filters.module} onChange={(e) => setF({ ...filters, module: e.target.value })} className={cn(select, "w-full sm:w-36")}>
+              <select aria-label="Modules" value={filters.module} onChange={(e) => setF({ ...filters, module: e.target.value })} className={cn(select, "w-full sm:w-[172px]")}>
                 <option value="">All modules</option>
                 {MODULES.map((m) => (
                   <option key={m}>{m}</option>
                 ))}
               </select>
-              <div className="col-span-2 sm:col-span-1">
+              <div>
                 <MoreFilters value={filters} onChange={setF} />
               </div>
             </div>
           </div>
 
           {log.isPending ? (
-            <div className="p-4">
+            <div className="p-6">
               <LoadingState rows={6} label="Loading activity…" />
             </div>
           ) : log.isError && !loaded.length ? (
-            <div className="p-4">
+            <div className="p-6">
               <ErrorState error={log.error} title="Couldn't load the audit log" onRetry={() => void log.refetch()} retrying={log.isFetching} />
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[880px] border-collapse text-left">
-                <thead>
-                  <tr className="border-b border-slate-100 text-[10px] leading-4 tracking-wide text-slate-500 uppercase">
-                    <th className="px-4 py-3 font-normal">Actor</th>
-                    <th className="px-3 py-3 font-normal">Activity</th>
-                    <th className="px-3 py-3 font-normal">Module</th>
-                    <th className="px-3 py-3 font-normal">Target</th>
-                    <th className="px-3 py-3 font-normal">Date &amp; time</th>
-                    <th className="px-3 py-3 font-normal">Type</th>
-                    <th className="w-8 px-3 py-3">
+              {/* Column widths from the mockup: 24 + 209 / 244 / 172 / 192 / 158 / type / chevron (of 1,136). */}
+              <table className="w-full min-w-[960px] table-fixed border-collapse text-left">
+                <colgroup>
+                  <col style={{ width: "20.5%" }} />
+                  <col style={{ width: "21.5%" }} />
+                  <col style={{ width: "15.2%" }} />
+                  <col style={{ width: "16.9%" }} />
+                  <col style={{ width: "13.9%" }} />
+                  <col style={{ width: "8.4%" }} />
+                  <col style={{ width: "3.6%" }} />
+                </colgroup>
+                <thead className="bg-gray-50">
+                  <tr className="h-[35px] text-[11px] leading-4 tracking-wide text-slate-500 uppercase">
+                    <th className="pl-6 font-normal">Actor</th>
+                    <th className="font-normal">Activity</th>
+                    <th className="font-normal">Module</th>
+                    <th className="font-normal">Target</th>
+                    <th className="font-normal">Date &amp; time</th>
+                    <th className="font-normal">Type</th>
+                    <th>
                       <span className="sr-only">Details</span>
                     </th>
                   </tr>
@@ -388,7 +399,7 @@ export function AuditLogsView() {
                 <tbody>
                   {rows.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-500">
+                      <td colSpan={7} className="px-6 py-10 text-center text-sm text-slate-500">
                         {filtering ? "No events match these filters." : "No activity has been recorded yet."}
                       </td>
                     </tr>
@@ -398,21 +409,21 @@ export function AuditLogsView() {
                     return (
                       <Fragment key={e.id}>
                         <tr
-                          className={cn("cursor-pointer border-b border-slate-100 text-xs hover:bg-slate-50/70", isOpen && "bg-slate-50/70")}
+                          className={cn("h-[75px] cursor-pointer border-t border-slate-100 hover:bg-gray-50/70", isOpen && "bg-gray-50")}
                           onClick={() => setOpen(isOpen ? null : e.id)}
                         >
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2.5">
-                              <span aria-hidden className="grid size-7 shrink-0 place-items-center rounded-full bg-primary-soft text-[10px] font-semibold text-primary">
+                          <td className="pr-3 pl-6">
+                            <div className="flex items-center gap-3">
+                              <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-[#EEF0FF] text-xs font-semibold text-[#3730A3]">
                                 {e.actorRole === "System" ? "SY" : initials(e.actorName)}
                               </span>
                               <div className="min-w-0">
-                                <p className="truncate font-medium text-slate-900">{e.actorName}</p>
-                                <p className="text-[10px] leading-3 text-slate-500">{e.actorRole}</p>
+                                <p className="truncate text-sm leading-5 text-slate-900">{e.actorName}</p>
+                                <p className="text-[11px] leading-4 text-slate-500">{e.actorRole}</p>
                               </div>
                             </div>
                           </td>
-                          <td className="px-3 py-3">
+                          <td className="pr-3">
                             <button
                               type="button"
                               aria-expanded={isOpen}
@@ -420,38 +431,38 @@ export function AuditLogsView() {
                                 ev.stopPropagation();
                                 setOpen(isOpen ? null : e.id);
                               }}
-                              className="text-left font-medium text-primary hover:underline"
+                              className="text-left text-sm leading-5 font-[450] text-slate-900 hover:underline"
                             >
                               {e.activity}
                             </button>
-                            <p className="font-mono text-[9px] leading-3 text-slate-400">{e.ref}</p>
+                            <p className="font-mono text-[10px] leading-4 text-slate-400">{e.ref}</p>
                           </td>
-                          <td className="px-3 py-3 text-primary">{e.module}</td>
-                          <td className="max-w-[180px] px-3 py-3 text-primary">{e.target}</td>
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <p className="text-slate-900">{when(e.at)}</p>
-                            {e.ip && <p className="text-[10px] leading-3 text-slate-400">{e.ip}</p>}
+                          <td className="pr-3 text-sm leading-5 text-slate-700">{e.module}</td>
+                          <td className="pr-3 text-sm leading-5 text-slate-700">{e.target}</td>
+                          <td className="pr-3">
+                            <p className="text-sm leading-5 whitespace-nowrap text-slate-900">{when(e.at)}</p>
+                            {e.ip && <p className="text-[11px] leading-4 text-slate-400">{e.ip}</p>}
                           </td>
-                          <td className="px-3 py-3">
-                            <span className={cn("rounded-full px-2 py-0.5 text-[10px] leading-4 font-medium", TYPE_TONE[e.type])}>{e.type}</span>
+                          <td>
+                            <span className={cn("inline-flex h-[23px] items-center rounded-full px-2.5 text-xs", TYPE_TONE[e.type])}>{e.type}</span>
                           </td>
-                          <td className="px-3 py-3 text-slate-400">
-                            {isOpen ? <ChevronDown aria-hidden className="size-4" /> : <ChevronRight aria-hidden className="size-4" />}
+                          <td className="pr-6 text-slate-400">
+                            {isOpen ? <ChevronDown aria-hidden className="ml-auto size-4" /> : <ChevronRight aria-hidden className="ml-auto size-4" />}
                           </td>
                         </tr>
                         {isOpen && (
-                          <tr className="border-b border-slate-100 bg-slate-50/40">
-                            <td colSpan={7} className="px-4 py-4">
-                              <div className="grid gap-3 md:grid-cols-[1fr_1fr_minmax(0,180px)]">
+                          <tr className="bg-gray-50">
+                            <td colSpan={7} className="px-6 pt-4 pb-5">
+                              <div className="grid gap-4 md:grid-cols-[404fr_404fr_245fr]">
                                 <Box title="BEFORE" tone="before">
-                                  <p className="text-xs text-slate-800">{e.before ?? "—"}</p>
+                                  <p className="text-sm leading-5 text-slate-800">{e.before ?? "—"}</p>
                                 </Box>
                                 <Box title="AFTER" tone="after">
-                                  <p className="text-xs text-slate-800">{e.after ?? (e.type === "Access" ? "Record viewed" : "—")}</p>
+                                  <p className="text-sm leading-5 text-slate-800">{e.after ?? (e.type === "Access" ? "Record viewed" : "—")}</p>
                                 </Box>
                                 <Box title="Session context" tone="session">
-                                  <p className="text-xs text-primary">{e.device ?? "Unknown device"}</p>
-                                  <p className="font-mono text-[10px] text-slate-500">{e.ip ?? "IP not recorded"}</p>
+                                  <p className="text-sm leading-5 text-slate-900">{e.device ?? "Unknown device"}</p>
+                                  <p className="mt-1 font-mono text-[11px] leading-4 text-slate-500">{e.ip ?? "IP not recorded"}</p>
                                 </Box>
                               </div>
                             </td>
@@ -465,19 +476,19 @@ export function AuditLogsView() {
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-            <p className="text-[11px] leading-4 text-slate-500">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+            <p className="text-sm leading-5 text-slate-600">
               {filtered.length
                 ? `Showing ${fmt(current * ROWS + 1)}–${fmt(current * ROWS + rows.length)} of ${fmt(filtered.length)}${log.hasNextPage ? "+" : ""} events`
                 : "Showing 0 events"}
-              {filtering && log.hasNextPage ? ` · searched the newest ${fmt(loaded.length)}; Next loads older events` : ""}
+              {filtering && log.hasNextPage ? ` · searched the newest ${fmt(loaded.length)}` : ""}
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 type="button"
                 disabled={current === 0}
                 onClick={() => setPage(current - 1)}
-                className="h-8 rounded-md border border-gray-200 px-3 text-xs font-medium text-slate-900 disabled:text-slate-400"
+                className="h-10 rounded-md border border-gray-300 bg-white px-4 text-sm text-slate-900 disabled:text-slate-400"
               >
                 Previous
               </button>
@@ -485,7 +496,7 @@ export function AuditLogsView() {
                 type="button"
                 disabled={!canNext || log.isFetchingNextPage}
                 onClick={() => void next()}
-                className="h-8 rounded-md border border-gray-200 px-3 text-xs font-semibold text-slate-900 disabled:font-medium disabled:text-slate-400"
+                className="h-10 rounded-md border border-gray-300 bg-white px-4 text-sm font-medium text-slate-900 disabled:text-slate-400"
               >
                 {log.isFetchingNextPage ? "Loading…" : "Next"}
               </button>
