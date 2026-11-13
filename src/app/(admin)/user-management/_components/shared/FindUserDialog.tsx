@@ -29,7 +29,7 @@ export default function FindUserDialog({ onClose, initial = "" }: { onClose: () 
             value={term}
             onChange={(e) => setTerm(e.target.value)}
           />
-          <p className={styles.hint}>Searches Students and all three mentor sections (Pending Reviews, Assigned, Unassigned).</p>
+          <p className={styles.hint}>Searches Students and every mentor, including drafts, changes requested and rejected applications.</p>
 
           <div aria-live="polite" className="flex max-h-[320px] flex-col gap-2 overflow-y-auto">
             {q.length < 3 ? null : lookup.isPending ? (
@@ -59,17 +59,9 @@ export default function FindUserDialog({ onClose, initial = "" }: { onClose: () 
             ) : (
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-5 text-amber-900" role="status">
                 <p className="font-semibold">No student or mentor matching “{q}” is visible to admins.</p>
-                <p className="mt-1">If they signed up as a mentor, they most likely haven&apos;t finished. The backend only shows a mentor to admins once they have:</p>
-                <ol className="mt-1 list-decimal pl-5">
-                  <li>verified their email with the sign-up code,</li>
-                  <li>completed every application step (identity, expertise, availability, agreements), and</li>
-                  <li>
-                    pressed <strong>Submit</strong>.
-                  </li>
-                </ol>
                 <p className="mt-1">
-                  Until then the application is a draft, and the admin API has no list for drafts. Ask them to sign in and submit, or check the
-                  spelling of the email.
+                  Students and mentors are searched in every status, drafts included, so this person most likely hasn&apos;t verified their email
+                  with the sign-up code yet (unverified accounts aren&apos;t listed), or the email is spelled differently.
                 </p>
               </div>
             )}

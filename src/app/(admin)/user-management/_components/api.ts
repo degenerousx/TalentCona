@@ -750,6 +750,12 @@ export function useMentorSummary(enabled = true) {
 }
 
 export type MentorSection = "pending" | "assigned" | "unassigned";
+
+/** Application statuses GET /mentors/admin accepts in `statuses` (instead of `section`). */
+export const APPLICATION_STATUSES = ["Draft", "Submitted", "UnderReview", "Approved", "Rejected", "ChangesRequested"] as const;
+export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
+/** The status queue's default: applications that are in none of the three sections. */
+export const DEFAULT_STATUS_QUEUE: ApplicationStatus[] = ["Draft", "ChangesRequested"];
 export type Capacity = "Available" | "NearFull" | "Full";
 
 export type MentorRow = {
@@ -766,6 +772,10 @@ export type MentorRow = {
   maxMentees: number | null;
   averageRating: number | null;
   capacity: Capacity | null;
+  /** Only on status-filter rows. */
+  applicationStatus: string | null;
+  submittedAt: string | null;
+  reviewedAt: string | null;
 };
 
 const CAPACITIES: Capacity[] = ["Available", "NearFull", "Full"];
@@ -790,6 +800,9 @@ const toMentorRow = (m: Loose): MentorRow => {
     maxMentees: num(pick(m, "maxStudents", "maxMentees")),
     averageRating: num(m.averageRating),
     capacity: toCapacity(m.capacity),
+    applicationStatus: str(m.applicationStatus),
+    submittedAt: str(m.submittedAt),
+    reviewedAt: str(m.reviewedAt),
   };
 };
 
@@ -809,14 +822,22 @@ export type MentorQuery = {
   averageRating?: string;
 };
 
-export function useMentors(section: MentorSection, q: MentorQuery) {
+/**
+ * A mentors list: one of the three directory sections, or (with `statuses`)
+ * the "Mentors List - With Free Status Filter" queue, e.g.
+ * `statuses=Draft,ChangesRequested`. The API rejects `section` and `statuses`
+ * together, so only one is sent.
+ */
+export function useMentors(section: MentorSection | "status", q: MentorQuery, statuses?: ApplicationStatus[]) {
+  const statusList = section === "status" ? (statuses?.length ? statuses : [...APPLICATION_STATUSES]) : undefined;
   return useInfiniteQuery({
     ...LIVE,
-    queryKey: ["user-management", "mentors", "list", section, q],
+    queryKey: ["user-management", "mentors", "list", section, q, statusList ?? null],
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam }) => {
       const query: Query = {
-        section,
+        section: statusList ? undefined : section,
+        statuses: statusList?.join(","),
         limit: 10,
         cursor: pageParam,
         search: q.search?.trim() || undefined,
@@ -1128,7 +1149,7 @@ export function useMentorCount(section: MentorSection, enabled = true) {
 // ---- Find a user by email (every place admins can see) -------------------------------
 
 export type LookupHit = {
-  where: "pending" | "assigned" | "unassigned" | "student";
+  where: "pending" | "assigned" | "unassigned" | "status" | "student";
   id: string;
   name: string;
   email: string;
@@ -1141,6 +1162,7 @@ const LOOKUP_WHERE: Record<LookupHit["where"], string> = {
   pending: "Mentors → Pending Reviews",
   assigned: "Mentors → Assigned Mentors",
   unassigned: "Mentors → Unassigned Mentors",
+  status: "Mentors → Applications by Status",
   student: "Students",
 };
 export const lookupWhere = (w: LookupHit["where"]) => LOOKUP_WHERE[w];
@@ -1160,8 +1182,10 @@ export function useUserLookup(term: string) {
     retry: false,
     queryFn: async (): Promise<LookupHit[]> => {
       const sections: MentorSection[] = ["pending", "assigned", "unassigned"];
-      const [mentorPages, studentPage] = await Promise.all([
+      const [mentorPages, otherStatuses, studentPage] = await Promise.all([
         Promise.all(sections.map((section) => api<CursorPage<Loose>>("/mentors/admin", { query: { section, search: q, limit: 20 } }))),
+        // Not in any section: unfinished, returned for changes, or rejected applications.
+        api<CursorPage<Loose>>("/mentors/admin", { query: { statuses: "Draft,ChangesRequested,Rejected", search: q, limit: 20 } }),
         api<CursorPage<ApiStudentRow>>("/students/admin", { query: { search: q, limit: 20 } }),
       ]);
       const mentors = await Promise.all(
@@ -1180,6 +1204,14 @@ export function useUserLookup(term: string) {
           }),
         ),
       );
+      const byStatus: LookupHit[] = otherStatuses.items.map((m) => ({
+        where: "status",
+        id: String(m.id),
+        name: str(m.fullName) ?? str(m.email) ?? "Unnamed",
+        email: str(m.email) ?? "",
+        status: str(m.applicationStatus),
+        href: `/user-management/mentors/review/${enc(String(m.id))}`,
+      }));
       const students: LookupHit[] = studentPage.items.map((s) => ({
         where: "student",
         id: s.id,
@@ -1188,7 +1220,7 @@ export function useUserLookup(term: string) {
         status: s.accountLabel,
         href: `/user-management/${enc(s.id)}`,
       }));
-      return [...mentors, ...students];
+      return [...mentors, ...byStatus, ...students];
     },
   });
 }

@@ -7,6 +7,7 @@ import {
   EMPTY_ASSIGNED_FILTERS,
   EMPTY_CANDIDATE_FILTERS,
   RATING_OPTIONS,
+  APPLICATION_STATUS_OPTIONS,
   type AssignedFilters,
   type CandidateFilters,
 } from "../filters";
@@ -39,16 +40,19 @@ function useOpenList<K extends string>() {
 export function CandidateFilterPanel({
   initial,
   withAdminRating,
+  withStatuses = false,
   onApply,
   onClose,
 }: {
   initial: CandidateFilters;
   withAdminRating: boolean;
+  /** Applications by Status: adds the Application Status filter (several can be picked). */
+  withStatuses?: boolean;
   onApply: (f: CandidateFilters) => void;
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState(initial);
-  const { openList, closeList, toggle } = useOpenList<"system" | "admin">();
+  const { openList, closeList, toggle } = useOpenList<"system" | "admin" | "status">();
   const set = <K extends keyof CandidateFilters>(key: K, value: CandidateFilters[K]) => setDraft((d) => ({ ...d, [key]: value }));
 
   return (
@@ -60,6 +64,17 @@ export function CandidateFilterPanel({
       onReset={() => setDraft(EMPTY_CANDIDATE_FILTERS)}
       onApply={() => onApply(draft)}
     >
+      {withStatuses && (
+        <MultiSelect
+          label="Application Status"
+          allLabel="All Statuses"
+          options={APPLICATION_STATUS_OPTIONS}
+          selected={draft.statuses}
+          onChange={(v) => set("statuses", v)}
+          open={openList === "status"}
+          onToggle={toggle("status")}
+        />
+      )}
       <TextField label="Expertise" value={draft.expertise} onChange={(v) => set("expertise", v)} suggestions={EXPERTISE_SUGGESTIONS} />
       <RangeField
         label="Total Experience"

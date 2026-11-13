@@ -11,7 +11,7 @@ there is no sample data. All requests live in `_components/api.ts`.
 | `/user-management` (Students tab) | Server-filtered, cursor-paged list | `GET /students/admin` |
 | `/user-management/:studentId` | Profile, program groups, Assign Mentor / Notify / Suspend / Reactivate | `GET /students/admin/:id`, `POST …/notify\|suspend\|reinstate` |
 | `/user-management/:studentId/:enrollmentId` | Overview + activity, Performance, Engagement, Loan, Campaign tabs | `GET …/enrollments/:eid[/performance\|engagement\|campaign]` |
-| `#mentors` tab | Summary cards; Pending, Assigned and Unassigned sections with filters | `GET /mentors/admin/summary`, `GET /mentors/admin?section=` |
+| `#mentors` tab | Summary cards; Pending, Assigned and Unassigned sections with filters; Applications by Status | `GET /mentors/admin/summary`, `GET /mentors/admin?section=`, `GET /mentors/admin?statuses=` |
 | `/user-management/mentors/:mentorId` | Profile, programs, Edit Role / Assign Mentor / Notify / Suspend | `GET /mentors/admin/:id`, `PUT …/programs`, `POST …/notify\|suspend\|reinstate` |
 | `/user-management/mentors/:mentorId/:programId` | Sessions, feedback, performance, mentees | `GET /mentors/admin/:id/programs/:programId` |
 | `/user-management/mentors/review/:mentorId` | Application review: rating, approve, reject, request changes | `PATCH …/rating`, `POST …/approve\|reject\|request-changes` |
@@ -55,19 +55,33 @@ Reject and Request changes return to the mentors list.
 - Status, payment method, laptop, rating and capacity filters take one value each
   in the API, so those lists are single-choice. Expertise is sent as a slug.
 
+## Applications by Status (free status filter)
+
+Postman "Mentors List - With Free Status Filter": `GET /mentors/admin?statuses=Draft,ChangesRequested`
+(one or more of Draft, Submitted, UnderReview, Approved, Rejected,
+ChangesRequested; comma-separated). It is used **instead of** `section`: the
+API rejects both together ("Use either section or statuses, not both."), so
+`useMentors(section="status", …, statuses)` never sends `section`.
+
+The fourth section on the Mentors tab uses it. It starts on Draft + Changes
+Requested (the applications no other section shows); its Filters drawer adds an
+**Application Status** multi-select (Reset = all statuses) next to expertise,
+experience and ratings, and search works with it. Rows show the status pill
+and submission date; View opens the review page, which explains drafts and
+changes-requested applications instead of offering Approve.
+
 ## Find a user
 
-The **Find a user** button (page header) searches Students and all three
-mentor sections by name or email and says where the person is. A mentor only
-appears to admins after verifying their email, completing every application
-step and pressing **Submit**: until then the application is a `Draft`, and
-`GET /mentors/admin` requires `section=pending|assigned|unassigned`, none of
-which include drafts. The dialog explains this when nothing matches.
+The **Find a user** button (page header) searches Students, the three mentor
+sections and `statuses=Draft,ChangesRequested,Rejected` by name or email, and
+says where the person is and their status. When nothing matches, the person
+most likely hasn't verified their email yet (unverified accounts aren't listed).
 
 ## Gaps in the backend (shown honestly in the UI)
 
-- **Unsubmitted mentor sign-ups:** no admin endpoint lists Draft applications or
-  unverified mentor accounts, so they can't be shown anywhere yet.
+- **Unverified mentor sign-ups** (email code not entered) aren't listed by any
+  admin endpoint. Drafts, changes-requested and rejected applications are,
+  via `statuses`.
 
 - **Partners:** no admin endpoint; only the public partnership/sponsorship forms.
   The tab says so.

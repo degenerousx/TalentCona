@@ -244,8 +244,13 @@ export default function MentorReview({ mentorId }: { mentorId: string }) {
             </div>
           ) : (
             <p className={styles.ratingText}>
-              {a.status === "Rejected" && a.rejectionReason ? `Rejected: ${a.rejectionReason}` : `This application was ${humanize(a.status).toLowerCase()}`}
-              {a.reviewedAt ? ` ${timeAgo(a.reviewedAt)}.` : "."}
+              {a.status === "Draft"
+                ? "This application is still a draft: the mentor hasn't submitted it yet, so it can't be reviewed."
+                : a.status === "ChangesRequested"
+                  ? `Changes were requested${a.reviewedAt ? ` ${timeAgo(a.reviewedAt)}` : ""}${a.rejectionReason ? `: ${a.rejectionReason}` : ""}. It returns to Pending Reviews when the mentor resubmits.`
+                  : a.status === "Rejected" && a.rejectionReason
+                    ? `Rejected${a.reviewedAt ? ` ${timeAgo(a.reviewedAt)}` : ""}: ${a.rejectionReason}`
+                    : `This application was ${humanize(a.status).toLowerCase()}${a.reviewedAt ? ` ${timeAgo(a.reviewedAt)}` : ""}.`}
             </p>
           )}
         </footer>

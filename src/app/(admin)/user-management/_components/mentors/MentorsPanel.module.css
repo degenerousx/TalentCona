@@ -481,3 +481,39 @@ button.stat.statActive {
   cursor: pointer;
   text-decoration: underline;
 }
+
+/* ---- Applications by Status (free status filter) ---- */
+.status {
+  background: linear-gradient(90deg, #faf5ff 0%, #f5f3ff 100%);
+}
+
+.statusTable td .muted {
+  display: block;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.stDraft {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.stSubmitted {
+  background: #dbeafe;
+  color: #1447e6;
+}
+
+.stChanges {
+  background: #fef9c2;
+  color: #894b00;
+}
+
+.stApproved {
+  background: #dcfce7;
+  color: #016630;
+}
+
+.stRejected {
+  background: #ffe2e2;
+  color: #9f0712;
+}

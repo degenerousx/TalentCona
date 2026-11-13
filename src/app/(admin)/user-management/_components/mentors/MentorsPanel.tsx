@@ -17,8 +17,10 @@ import { ErrorState, LoadingState } from "@/components/ui/States";
 import { AssignedFilterPanel, CandidateFilterPanel } from "./MentorFilterPanel";
 import ListFooter from "../shared/ListFooter";
 import {
+  DEFAULT_STATUS_FILTERS,
   EMPTY_ASSIGNED_FILTERS,
   EMPTY_CANDIDATE_FILTERS,
+  applicationStatusLabel,
   assignedFilterCount,
   assignedQuery,
   candidateFilterCount,
@@ -27,10 +29,12 @@ import {
   type CandidateFilters,
 } from "../filters";
 import {
+  shortDate,
   useMentorSummary,
   useMentors,
   useMentorsByRole,
   usePrograms,
+  type ApplicationStatus,
   type Capacity,
   type MentorQuery,
   type MentorRow,
@@ -110,6 +114,7 @@ function Section({
   title,
   tone,
   section,
+  statuses,
   filtered,
   filter,
   query: q,
@@ -119,8 +124,11 @@ function Section({
   emptyText,
 }: {
   title: string;
-  tone: MentorSection;
-  section: MentorSection;
+  tone: MentorSection | "status";
+  /** A directory section, or "status" for the free status filter queue. */
+  section: MentorSection | "status";
+  /** With section "status": the application statuses to list. */
+  statuses?: ApplicationStatus[];
   query: string;
   filtered: MentorQuery & { active: boolean };
   filter: ReactNode;
@@ -131,7 +139,7 @@ function Section({
 }) {
   const search = useDebounced(q);
   const { active, ...params } = filtered;
-  const list = useMentors(section, { ...params, search });
+  const list = useMentors(section, { ...params, search }, statuses);
   const rows = list.data?.pages.flatMap((p) => p.items) ?? [];
   const empty = (
     <tr>
@@ -333,6 +341,65 @@ function AssignedTable({
   );
 }
 
+const STATUS_CLASS: Record<string, string> = {
+  Draft: styles.stDraft,
+  Submitted: styles.stSubmitted,
+  UnderReview: styles.stSubmitted,
+  ChangesRequested: styles.stChanges,
+  Approved: styles.stApproved,
+  Rejected: styles.stRejected,
+};
+
+/** Applications by Status: each mentor's application status, with when it was submitted. */
+function StatusTable({ rows, empty }: { rows: MentorRow[]; empty: ReactNode }) {
+  return (
+    <table className={`${styles.table} ${styles.statusTable}`}>
+      <thead>
+        <tr>
+          <th>Mentor</th>
+          <th>Status</th>
+          <th>Expertise</th>
+          <th>Total Experience</th>
+          <th>Submitted</th>
+          <th className={styles.thActions}>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((m) => (
+          <tr key={m.id}>
+            <td>
+              <Link href={reviewHref(m.id)} className={`${styles.name} ${styles.nameLink}`}>
+                {m.name}
+              </Link>
+              {m.email && <span className={styles.muted}>{m.email}</span>}
+            </td>
+            <td>
+              <span className={`${styles.capacity} ${STATUS_CLASS[m.applicationStatus ?? ""] ?? styles.stDraft}`}>
+                {applicationStatusLabel(m.applicationStatus)}
+              </span>
+            </td>
+            <td>
+              <Tags items={m.expertise} />
+            </td>
+            <td>
+              <span className={styles.small}>{m.experience != null ? `${m.experience} ${m.experience === 1 ? "year" : "years"}` : "—"}</span>
+            </td>
+            <td>
+              <span className={styles.small}>{m.submittedAt ? shortDate(m.submittedAt) : "Not yet"}</span>
+            </td>
+            <td className={styles.tdAction}>
+              <Link href={reviewHref(m.id)} className={styles.greenButton}>
+                View
+              </Link>
+            </td>
+          </tr>
+        ))}
+        {rows.length === 0 && empty}
+      </tbody>
+    </table>
+  );
+}
+
 /** What the summary cards filter the lists to; kept in `?view=` so it can be linked to. */
 export const MENTOR_VIEWS = [
   "pending",
@@ -425,7 +492,9 @@ export default function MentorsPanel() {
   const [unassignedF, setUnassignedF] = useState<CandidateFilters>(
     EMPTY_CANDIDATE_FILTERS,
   );
-  const [drawer, setDrawer] = useState<MentorSection | null>(null);
+  const [statusQ, setStatusQ] = useState("");
+  const [statusF, setStatusF] = useState<CandidateFilters>(DEFAULT_STATUS_FILTERS);
+  const [drawer, setDrawer] = useState<MentorSection | "status" | null>(null);
   const closeDrawer = useCallback(() => setDrawer(null), []);
 
   const s = summary.data;
@@ -617,6 +686,30 @@ export default function MentorsPanel() {
             )}
           />
         )}
+        {showLists && view !== "pending" && (
+          <Section
+            title="Applications by Status"
+            tone="status"
+            section="status"
+            statuses={statusF.statuses as ApplicationStatus[]}
+            query={statusQ}
+            onQuery={setStatusQ}
+            filtered={{
+              ...candidateQuery("", statusF),
+              active: candidateFilterCount(statusF) > 0,
+            }}
+            filter={
+              <FiltersButton
+                count={candidateFilterCount(statusF)}
+                open={drawer === "status"}
+                onOpen={() => setDrawer("status")}
+              />
+            }
+            colSpan={6}
+            emptyText="No mentor applications have these statuses."
+            render={(rows, empty) => <StatusTable rows={rows} empty={empty} />}
+          />
+        )}
       </div>
 
       {drawer === "pending" && (
@@ -644,6 +737,18 @@ export default function MentorsPanel() {
           onClose={closeDrawer}
           onApply={(f) => {
             setAssignedF(f);
+            closeDrawer();
+          }}
+        />
+      )}
+      {drawer === "status" && (
+        <CandidateFilterPanel
+          initial={statusF}
+          withAdminRating
+          withStatuses
+          onClose={closeDrawer}
+          onApply={(f) => {
+            setStatusF(f);
             closeDrawer();
           }}
         />
