@@ -39,6 +39,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Communities", href: "/communities", icon: "fluent:people-community-24-regular", enabled: true, privilege: "MANAGE_COMMUNITIES" },
   { label: "Referrals", href: "/referrals", icon: "tabler:transfer", enabled: true, privilege: "MANAGE_REFERRALS" },
   { label: "Reports & Insights", href: "/reports-insights", icon: "iconoir:stats-report", enabled: true, privilege: "VIEW_REPORTS_INSIGHTS" },
+  { label: "Audit & System Logs", href: "/audit-logs", icon: "lucide:landmark", enabled: true, privilege: "VIEW_AUDIT_LOG" },
   // Not in the latest sidebar design; kept at the end.
   { label: "My Mentees", href: "/my-mentees", icon: "lucide:calendar", enabled: true },
   { label: "Sessions", href: "/sessions", icon: "simple-icons:codementor", enabled: true },
