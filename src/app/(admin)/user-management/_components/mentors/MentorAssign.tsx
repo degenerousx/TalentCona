@@ -10,7 +10,7 @@ import AssignProgramsModal, { type AssignableProgram, type MentorRole } from "./
 import PageState from "../shared/PageState";
 import SuccessDialog from "../shared/SuccessDialog";
 import { errorText, mergePrograms, timeAgo, useMentor, usePrograms, useReviewMentor, useSetMentorPrograms } from "../api";
-import { applicantInitials, isAwaitingReview } from "./reviewParts";
+import { applicantInitials, isAwaitingReview, linkLabel } from "./reviewParts";
 import reviewStyles from "./MentorReview.module.css";
 import styles from "./MentorAssign.module.css";
 
@@ -25,8 +25,7 @@ const selectionOf = (links: { programId: string; mentor: boolean; advisor: boole
     links.map((l) => [l.programId, [...(l.mentor ? ["Instructor" as const] : []), ...(l.advisor ? ["Program Advisor" as const] : [])]]),
   );
 
-/** "LinkedIn" for a LinkedIn URL, otherwise "Portfolio". */
-const linkLabel = (url: string) => (/linkedin\.com/i.test(url) ? "LinkedIn" : "Portfolio");
+
 
 /**
  * Assign an approved mentor to programs (also where Approve on the review

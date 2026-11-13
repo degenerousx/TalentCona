@@ -73,7 +73,8 @@ export const DEFAULT_STATUS_FILTERS: CandidateFilters = { ...EMPTY_CANDIDATE_FIL
 
 /** Mentor application statuses: API value → label, in the order the filter lists them. */
 export const APPLICATION_STATUS_OPTIONS = [
-  { value: "Draft", label: "Draft" },
+  // "Draft" in the API: the mentor hasn't submitted the application yet.
+  { value: "Draft", label: "Not Submitted" },
   { value: "Submitted", label: "Submitted" },
   { value: "UnderReview", label: "Under Review" },
   { value: "ChangesRequested", label: "Changes Requested" },

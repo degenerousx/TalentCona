@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { humanize, lookupWhere, useUserLookup } from "../api";
+import { applicationStatusLabel } from "../filters";
 import { useDebounced } from "../useDebounced";
 import { Modal } from "./ActionModals";
 import styles from "./ActionModals.module.css";
@@ -29,7 +30,7 @@ export default function FindUserDialog({ onClose, initial = "" }: { onClose: () 
             value={term}
             onChange={(e) => setTerm(e.target.value)}
           />
-          <p className={styles.hint}>Searches Students and every mentor, including drafts, changes requested and rejected applications.</p>
+          <p className={styles.hint}>Searches Students and every mentor, including not submitted, changes requested and rejected applications.</p>
 
           <div aria-live="polite" className="flex max-h-[320px] flex-col gap-2 overflow-y-auto">
             {q.length < 3 ? null : lookup.isPending ? (
@@ -47,7 +48,7 @@ export default function FindUserDialog({ onClose, initial = "" }: { onClose: () 
                       <p className="truncate text-xs text-slate-500">{h.email}</p>
                       <p className="text-xs text-slate-700">
                         Found in <strong>{lookupWhere(h.where)}</strong>
-                        {h.status ? ` · ${h.where === "student" ? "Account" : "Application"}: ${humanize(h.status)}` : ""}
+                        {h.status ? ` · ${h.where === "student" ? `Account: ${humanize(h.status)}` : `Application: ${applicationStatusLabel(h.status)}`}` : ""}
                       </p>
                     </div>
                     <Link href={h.href} onClick={onClose} className="shrink-0 text-sm font-medium text-primary hover:underline">
@@ -60,7 +61,7 @@ export default function FindUserDialog({ onClose, initial = "" }: { onClose: () 
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm leading-5 text-amber-900" role="status">
                 <p className="font-semibold">No student or mentor matching “{q}” is visible to admins.</p>
                 <p className="mt-1">
-                  Students and mentors are searched in every status, drafts included, so this person most likely hasn&apos;t verified their email
+                  Students and mentors are searched in every status, not submitted included, so this person most likely hasn&apos;t verified their email
                   with the sign-up code yet (unverified accounts aren&apos;t listed), or the email is spelled differently.
                 </p>
               </div>
