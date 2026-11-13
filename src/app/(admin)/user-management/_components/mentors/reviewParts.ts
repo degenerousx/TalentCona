@@ -18,3 +18,6 @@ export const applicantInitials = (name: string) =>
 
 /** Application statuses that still await an admin decision. */
 export const isAwaitingReview = (status: string) => !["Approved", "Rejected", "ChangesRequested", "Draft"].includes(status);
+
+/** "LinkedIn" for a LinkedIn URL, otherwise "Portfolio". */
+export const linkLabel = (url: string) => (/linkedin\.com/i.test(url) ? "LinkedIn" : "Portfolio");

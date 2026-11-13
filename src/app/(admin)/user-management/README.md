@@ -61,7 +61,7 @@ Postman "Mentors List - With Free Status Filter": `GET /mentors/admin?statuses=D
 (one or more of Draft, Submitted, UnderReview, Approved, Rejected,
 ChangesRequested; comma-separated). It is used **instead of** `section`: the
 API rejects both together ("Use either section or statuses, not both."), so
-`useMentors(section="status", …, statuses)` never sends `section`.
+`useMentors(section="status", …, statuses)` never sends `section`. The API value `Draft` is shown as **Not Submitted** everywhere (filter, table, review page, Find a user).
 
 The fourth section on the Mentors tab uses it. It starts on Draft + Changes
 Requested (the applications no other section shows); its Filters drawer adds an

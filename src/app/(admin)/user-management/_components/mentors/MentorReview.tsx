@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AwardIcon, BriefcaseIcon, CircleCheckIcon, CircleXIcon, ClockIcon, GraduationCapIcon, LinkIcon, RatingStarIcon, TrophyIcon } from "@/components/icons";
-import { errorText, humanize, timeAgo, useMentor, useRateMentor, useReviewMentor, type ReviewAction } from "../api";
-import { RATING_LABELS, applicantInitials, isAwaitingReview } from "./reviewParts";
+import { errorText, timeAgo, useMentor, useRateMentor, useReviewMentor, type ReviewAction } from "../api";
+import { RATING_LABELS, applicantInitials, isAwaitingReview, linkLabel } from "./reviewParts";
 import PageState from "../shared/PageState";
 import RejectDialog from "../shared/RejectDialog";
+import { applicationStatusLabel } from "../filters";
 import SuccessDialog from "../shared/SuccessDialog";
 import styles from "./MentorReview.module.css";
 
@@ -110,7 +111,8 @@ export default function MentorReview({ mentorId }: { mentorId: string }) {
               <a href={`mailto:${m.email}`} className={styles.email}>
                 {m.email}
               </a>
-              {a.submittedAt && (
+              {/* A not-submitted application has no submission time to show. */}
+              {a.submittedAt && a.status !== "Draft" && (
                 <span className={styles.submitted}>
                   <ClockIcon size={12} color="#455A64" strokeWidth={2} />
                   Submitted {timeAgo(a.submittedAt)}
@@ -120,7 +122,7 @@ export default function MentorReview({ mentorId }: { mentorId: string }) {
           </div>
           <span className={`${styles.badge} ${badgeClass}`}>
             {pending && <ClockIcon size={12} color="#894B00" strokeWidth={2} />}
-            {pending ? "Pending Review" : humanize(a.status)}
+            {pending ? "Pending Review" : applicationStatusLabel(a.status)}
           </span>
         </header>
 
@@ -163,7 +165,7 @@ export default function MentorReview({ mentorId }: { mentorId: string }) {
             {a.link && (
               <a href={a.link} target="_blank" rel="noreferrer" className={styles.link}>
                 <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
-                LinkedIn / Portfolio
+                {linkLabel(a.link)}
               </a>
             )}
             {a.introVideo && (
@@ -245,12 +247,12 @@ export default function MentorReview({ mentorId }: { mentorId: string }) {
           ) : (
             <p className={styles.ratingText}>
               {a.status === "Draft"
-                ? "This application is still a draft: the mentor hasn't submitted it yet, so it can't be reviewed."
+                ? "Not Submitted: the mentor hasn't submitted this application yet, so it can't be reviewed."
                 : a.status === "ChangesRequested"
                   ? `Changes were requested${a.reviewedAt ? ` ${timeAgo(a.reviewedAt)}` : ""}${a.rejectionReason ? `: ${a.rejectionReason}` : ""}. It returns to Pending Reviews when the mentor resubmits.`
                   : a.status === "Rejected" && a.rejectionReason
                     ? `Rejected${a.reviewedAt ? ` ${timeAgo(a.reviewedAt)}` : ""}: ${a.rejectionReason}`
-                    : `This application was ${humanize(a.status).toLowerCase()}${a.reviewedAt ? ` ${timeAgo(a.reviewedAt)}` : ""}.`}
+                    : `This application was ${applicationStatusLabel(a.status).toLowerCase()}${a.reviewedAt ? ` ${timeAgo(a.reviewedAt)}` : ""}.`}
             </p>
           )}
         </footer>
