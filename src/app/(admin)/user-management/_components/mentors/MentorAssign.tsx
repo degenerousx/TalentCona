@@ -9,9 +9,9 @@ import { Check, RoleDefinitions } from "./AssignParts";
 import AssignProgramsModal, { type AssignableProgram, type MentorRole } from "./AssignProgramsModal";
 import PageState from "../shared/PageState";
 import SuccessDialog from "../shared/SuccessDialog";
-import { mergePrograms, timeAgo, useMentor, usePrograms, useSetMentorPrograms } from "../api";
-import { applicantInitials } from "./reviewParts";
-import review from "./MentorReview.module.css";
+import { errorText, mergePrograms, timeAgo, useMentor, usePrograms, useReviewMentor, useSetMentorPrograms } from "../api";
+import { applicantInitials, isAwaitingReview } from "./reviewParts";
+import reviewStyles from "./MentorReview.module.css";
 import styles from "./MentorAssign.module.css";
 
 const ROLES: MentorRole[] = ["Instructor", "Program Advisor"];
@@ -40,6 +40,10 @@ export default function MentorAssign({ mentorId }: { mentorId: string }) {
   const query = useMentor(mentorId);
   const programsQuery = usePrograms();
   const save = useSetMentorPrograms(mentorId);
+  const review = useReviewMentor(mentorId);
+  // Set once this page has approved the application, so a retry after a failed
+  // program save doesn't approve twice (the refetched status is "Approved" by then).
+  const [approvedHere, setApprovedHere] = useState(false);
   const [search, setSearch] = useState("");
   // null until the admin changes something: until then the mentor's current programs are shown.
   const [edited, setEdited] = useState<Selection | null>(null);
@@ -57,6 +61,8 @@ export default function MentorAssign({ mentorId }: { mentorId: string }) {
   const m = query.data;
   if (!m) return <PageState query={query} noun="mentor" backHref="/user-management#mentors" />;
   const a = m.application;
+  /** Opened from Approve on the review page: confirming approves, then assigns. */
+  const approving = isAwaitingReview(a.status) || approvedHere;
   const selection = edited ?? selectionOf(m.programs);
   const setSelection = (fn: (s: Selection) => Selection) => setEdited(fn(selection));
   const all: AssignableProgram[] = (programsQuery.data ?? []).map((p) => ({ id: p.id, title: p.title, track: p.school }));
@@ -70,9 +76,9 @@ export default function MentorAssign({ mentorId }: { mentorId: string }) {
     setSelection((s) => ({ ...s, [id]: s[id]?.includes(role) ? s[id].filter((r) => r !== role) : ROLES.filter((r) => r === role || s[id]?.includes(r)) }));
 
   return (
-    <div className={review.page}>
-      <h1 className={review.title}>
-        <Link href="/user-management#mentors" className={review.back} aria-label="Back to mentors">
+    <div className={reviewStyles.page}>
+      <h1 className={reviewStyles.title}>
+        <Link href="/user-management#mentors" className={reviewStyles.back} aria-label="Back to mentors">
           <svg width="19" height="17" viewBox="0 0 19 17" fill="none" aria-hidden="true">
             <path d="M8.5 1.6 1.6 8.5l6.9 6.9M1.6 8.5h15.8" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -80,19 +86,24 @@ export default function MentorAssign({ mentorId }: { mentorId: string }) {
         Mentor Details
       </h1>
 
-      <section className={review.card} aria-label={`Assign ${m.name}`}>
-        <header className={review.head}>
-          <div className={review.who}>
-            <span className={review.avatar} aria-hidden="true">
+      <section className={reviewStyles.card} aria-label={`Assign ${m.name}`}>
+        <header className={reviewStyles.head}>
+          <div className={reviewStyles.who}>
+            <span className={reviewStyles.avatar} aria-hidden="true">
               {applicantInitials(m.name)}
             </span>
-            <div className={review.identity}>
-              <h2 className={review.name}>{m.name}</h2>
-              <a href={`mailto:${m.email}`} className={review.email}>
+            <div className={reviewStyles.identity}>
+              <h2 className={reviewStyles.name}>{m.name}</h2>
+              <a href={`mailto:${m.email}`} className={reviewStyles.email}>
                 {m.email}
               </a>
-              {a.reviewedAt && (
-                <span className={review.submitted}>
+              {approving ? (
+                <span className={`${reviewStyles.badge} ${reviewStyles.pending}`}>
+                  <ClockIcon size={12} color="#894B00" strokeWidth={2} />
+                  Pending approval
+                </span>
+              ) : a.reviewedAt && (
+                <span className={reviewStyles.submitted}>
                   <ClockIcon size={12} color="#455A64" strokeWidth={2} />
                   Approved {timeAgo(a.reviewedAt)}
                 </span>
@@ -102,15 +113,15 @@ export default function MentorAssign({ mentorId }: { mentorId: string }) {
         </header>
 
         {(a.link || a.introVideo) && (
-          <div className={review.links}>
+          <div className={reviewStyles.links}>
             {a.link && (
-              <a href={a.link} target="_blank" rel="noreferrer" className={review.link}>
+              <a href={a.link} target="_blank" rel="noreferrer" className={reviewStyles.link}>
                 <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
                 {linkLabel(a.link)}
               </a>
             )}
             {a.introVideo && (
-              <a href={a.introVideo} target="_blank" rel="noreferrer" className={review.link}>
+              <a href={a.introVideo} target="_blank" rel="noreferrer" className={reviewStyles.link}>
                 <LinkIcon size={14} color="#722FFF" strokeWidth={1.67} />
                 Intro video
               </a>
@@ -142,15 +153,15 @@ export default function MentorAssign({ mentorId }: { mentorId: string }) {
           </div>
         </dl>
 
-        <dl className={review.details}>
-          <div className={review.detail}>
+        <dl className={reviewStyles.details}>
+          <div className={reviewStyles.detail}>
             <dt>Expertise</dt>
             <dd>
               <BriefcaseIcon size={16} color="#722FFF" strokeWidth={1.33} />
-              <ul className={review.chips}>
-                {a.expertise.length === 0 && <li className={review.chip}>Not provided</li>}
+              <ul className={reviewStyles.chips}>
+                {a.expertise.length === 0 && <li className={reviewStyles.chip}>Not provided</li>}
                 {a.expertise.map((e) => (
-                  <li key={e.label} className={review.chip}>
+                  <li key={e.label} className={reviewStyles.chip}>
                     {e.label}
                     {e.years ? ` -${e.years} ${e.years === 1 ? "Year" : "Years"}` : ""}
                   </li>
@@ -224,9 +235,12 @@ export default function MentorAssign({ mentorId }: { mentorId: string }) {
           </div>
         </div>
 
-        <footer className={review.footer}>
-          <div className={`${review.actions} ${styles.actions}`}>
-            <Link href="/user-management#mentors" className={styles.later}>
+        <footer className={reviewStyles.footer}>
+          <div className={`${reviewStyles.actions} ${styles.actions}`}>
+            <Link
+              href={approving ? `/user-management/mentors/review/${encodeURIComponent(mentorId)}` : "/user-management#mentors"}
+              className={styles.later}
+            >
               I will do this later
             </Link>
             <button
@@ -260,10 +274,21 @@ export default function MentorAssign({ mentorId }: { mentorId: string }) {
                 advisor: roles.includes("Program Advisor"),
               })),
             ];
-            await save.mutateAsync(mergePrograms(m.programs, changes));
+            // Approve first (only now, after programs and roles are chosen), then save the programs.
+            if (approving && !approvedHere) {
+              await review.mutateAsync({ action: "approve" });
+              setApprovedHere(true);
+            }
+            try {
+              await save.mutateAsync(mergePrograms(m.programs, changes));
+            } catch (e) {
+              throw new Error(
+                approving ? `The application is approved, but the programs couldn't be saved: ${errorText(e)} Try again.` : errorText(e),
+              );
+            }
             setEdited(confirmed);
             setConfirming(false);
-            setDone(`${m.name} Assigned Successfully !`);
+            setDone(approving ? "Mentorship Application Approved Successfully !" : `${m.name} Assigned Successfully !`);
           }}
         />
       )}

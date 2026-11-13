@@ -19,14 +19,19 @@ there is no sample data. All requests live in `_components/api.ts`.
 
 ## Approve → assign
 
-On the review page, **Approve** (`POST /mentors/admin/:id/approve`) shows the
-success message, then opens **Mentor Details → assign**
-(`/user-management/mentors/assign/:id`) on its own. There the admin picks
-programs and one or both roles (Instructor, Program Advisor), confirms, and
-`PUT /mentors/admin/:id/programs` saves them, then the mentor's profile opens.
-The assign page starts from the mentor's current programs, and the PUT sends
-the full resulting list, so unticking a program removes it. Reject and
-Request changes return to the mentors list.
+On the review page, **Approve** opens **Mentor Details → assign**
+(`/user-management/mentors/assign/:id`) without approving anything. While the
+application is awaiting review the page shows "Pending approval"; the admin
+picks programs and one or both roles (Instructor, Program Advisor), then
+**Assign → Confirm Assignment** sends `POST /mentors/admin/:id/approve` and
+then `PUT /mentors/admin/:id/programs`, and only then shows "Mentorship
+Application Approved Successfully !" and opens the mentor's profile. If the
+programs fail to save after the approval succeeded, the error says so and a
+retry saves only the programs. "I will do this later" returns to the review
+page with the application still pending. For an already-approved mentor the
+same page just assigns programs. The page starts from the mentor's current
+programs and the PUT sends the full list (it replaces), so unticking removes.
+Reject and Request changes return to the mentors list.
 
 ## Notes
 
