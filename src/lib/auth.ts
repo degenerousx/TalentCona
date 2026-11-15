@@ -1,5 +1,6 @@
 import { api, ApiError, refreshAccessToken } from "./api";
 import { clearSession, decodeClaims, setAccessToken, type AdminInfo } from "./session";
+import { forgetPushOnSignOut } from "./push";
 
 /**
  * Admin sign-in. MFA is per-admin policy:
@@ -164,6 +165,8 @@ export async function resetPassword(token: string, newPassword: string) {
  */
 export async function logout({ idle = false }: { idle?: boolean } = {}) {
   let status: SignOutStatus = idle ? "idle" : "done";
+  // Stop desktop notifications for this admin on this browser (needs the session, so first).
+  await forgetPushOnSignOut();
   try {
     await api("/auth/logout", { method: "POST" });
   } catch (err) {
