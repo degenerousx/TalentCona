@@ -2,6 +2,7 @@ import AuthGate from "@/components/layout/AuthGate";
 import Header from "@/components/layout/Header";
 import IdleTimeout from "@/components/layout/IdleTimeout";
 import MainScroll from "@/components/layout/MainScroll";
+import PushSetup from "@/components/notifications/PushSetup";
 import RequirePrivilege from "@/components/layout/RequirePrivilege";
 import ScrollLock from "@/components/layout/ScrollLock";
 import Sidebar from "@/components/layout/Sidebar";
@@ -16,6 +17,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     // ScrollLock undoes any programmatic scroll that still gets through.
     <AuthGate>
       <IdleTimeout />
+      <PushSetup />
       <div id="app-shell" className="flex h-dvh flex-col overflow-hidden">
         <ScrollLock />
         <Header />

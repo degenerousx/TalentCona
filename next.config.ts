@@ -11,6 +11,18 @@ const nextConfig: NextConfig = {
   // backend. Called directly, the refresh cookie would be a third-party cookie,
   // which Safari and incognito Chrome block.
   // /auth/* keeps its path because the cookie is scoped to Path=/auth/refresh.
+  // The push service worker (public/sw.js) must never be served stale.
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+        ],
+      },
+    ];
+  },
   async rewrites() {
     return [
       { source: "/auth/:path*", destination: `${API_URL}/auth/:path*` },

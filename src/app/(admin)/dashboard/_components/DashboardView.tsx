@@ -4,9 +4,7 @@ import Link from "next/link";
 import { WelcomeHeading } from "@/components/layout/CurrentAdmin";
 import GrowthChart from "./GrowthChart";
 import { useLiveDashboard } from "./LiveDashboard";
-import { useNotifications } from "@/components/notifications/useNotifications";
-import { ago } from "@/components/notifications/NotificationBell";
-import type { NotificationKind } from "@/components/notifications/sources";
+import { ago, kindOf, targetOf, useMarkRead, useNotificationList, type NotificationKind } from "@/components/notifications/api";
 import { GROWTH, PENDING_REVIEWS, PERFORMANCE, STATS, type Stat } from "./data";
 import {
   CircleAlertIcon,
@@ -34,10 +32,10 @@ const ACTIVITY_STYLE: Record<NotificationKind, { bg: string; color: string; Icon
   student: { bg: "#DBEAFE", color: "#155DFC", Icon: UsersIcon },
   mentor: { bg: "#DBEAFE", color: "#155DFC", Icon: UserCheckIcon },
   admin: { bg: "#E0E7FF", color: "#4F39F6", Icon: UserCheckIcon },
-  payout: { bg: "#DCFCE7", color: "#00A63E", Icon: CircleCheckIcon },
-  loan: { bg: "#FFEDD4", color: "#F54900", Icon: ClockIcon },
-  talent: { bg: "#FCE7F3", color: "#E60076", Icon: TrendingUpIcon },
-  activity: { bg: "#F3F4F6", color: "#4A5565", Icon: CircleAlertIcon },
+  money: { bg: "#DCFCE7", color: "#00A63E", Icon: CircleCheckIcon },
+  message: { bg: "#FCE7F3", color: "#E60076", Icon: FileTextIcon },
+  security: { bg: "#FFEDD4", color: "#F54900", Icon: ClockIcon },
+  other: { bg: "#F3F4F6", color: "#4A5565", Icon: CircleAlertIcon },
 };
 
 function StatCard({ stat, value, title }: { stat: Stat; value: string; title?: string }) {
@@ -67,7 +65,9 @@ function StatCard({ stat, value, title }: { stat: Stat; value: string; title?: s
 
 export default function DashboardView() {
   const live = useLiveDashboard();
-  const feed = useNotifications();
+  // Recent Activity: the admin's latest notifications (GET /notifications).
+  const feed = useNotificationList();
+  const { mutate: markRead } = useMarkRead();
   const recent = feed.items.slice(0, 5);
   return (
     <div className={styles.dashboard}>
@@ -106,11 +106,14 @@ export default function DashboardView() {
           <ul className={styles.activityList}>
             {recent.length === 0 && (
               <li className={styles.activityItem}>
-                <p className={styles.activityTime}>{feed.loading ? "Loading activity…" : "No recent activity."}</p>
+                <p className={styles.activityTime}>
+                  {feed.isPending && feed.fetchStatus !== "idle" ? "Loading activity…" : feed.isError ? "Couldn't load recent activity." : "No recent activity."}
+                </p>
               </li>
             )}
             {recent.map((item) => {
-              const { bg, color, Icon } = ACTIVITY_STYLE[item.kind];
+              const { bg, color, Icon } = ACTIVITY_STYLE[kindOf(item.type)];
+              const target = targetOf(item);
               const body = (
                 <>
                   <span className={styles.activityIcon} style={{ background: bg }}>
@@ -118,16 +121,21 @@ export default function DashboardView() {
                   </span>
                   <div>
                     <p className={styles.activityText}>
-                      {item.title}: {item.description}
+                      {item.body ? `${item.title}: ${item.body}` : item.title}
                     </p>
-                    {item.at && <p className={styles.activityTime}>{ago(item.at)}</p>}
+                    <p className={styles.activityTime}>{ago(item.createdAt)}</p>
                   </div>
                 </>
               );
               return (
                 <li key={item.id} className={styles.activityItem}>
-                  {item.href ? (
-                    <Link href={item.href} onClick={() => feed.markRead(item.id)} style={{ display: "contents" }}>
+                  {target ? (
+                    <Link
+                      href={target.href}
+                      {...(target.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                      onClick={() => !item.readAt && markRead(item.id)}
+                      style={{ display: "contents" }}
+                    >
                       {body}
                     </Link>
                   ) : (
