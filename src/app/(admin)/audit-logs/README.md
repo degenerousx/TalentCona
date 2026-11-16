@@ -31,4 +31,4 @@ Super-admin view (`VIEW_AUDIT_LOG`) of everything the backend records. All data 
 
 ## Export
 
-The button starts the backend export with the table's filters and shows the job reference. Postman has no endpoint to fetch an audit export job's result yet, so the confirmation also offers **Download CSV now**: the same filtered events (up to 5,000) as a CSV made in the browser.
+**Export audit log** sends `POST /audit/logs/export` with the table's current filters (search, type, date range). The backend builds the file and emails it to the admin who asked and to the super admin; that keeps large exports off the browser. The page only confirms: "Your export is being processed… we'll email it to you once it's ready." Nothing downloads in the browser.

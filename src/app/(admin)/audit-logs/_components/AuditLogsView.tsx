@@ -7,10 +7,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/shadcn/pop
 import { Toaster } from "@/components/shadcn/sonner";
 import { Card } from "@/components/ui/Card";
 import { ErrorState, LoadingState } from "@/components/ui/States";
-import { downloadCsv } from "@/lib/csv";
 import { cn } from "@/lib/cn";
 import { useCan } from "@/lib/permissions";
-import { RANGES, fetchForCsv, requestExport, useAdminActivity, useAuditLog, useAuditSummary, useRecentSecurity, type Range, type ServerFilters } from "./api";
+import { RANGES, requestExport, useAdminActivity, useAuditLog, useAuditSummary, useRecentSecurity, type Range, type ServerFilters } from "./api";
 import { LOG_TYPES, MODULES, USER_TYPES, initials, when, type AuditEvent, type LogType } from "./model";
 
 const ROWS = 20;
@@ -253,52 +252,20 @@ export function AuditLogsView() {
     tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  /** Same filters as the table, as a CSV made in the browser. */
-  const downloadCsvNow = async () => {
-    try {
-      const all = (await fetchForCsv(server)).filter((e) => matches(e, filters));
-      if (!all.length) return void toast.info("Nothing to export for these filters.");
-      downloadCsv(
-        `audit-log-${new Date().toISOString().slice(0, 10)}.csv`,
-        all.map((e) => ({
-          "Log ID": e.ref,
-          Date: e.at ?? "",
-          Actor: e.actorName,
-          "User type": e.actorRole,
-          Email: e.actorEmail ?? "",
-          Activity: e.activity,
-          Action: e.action,
-          Module: e.module,
-          Target: e.target,
-          Type: e.type,
-          Categories: e.categories.join(", "),
-          Details: e.details.map((d) => `${d.label}: ${d.value}`).join("; "),
-          Before: e.before ?? "",
-          After: e.after ?? "",
-          Device: e.device ?? "",
-          IP: e.ip ?? "",
-        })),
-      );
-      toast.success(`Downloaded ${fmt(all.length)} events`);
-    } catch (e) {
-      toast.error(`Couldn't download: ${e instanceof Error ? e.message : "try again"}`);
-    }
-  };
-
-  /** POST /audit/logs/export with the table's filters: the backend prepares the export. */
+  /**
+   * POST /audit/logs/export with the table's filters. The backend builds the
+   * file and emails it to the requester and the super admin; nothing downloads here.
+   */
   const exportLog = async () => {
     setExporting(true);
     try {
-      const { jobId } = await requestExport(server);
-      toast.success("Export requested", {
-        description: `Reference ${jobId}. The backend is preparing the audit log with your current filters.`,
-        action: { label: "Download CSV now", onClick: () => void downloadCsvNow() },
-        duration: 12_000,
+      await requestExport(server);
+      toast.success("Your export is being processed", {
+        description: "We'll email the audit log (with your current filters) to you once it's ready. The super admin also receives a copy.",
+        duration: 10_000,
       });
     } catch (e) {
-      toast.error(`Couldn't start the export: ${e instanceof Error ? e.message : "try again"}`, {
-        action: { label: "Download CSV", onClick: () => void downloadCsvNow() },
-      });
+      toast.error("Couldn't start the export", { description: e instanceof Error ? e.message : "Please try again." });
     } finally {
       setExporting(false);
     }
@@ -325,7 +292,7 @@ export function AuditLogsView() {
           className="flex h-[42px] items-center gap-2 rounded-md bg-primary px-[22px] text-base font-medium text-white shadow-sm hover:bg-primary/90 disabled:opacity-70"
         >
           <Download aria-hidden className="size-4" />
-          {exporting ? "Exporting…" : "Export audit log"}
+          {exporting ? "Requesting export…" : "Export audit log"}
         </button>
       </div>
 
