@@ -18,7 +18,7 @@ Super-admin view (`VIEW_AUDIT_LOG`) of everything the backend records. All data 
 - **Type** (More filters → backend `categories`, comma-separated): Change, Critical, Security, Approval, Access.
 - **Date** (More filters → backend `range`): Last 24 hours (`1d`), Last 7 days (`7d`, the default), Last 30 days (`30d`), Custom (`custom` + `from`/`to`, sent once both dates are set).
 - **All users**: Admin, Student, Mentor, Ambassador, System, from each event's `actorUserType` (no actor → System). The list endpoint has no user-type parameter, so this filters the loaded events, loading older pages until a page is full (up to 10 × 100).
-- **All modules**: currently derived from `entityType`/`action` and filtered the same way. To be replaced by the backend's module list.
+- **All modules**: every backend `AuditAction` (166, from the backend team) is assigned to one module in `_components/modules.ts`. The modules follow the portal's sections: Authentication & Security, Admin Management, User Management, Accounts & Privacy, Admissions & Routing, Financial Ops, Referrals, Manage Programs, Learning & Certificates, Mentorship & Sessions, Communities, Talent Corner, Laptops, Website Inquiries, Payment Webhooks, Audit Logs. The list endpoint filters by a single `action`, not a group, so the module filter is applied to the loaded events like the user filter. An action added later that isn't in the map falls back to a guess from its name; add it to `modules.ts`.
 
 ## Rows
 

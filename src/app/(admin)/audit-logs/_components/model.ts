@@ -6,6 +6,8 @@
  * email, userType, profileAvatarUrl }.
  */
 
+import { MODULE_OF_ACTION } from "./modules";
+
 type Loose = Record<string, unknown>;
 
 export type LogType = "Change" | "Critical" | "Access" | "Security" | "Approval";
@@ -15,8 +17,7 @@ export const LOG_TYPES: LogType[] = ["Change", "Critical", "Access", "Security",
 export type UserType = "Admin" | "Student" | "Mentor" | "Ambassador" | "System";
 export const USER_TYPES: UserType[] = ["Admin", "Student", "Mentor", "Ambassador", "System"];
 
-/** The design's "All modules" options (others still show in the table). */
-export const MODULES = ["User Management", "Admin Management", "Financial Ops", "Referrals", "Authentication"] as const;
+export { MODULES } from "./modules";
 
 export type AuditEvent = {
   id: string;
@@ -60,7 +61,9 @@ export function humanize(s: string) {
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/[._:/-]+/g, " ")
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    // Acronyms stay upper case: "Admin MFA verification failed", "Program module MCQs reordered".
+    .replace(/\b(mfa|otp|mcq|ip|id)(s?)\b/g, (_, a: string, plural: string) => a.toUpperCase() + plural);
   return w ? w[0].toUpperCase() + w.slice(1) : "";
 }
 
@@ -76,15 +79,18 @@ function roleOf(raw: string | null, hasActor: boolean): UserType {
 
 const isLogType = (v: unknown): v is LogType => typeof v === "string" && (LOG_TYPES as string[]).includes(v);
 
-/** Module from the entity type and action. */
+/** Module from the backend's action (modules.ts); a guess from the names for actions not in the list. */
 export function moduleOf(entityType: string, action: string) {
+  const known = MODULE_OF_ACTION.get(action.toUpperCase());
+  if (known) return known;
   const t = `${entityType} ${action}`.toLowerCase();
-  if (/auth|login|logout|mfa|password|session|otp|token/.test(t)) return "Authentication";
+  if (/auth|login|logout|mfa|password|session|otp|token/.test(t)) return "Authentication & Security";
   if (/withdraw|payout|referral|ambassador/.test(t)) return "Referrals";
   if (/payment|loan|wallet|transaction|invoice|refund|repayment|campaign|fund/.test(t)) return "Financial Ops";
   if (/invit|admin|team|privilege|permission/.test(t)) return "Admin Management";
   if (/student|mentor|user|enrol|assignment|application/.test(t)) return "User Management";
   if (/program|module|lesson|rubric|course|mcq|project/.test(t)) return "Manage Programs";
+  if (/webhook/.test(t)) return "Payment Webhooks";
   if (/talent|hiring/.test(t)) return "Talent Corner";
   if (/communit|channel/.test(t)) return "Communities";
   if (/laptop|device/.test(t)) return "Laptops";
