@@ -3,7 +3,7 @@
 Two parts, both on the backend's notifications API (Postman: **notifications**).
 No mock or derived data: what the bell shows is exactly what `GET /notifications` returns.
 
-## In-app (header bell + Dashboard Recent Activity)
+## In-app (header bell)
 
 | What | Endpoint | Where |
 | --- | --- | --- |

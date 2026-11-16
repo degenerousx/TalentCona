@@ -34,7 +34,7 @@ export const GROWTH = {
   revenue: [45000, 52000, 58000, 67000, 78000, 92000],
 };
 
-// Recent Activity is the admin's latest notifications (GET /notifications, components/notifications/api.ts).
+// Recent Activity is the newest audit log events (GET /audit/logs, recentAudit.ts).
 
 // "Review" opens where each queue is handled: the Pending Reviews table on the
 // Mentors tab, and the Communities page (join requests are on its Members tab).

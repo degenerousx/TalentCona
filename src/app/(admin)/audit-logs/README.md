@@ -11,6 +11,7 @@ Super-admin view (`VIEW_AUDIT_LOG`) of everything the backend records. All data 
 | Security banner text | `GET /audit/logs?range=1d&categories=Security&limit=20` |
 | Active administrators | `GET /admin-portal/team/members` (needs `MANAGE_ADMINS`) |
 | Export audit log | `POST /audit/logs/export?<table filters>` → `{ jobId }` |
+| Dashboard → Recent Activity | `GET /audit/logs?limit=5&range=30d` (`VIEW_AUDIT_LOG` or `DASHBOARD_VIEW_AUDIT_LOG`; see dashboard/_components/recentAudit.ts) |
 
 ## Filters
 
