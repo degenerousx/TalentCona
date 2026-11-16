@@ -244,7 +244,8 @@ export function AuditLogsView() {
   const s = summary.data;
   const loadingStat = summary.isPending ? "…" : summary.isError ? "—" : null;
   // "Mfa failed and password reset requested in the last 24 hours." (from the events themselves)
-  const kinds = [...new Set((recentSecurity.data ?? []).map((e) => e.activity.toLowerCase()))].slice(0, 2);
+  // Lower-case only each phrase's first letter, so acronyms (MFA, OTP) survive.
+  const kinds = [...new Set((recentSecurity.data ?? []).map((e) => e.activity.replace(/^./, (c) => c.toLowerCase())))].slice(0, 2);
   const bannerText = kinds.length ? `${kinds.join(" and ").replace(/^./, (c) => c.toUpperCase())} in the last 24 hours.` : "Recorded in the last 24 hours.";
 
   const review = () => {
