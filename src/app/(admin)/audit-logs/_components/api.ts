@@ -1,12 +1,12 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { api, ApiError, type Query } from "@/lib/api";
-import { toEvent, type AuditEvent, type LogType } from "./model";
+import { toEvent, type LogType } from "./model";
 
 /**
  * Audit & System Logs ↔ backend (Postman: "audit"), VIEW_AUDIT_LOG:
  *   GET  /audit/logs?cursor=&limit=&search=&categories=&range=&from=&to=   list (cursor paging, max 100)
  *   GET  /audit/logs/summary?range=&from=&to=                             { events, adminChanges, securityEvents }
- *   POST /audit/logs/export?<same filters>                                { jobId }
+ *   POST /audit/logs/export?<same filters>                                { jobId } (file is emailed)
  *   GET  /admin-portal/team/members (MANAGE_ADMINS)                       "Active administrators"
  *
  * Search, categories (Change/Critical/Security/Approval/Access) and the date
@@ -103,20 +103,7 @@ export function useAdminActivity(enabled: boolean) {
   });
 }
 
-/** Starts a backend export of the filtered log; returns its job id. */
+/** Starts the backend export of the filtered log; the backend emails the file to the requester and the super admin. */
 export async function requestExport(f: ServerFilters) {
   return api<{ jobId: string }>("/audit/logs/export", { method: "POST", query: toQuery(f) });
-}
-
-/** Up to 5,000 filtered events, for a CSV download in the browser. */
-export async function fetchForCsv(f: ServerFilters) {
-  const out: AuditEvent[] = [];
-  let cursor: string | null = null;
-  for (let i = 0; i < 50; i++) {
-    const page: CursorPage<unknown> = await api<CursorPage<unknown>>("/audit/logs", { query: { limit: PAGE, cursor, ...toQuery(f) } });
-    out.push(...page.items.map(toEvent));
-    if (!page.hasNext || !page.nextCursor) break;
-    cursor = page.nextCursor;
-  }
-  return out;
 }
