@@ -4,7 +4,10 @@ import Link from "next/link";
 import { WelcomeHeading } from "@/components/layout/CurrentAdmin";
 import GrowthChart from "./GrowthChart";
 import { useLiveDashboard } from "./LiveDashboard";
-import { ago, kindOf, targetOf, useMarkRead, useNotificationList, type NotificationKind } from "@/components/notifications/api";
+import { ago } from "@/components/notifications/api";
+import { useCan } from "@/lib/permissions";
+import { useRecentAudit } from "./recentAudit";
+import type { LogType } from "../../audit-logs/_components/model";
 import { GROWTH, PENDING_REVIEWS, PERFORMANCE, STATS, type Stat } from "./data";
 import {
   CircleAlertIcon,
@@ -28,14 +31,13 @@ const STAT_ICONS = {
   trend: TrendingUpIcon,
 };
 
-const ACTIVITY_STYLE: Record<NotificationKind, { bg: string; color: string; Icon: typeof UsersIcon }> = {
-  student: { bg: "#DBEAFE", color: "#155DFC", Icon: UsersIcon },
-  mentor: { bg: "#DBEAFE", color: "#155DFC", Icon: UserCheckIcon },
-  admin: { bg: "#E0E7FF", color: "#4F39F6", Icon: UserCheckIcon },
-  money: { bg: "#DCFCE7", color: "#00A63E", Icon: CircleCheckIcon },
-  message: { bg: "#FCE7F3", color: "#E60076", Icon: FileTextIcon },
-  security: { bg: "#FFEDD4", color: "#F54900", Icon: ClockIcon },
-  other: { bg: "#F3F4F6", color: "#4A5565", Icon: CircleAlertIcon },
+/** Recent Activity icon by the audit event's type (primaryCategory). */
+const ACTIVITY_STYLE: Record<LogType, { bg: string; color: string; Icon: typeof UsersIcon }> = {
+  Change: { bg: "#DBEAFE", color: "#155DFC", Icon: FileTextIcon },
+  Approval: { bg: "#DCFCE7", color: "#00A63E", Icon: CircleCheckIcon },
+  Critical: { bg: "#FFE4E6", color: "#E11D48", Icon: CircleAlertIcon },
+  Security: { bg: "#FFEDD4", color: "#F54900", Icon: CircleAlertIcon },
+  Access: { bg: "#F3F4F6", color: "#4A5565", Icon: UserCheckIcon },
 };
 
 function StatCard({ stat, value, title }: { stat: Stat; value: string; title?: string }) {
@@ -65,10 +67,10 @@ function StatCard({ stat, value, title }: { stat: Stat; value: string; title?: s
 
 export default function DashboardView() {
   const live = useLiveDashboard();
-  // Recent Activity: the admin's latest notifications (GET /notifications).
-  const feed = useNotificationList();
-  const { mutate: markRead } = useMarkRead();
-  const recent = feed.items.slice(0, 5);
+  // Recent Activity: the newest audit log events (GET /audit/logs).
+  const canOpenLog = useCan("VIEW_AUDIT_LOG");
+  const feed = useRecentAudit();
+  const recent = feed.data ?? [];
   return (
     <div className={styles.dashboard}>
       <header className={styles.welcome}>
@@ -107,13 +109,18 @@ export default function DashboardView() {
             {recent.length === 0 && (
               <li className={styles.activityItem}>
                 <p className={styles.activityTime}>
-                  {feed.isPending && feed.fetchStatus !== "idle" ? "Loading activity…" : feed.isError ? "Couldn't load recent activity." : "No recent activity."}
+                  {!feed.allowed
+                    ? "Needs the View audit log privilege."
+                    : feed.isPending
+                      ? "Loading activity…"
+                      : feed.isError
+                        ? "Couldn't load recent activity."
+                        : "No activity in the last 30 days."}
                 </p>
               </li>
             )}
-            {recent.map((item) => {
-              const { bg, color, Icon } = ACTIVITY_STYLE[kindOf(item.type)];
-              const target = targetOf(item);
+            {recent.map((e) => {
+              const { bg, color, Icon } = ACTIVITY_STYLE[e.type];
               const body = (
                 <>
                   <span className={styles.activityIcon} style={{ background: bg }}>
@@ -121,21 +128,18 @@ export default function DashboardView() {
                   </span>
                   <div>
                     <p className={styles.activityText}>
-                      {item.body ? `${item.title}: ${item.body}` : item.title}
+                      {e.actorName}: {e.activity}
                     </p>
-                    <p className={styles.activityTime}>{ago(item.createdAt)}</p>
+                    <p className={styles.activityTime}>
+                      {e.at ? ago(e.at) : "—"} · {e.module}
+                    </p>
                   </div>
                 </>
               );
               return (
-                <li key={item.id} className={styles.activityItem}>
-                  {target ? (
-                    <Link
-                      href={target.href}
-                      {...(target.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                      onClick={() => !item.readAt && markRead(item.id)}
-                      style={{ display: "contents" }}
-                    >
+                <li key={e.id} className={styles.activityItem}>
+                  {canOpenLog ? (
+                    <Link href="/audit-logs" style={{ display: "contents" }} title="Open Audit & System Logs">
                       {body}
                     </Link>
                   ) : (
