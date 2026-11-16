@@ -1,8 +1,9 @@
 /**
- * Audit & System Logs: turns GET /audit/logs entries into what the design
- * shows. Postman documents the endpoint (cursor, limit, actorUserId,
- * entityType, action) but no example response, so every field is read
- * defensively from the likely names, and anything missing shows as "—".
+ * Audit & System Logs: turns GET /audit/logs items into what the design shows.
+ * Item shape (Postman example): id, actorUserId, actorUserType, action,
+ * entityType, entityId, scopeType, scopeId, metadata, ipAddress, userAgent,
+ * requestId, createdAt, categories[], primaryCategory, actor { fullName,
+ * email, userType, profileAvatarUrl }.
  */
 
 type Loose = Record<string, unknown>;
@@ -10,27 +11,34 @@ type Loose = Record<string, unknown>;
 export type LogType = "Change" | "Critical" | "Access" | "Security" | "Approval";
 export const LOG_TYPES: LogType[] = ["Change", "Critical", "Access", "Security", "Approval"];
 
-export type ActorRole = "Admin" | "Program Advisor" | "Ambassador" | "Mentor" | "Student" | "System";
-/** The design's "All users" options. */
-export const ACTOR_ROLES: ActorRole[] = ["Admin", "Program Advisor", "Ambassador", "System"];
+/** The backend's user types ("All users" filter). Events with no actor are System. */
+export type UserType = "Admin" | "Student" | "Mentor" | "Ambassador" | "System";
+export const USER_TYPES: UserType[] = ["Admin", "Student", "Mentor", "Ambassador", "System"];
 
 /** The design's "All modules" options (others still show in the table). */
 export const MODULES = ["User Management", "Admin Management", "Financial Ops", "Referrals", "Authentication"] as const;
 
 export type AuditEvent = {
   id: string;
-  /** "LOG-29481" style reference shown under the activity. */
+  /** The log id, shown under the activity (search matches it). */
   ref: string;
   actorId: string | null;
   actorName: string;
-  actorRole: ActorRole;
+  actorEmail: string | null;
+  actorAvatar: string | null;
+  actorRole: UserType;
   activity: string;
   action: string;
   module: string;
   target: string;
   at: string | null;
   ip: string | null;
+  requestId: string | null;
   type: LogType;
+  /** All categories the backend gave it (type is the primary one). */
+  categories: LogType[];
+  /** Other recorded details (metadata), as label/value pairs. */
+  details: { label: string; value: string }[];
   before: string | null;
   after: string | null;
   device: string | null;
@@ -56,16 +64,17 @@ export function humanize(s: string) {
   return w ? w[0].toUpperCase() + w.slice(1) : "";
 }
 
-function roleOf(raw: string | null, hasActor: boolean): ActorRole {
-  if (!hasActor) return "System";
+function roleOf(raw: string | null, hasActor: boolean): UserType {
   const r = (raw ?? "").toLowerCase();
+  if (!r) return hasActor ? "Admin" : "System";
   if (/system|cron|job|worker|service/.test(r)) return "System";
-  if (/advisor/.test(r)) return "Program Advisor";
   if (/ambassador/.test(r)) return "Ambassador";
-  if (/mentor/.test(r)) return "Mentor";
+  if (/mentor|advisor/.test(r)) return "Mentor";
   if (/student|consumer/.test(r)) return "Student";
   return "Admin";
 }
+
+const isLogType = (v: unknown): v is LogType => typeof v === "string" && (LOG_TYPES as string[]).includes(v);
 
 /** Module from the entity type and action. */
 export function moduleOf(entityType: string, action: string) {
@@ -130,6 +139,16 @@ function beforeAfter(e: Loose, meta: Loose | null) {
   return { before: null, after: null };
 }
 
+const BEFORE_AFTER = new Set(["before", "previous", "old", "oldValues", "from", "after", "next", "new", "newValues", "to", "changes", "diff"]);
+
+/** Metadata as label/value pairs: { programId: "x", amountMinor: 2000 } → Program id: x, Amount minor: 2000. */
+function detailsOf(meta: Loose | null) {
+  if (!meta) return [];
+  return Object.entries(meta)
+    .filter(([k, v]) => !BEFORE_AFTER.has(k) && v !== null && v !== undefined && v !== "")
+    .map(([k, v]) => ({ label: humanize(k), value: typeof v === "object" ? (describe(v) ?? JSON.stringify(v)) : String(v) }));
+}
+
 /** "Chrome · Windows" from a user agent string. */
 export function deviceOf(ua: string | null) {
   if (!ua) return null;
@@ -168,8 +187,9 @@ export function toEvent(raw: unknown, index: number): AuditEvent {
   const entityType = str(pick(e, "entityType", "resourceType", "targetType")) ?? "";
   const moduleName = moduleOf(entityType, action);
   const actorId = str(pick(e, "actorUserId", "actorId", "userId")) ?? str(actor?.id);
-  const actorName = str(actor?.fullName) ?? str(actor?.name) ?? str(actor?.email) ?? str(e.actorName) ?? (actorId ? "Unknown user" : "System");
-  const role = roleOf(str(pick(actor, "userType", "role", "type")) ?? str(pick(e, "actorRole", "actorType", "userType")), !!(actorId || actor));
+  const role = roleOf(str(pick(e, "actorUserType", "actorRole", "actorType")) ?? str(pick(actor, "userType", "role", "type")), !!(actorId || actor));
+  const categories = Array.isArray(e.categories) ? e.categories.filter(isLogType) : [];
+  const primary = isLogType(e.primaryCategory) ? e.primaryCategory : (categories[0] ?? typeOf(action));
   const entity = obj(e.entity) ?? obj(e.target) ?? obj(e.resource);
   const targetName = str(entity?.fullName) ?? str(entity?.name) ?? str(entity?.title) ?? str(entity?.email) ?? str(pick(meta, "targetName", "title", "name", "email"));
   // The person's own type (Student, Ambassador…) reads better than the record type (Payment, Withdrawal…).
@@ -177,13 +197,16 @@ export function toEvent(raw: unknown, index: number): AuditEvent {
   // As in the design: "Evelyn Tetteh · Student" for people, just the name otherwise ("Personal payout account").
   const targetKind = personType ? humanize(personType) : targetName ? null : entityType ? humanize(entityType) : null;
   const id = str(e.id) ?? `${action}-${index}`;
+  const name = str(actor?.fullName) ?? ([str(actor?.firstName), str(actor?.lastName)].filter(Boolean).join(" ") || null);
   const ua = str(pick(e, "userAgent", "ua")) ?? str(pick(meta, "userAgent"));
   const { before, after } = beforeAfter(e, meta);
   return {
     id,
-    ref: str(pick(e, "referenceId", "ref", "logId")) ?? `LOG-${id.slice(-6).toUpperCase()}`,
+    ref: str(pick(e, "referenceId", "ref", "logId")) ?? id,
     actorId,
-    actorName,
+    actorName: name ?? str(actor?.name) ?? str(actor?.email) ?? str(e.actorName) ?? (actorId ? "Unknown user" : "System"),
+    actorEmail: str(actor?.email),
+    actorAvatar: str(actor?.profileAvatarUrl),
     actorRole: role,
     activity: str(pick(e, "label", "description", "summary")) ?? humanize(action),
     action,
@@ -191,7 +214,10 @@ export function toEvent(raw: unknown, index: number): AuditEvent {
     target: targetName && targetKind ? `${targetName} · ${targetKind}` : (targetName ?? targetKind ?? "—"),
     at: str(pick(e, "createdAt", "timestamp", "occurredAt")),
     ip: str(pick(e, "ipAddress", "ip")) ?? str(pick(meta, "ipAddress", "ip")),
-    type: typeOf(action),
+    requestId: str(e.requestId),
+    type: primary,
+    categories: categories.length ? categories : [primary],
+    details: detailsOf(meta),
     before,
     after,
     device: deviceOf(ua),

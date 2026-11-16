@@ -1,13 +1,17 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { api, ApiError } from "@/lib/api";
-import { toEvent, type AuditEvent } from "./model";
+import { api, ApiError, type Query } from "@/lib/api";
+import { toEvent, type AuditEvent, type LogType } from "./model";
 
 /**
- * Audit & System Logs ↔ backend.
- *   GET /audit/logs?cursor=&limit=&actorUserId=&entityType=&action=   (VIEW_AUDIT_LOG)
- *   GET /admin-portal/team/members?page=&pageSize=                      (MANAGE_ADMINS, for "Active administrators")
- * The log has no total, search, role or module filter, so the page reads the
- * newest events in pages of 100 and filters what it has loaded.
+ * Audit & System Logs ↔ backend (Postman: "audit"), VIEW_AUDIT_LOG:
+ *   GET  /audit/logs?cursor=&limit=&search=&categories=&range=&from=&to=   list (cursor paging, max 100)
+ *   GET  /audit/logs/summary?range=&from=&to=                             { events, adminChanges, securityEvents }
+ *   POST /audit/logs/export?<same filters>                                { jobId }
+ *   GET  /admin-portal/team/members (MANAGE_ADMINS)                       "Active administrators"
+ *
+ * Search, categories (Change/Critical/Security/Approval/Access) and the date
+ * range are filtered by the backend. The user-type and module filters aren't
+ * list parameters, so those are applied to the loaded events.
  */
 
 type CursorPage<T> = { items: T[]; limit?: number; hasNext?: boolean; nextCursor?: string | null };
@@ -15,46 +19,59 @@ type CursorPage<T> = { items: T[]; limit?: number; hasNext?: boolean; nextCursor
 const LIVE = { staleTime: 0, refetchOnWindowFocus: true, refetchInterval: 30_000 } as const;
 export const PAGE = 100;
 
-export type ServerFilters = { actorUserId?: string; entityType?: string; action?: string };
+/** Backend ranges; the backend's default is 7d. */
+export type Range = "1d" | "7d" | "30d" | "custom";
+export const RANGES: { id: Range; label: string; phrase: string }[] = [
+  { id: "1d", label: "Last 24 hours", phrase: "in the last 24 hours" },
+  { id: "7d", label: "Last 7 days", phrase: "in the last 7 days" },
+  { id: "30d", label: "Last 30 days", phrase: "in the last 30 days" },
+  { id: "custom", label: "Custom", phrase: "in the selected dates" },
+];
 
-/** The newest events, page by page (Next loads more when the filtered list runs out). */
-export function useAuditLog(server: ServerFilters = {}) {
+export type ServerFilters = { search: string; categories: LogType[]; range: Range; from: string; to: string };
+
+export function toQuery(f: ServerFilters): Query {
+  return {
+    search: f.search.trim() || undefined,
+    categories: f.categories.length ? f.categories.join(",") : undefined,
+    range: f.range,
+    from: f.range === "custom" ? f.from : undefined,
+    to: f.range === "custom" ? f.to : undefined,
+  };
+}
+
+/** The filtered log, newest first, 100 per request. */
+export function useAuditLog(f: ServerFilters) {
   return useInfiniteQuery({
     ...LIVE,
-    queryKey: ["audit-logs", "list", server],
+    queryKey: ["audit-logs", "list", f],
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam }) => {
-      const page = await api<CursorPage<unknown>>("/audit/logs", { query: { limit: PAGE, cursor: pageParam, ...server } });
+      const page = await api<CursorPage<unknown>>("/audit/logs", { query: { limit: PAGE, cursor: pageParam, ...toQuery(f) } });
       return { items: page.items.map(toEvent), hasNext: !!page.hasNext && !!page.nextCursor, nextCursor: page.nextCursor ?? null };
     },
     getNextPageParam: (last) => (last.hasNext ? last.nextCursor : null),
   });
 }
 
-/** Every event in the last 24 hours (up to 2,000), for the stat cards and the security banner. */
-export function useRecentEvents() {
+export type AuditSummary = { range: string; from: string; to: string; events: number; adminChanges: number; securityEvents: number };
+
+/** The stat cards: last 24 hours. */
+export function useAuditSummary() {
   return useQuery({
     ...LIVE,
-    queryKey: ["audit-logs", "recent"],
-    queryFn: async () => {
-      const since = Date.now() - 24 * 3_600_000;
-      const startOfToday = new Date();
-      startOfToday.setHours(0, 0, 0, 0);
-      const cutoff = Math.min(since, startOfToday.getTime());
-      const out: AuditEvent[] = [];
-      let cursor: string | null = null;
-      let capped = false;
-      for (let i = 0; i < 20; i++) {
-        const page: CursorPage<unknown> = await api<CursorPage<unknown>>("/audit/logs", { query: { limit: PAGE, cursor } });
-        const events = page.items.map(toEvent);
-        out.push(...events);
-        const oldest = events.at(-1)?.at;
-        if (!page.hasNext || !page.nextCursor || (oldest && new Date(oldest).getTime() < cutoff)) break;
-        cursor = page.nextCursor;
-        if (i === 19) capped = true;
-      }
-      return { events: out.filter((e) => e.at && new Date(e.at).getTime() >= cutoff), capped, since, startOfToday: startOfToday.getTime() };
-    },
+    queryKey: ["audit-logs", "summary", "1d"],
+    queryFn: () => api<AuditSummary>("/audit/logs/summary", { query: { range: "1d" } }),
+  });
+}
+
+/** The newest security events of the last 24 hours, to say what the banner is about. */
+export function useRecentSecurity(enabled: boolean) {
+  return useQuery({
+    ...LIVE,
+    enabled,
+    queryKey: ["audit-logs", "security", "1d"],
+    queryFn: async () => (await api<CursorPage<unknown>>("/audit/logs", { query: { limit: 20, range: "1d", categories: "Security" } })).items.map(toEvent),
   });
 }
 
@@ -86,12 +103,17 @@ export function useAdminActivity(enabled: boolean) {
   });
 }
 
-/** Up to 5,000 newest events, for Export audit log. */
-export async function fetchForExport(server: ServerFilters = {}) {
+/** Starts a backend export of the filtered log; returns its job id. */
+export async function requestExport(f: ServerFilters) {
+  return api<{ jobId: string }>("/audit/logs/export", { method: "POST", query: toQuery(f) });
+}
+
+/** Up to 5,000 filtered events, for a CSV download in the browser. */
+export async function fetchForCsv(f: ServerFilters) {
   const out: AuditEvent[] = [];
   let cursor: string | null = null;
   for (let i = 0; i < 50; i++) {
-    const page: CursorPage<unknown> = await api<CursorPage<unknown>>("/audit/logs", { query: { limit: PAGE, cursor, ...server } });
+    const page: CursorPage<unknown> = await api<CursorPage<unknown>>("/audit/logs", { query: { limit: PAGE, cursor, ...toQuery(f) } });
     out.push(...page.items.map(toEvent));
     if (!page.hasNext || !page.nextCursor) break;
     cursor = page.nextCursor;
