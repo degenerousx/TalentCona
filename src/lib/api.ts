@@ -158,6 +158,58 @@ export function refreshAccessToken(): Promise<string | null> {
   return refreshing;
 }
 
+/**
+ * Download a file endpoint (CSV / XLSX exports) with the admin's session and
+ * save it in the browser. Uses the server's filename when it sends one.
+ * Refreshes once on 401, like api(). Throws ApiError on failure.
+ */
+export async function apiDownload(path: string, opts: { query?: Query; filename: string }) {
+  const get = async () => {
+    const headers: Record<string, string> = { "x-client-app": CLIENT_APP };
+    const token = getAccessToken();
+    if (token) headers[AUTH_HEADER] = `Bearer ${token}`;
+    try {
+      return await fetch(url(path, opts.query), { headers, credentials: "include" });
+    } catch {
+      throw new ApiError(0, "NETWORK", "Couldn't reach the server. Check your connection and try again.");
+    }
+  };
+  let res = await get();
+  if (res.status === 401) {
+    if (await refreshAccessToken()) res = await get();
+    else onSessionExpired();
+  }
+  const type = res.headers.get("Content-Type") ?? "";
+  if (!res.ok || type.includes("application/json")) {
+    const json = (await res.json().catch(() => null)) as Envelope<unknown> | null;
+    if (res.ok && json?.success !== false && typeof json?.data === "string") {
+      // Some exports may come back as CSV text inside the envelope.
+      return saveBlob(new Blob([json.data], { type: "text/csv;charset=utf-8" }), opts.filename);
+    }
+    const message = json?.error?.message;
+    throw new ApiError(
+      res.status,
+      json?.error?.code ?? `HTTP_${res.status}`,
+      (Array.isArray(message) ? message.join(". ") : message) || res.statusText || "Download failed",
+      json?.meta?.requestId,
+    );
+  }
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const named = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition)?.[1];
+  saveBlob(await res.blob(), named ? decodeURIComponent(named) : opts.filename);
+}
+
+function saveBlob(blob: Blob, filename: string) {
+  const href = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(href), 1000);
+}
+
 /** Call a backend endpoint and return the envelope's `data`. Throws ApiError on failure. */
 export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   try {

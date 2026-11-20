@@ -1,48 +1,48 @@
-# Referrals — Ambassador Management
+# Referrals — Referral & Commission Engine
 
-- **Route:** `/referrals` (needs `MANAGE_REFERRALS`, or super admin)
-- **Design:** recreated from the Ambassador Management and Payout Requests screen recordings.
-- **Files:** `_components/ReferralsView.tsx` (page), `Overview.tsx` (stat cards, payout chart, pending
-  payout card), `Tables.tsx` (Ambassadors tab), `PayoutRequests.tsx` (Payout requests tab),
-  `api.ts` (hooks), `data.ts` (types and the calculations). **No sample data.**
+- **Route:** `/referrals` (needs `MANAGE_REFERRALS`, or super admin). Tabs are in the URL hash:
+  `#ledger`, `#queue`, `#settings` (Overview has none).
+- **Design:** the original "Referral & Commission Engine" frames ([Figma](https://www.figma.com/design/q8WJ8duI2FR5mc7ESAcUhi/Talent-cona-Admin-Portal--Copy-?node-id=293-10764)).
+  Restored on 20 Nov 2026 after the Ambassador Management redesign (11–12 Nov) was reverted; same
+  layout, styling and components, now on live data.
+- **Files:** `_components/ReferralsContent.tsx` (the page), `_components/api.ts` (hooks). **No sample data.**
 
-## Endpoints (Postman "withdrawals → admin")
+## Endpoints
 
-| Method | Path | Used for |
-|---|---|---|
-| GET | `/withdrawals/admin?cursor=&limit=&status=` | Everything: `useAllPayouts` loads every record (limit 100, follows `nextCursor`); `usePayoutRequests(status)` pages one status for the Payout requests tab |
-| PATCH | `/withdrawals/admin/:id/approve` | Approve (`{}`) |
-| PATCH | `/withdrawals/admin/:id/reject` | Reject, with optional `{ note }` reason |
-| PATCH | `/withdrawals/admin/:id/disburse` | Mark as disbursed, with optional `{ note }` transfer reference |
-| GET | `/students/admin/:studentId` | Manage panel: name, email, joined date and account status, when the payee has a student account (403/404 → falls back to payout details) |
+| Part of the page | Endpoint |
+| --- | --- |
+| Overview stat cards: Viral Coefficient, Conversion Value, Active Referrers (last 90 days) | `GET /admin/referrals/overview?range=last_90d` |
+| Overview stat card: Pending Payouts (withdrawals awaiting review or transfer) | sum of `Pending` + `Approved` from `GET /withdrawals/admin?status=` |
+| Viral Growth Trend (last 7 months, signups vs paid conversions) | `GET /admin/referrals/overview/viral-growth?range=custom&from=&to=` |
+| Top Referrers Leaderboard | `topReferrers` from the overview |
+| Leaderboard → Export (file) | `GET /admin/referrals/overview/leaderboard/export?range=last_90d&limit=50` |
+| Referral Ledger (20 per page, Load more) | `GET /admin/referrals/ledger?cursor=&limit=&search=&programIds=&status=` |
+| Ledger filters | search (sent 350 ms after typing stops); programs from `GET /programs/admin` (`programIds`, comma-separated); status `paid` / `no_commission` (one picked = filter, both = all) |
+| Ledger → Export CSV (file, same filters) | `GET /admin/referrals/ledger/export` |
+| Withdrawal Queue (Pending, Approved, Disbursing, Failed; oldest first) | `GET /withdrawals/admin?status=` (each status, all pages) |
+| Queue tab badge | `GET /withdrawals/admin/summary-counts` (pending + approved + disbursing + failed) |
+| View Details | `GET /withdrawals/admin/:id` (email, phone, previous withdrawals) + the list item (full account number, account age) |
+| Approve & Process | `PATCH /withdrawals/admin/:id/approve`, then `PATCH …/disburse`. If the transfer can't start, the request stays **Approved** in the queue with **Process Payout** (or **Retry Payout** when Failed) |
+| Reject (reason required) | `PATCH /withdrawals/admin/:id/reject { note }` |
+| Commission Settings | `GET /admin/referrals/settings` → `rewardPercent`; Save → `PATCH { rewardPercent }` (0–100, decimals allowed) |
+| Referrer detail (leaderboard → View) | `GET /admin/referrals/referrers/:userId` (code, share link, clicks, referrals, conversions, rate, total earned) |
+| Referral Performance Over Time | `GET …/referrers/:userId/performance?range=custom&from=&to=` |
+| Reset Code (after a confirmation) | `POST …/referrers/:userId/reset-code` |
+| Export Report (XLSX) | `GET …/referrers/:userId/export` |
+| Referral History | `GET …/referrers/:userId/history?cursor=&limit=` |
+| Available / Pending balance, Total Withdrawn | `GET /withdrawals/admin/users/:userId/payout-summary` |
+| Withdrawal History | `GET /withdrawals/admin/users/:userId/requests?cursor=&limit=` |
 
-Statuses: `PendingOtp`, `Pending`, `Approved`, `Rejected`, `Disbursed`. Amounts are minor units
-(`amount / minorUnit`), shown in naira.
+Money is in minor units (`amount / minorUnit`), shown in naira. Exports are downloaded with the
+admin's session (`apiDownload` in `src/lib/api.ts`), using the server's filename when it sends one.
+The queue and its badge refresh every 30 s while the tab is visible and on focus; every action
+refreshes the queue, counts and balances.
 
-## Why everything comes from payouts
+## Differences from the original mock-up (no fake data)
 
-The backend has **no admin endpoints** for the ambassador list, referred students, student payments
-or commission. `/referrals/me*` only return the signed-in ambassador's own dashboard, and the admin
-user lists can't filter by ambassador. So the page is built from payout records:
-
-- **Stat cards:** ambassadors with payouts (and requests this month), paid out, awaiting review,
-  approved but not yet sent.
-- **Payout overview chart:** amount requested (by request month, rejected excluded) vs paid out (by
-  disbursement month), last 3/6/12 months.
-- **Ambassadors tab:** one row per person who has requested a payout: requests, requested, paid out,
-  outstanding, last request, status (Payout due / Awaiting transfer / Nothing due). **Export
-  report** downloads these rows.
-- **Manage panel** (`AmbassadorPanel.tsx`, from the "Ambassador Referral Admin Dashboard" design):
-  a right-side sheet with "Back to ambassadors", the person (profile from the students endpoint),
-  four figures (requests, requested, paid out, outstanding), **Bank details & evidence** from their
-  latest payout (bank, masked account number, account name, bank code, their note), and **Payout
-  history** ("View all" past four). The "…" menu emails them, copies their email, or opens their
-  payouts. The design's branch, verification date, uploaded document and **Referred students** list
-  have no admin API, so they're not shown; payout history takes the referred-students slot.
-- **Payout requests tab:** see `PayoutRequests.tsx`. Every action refreshes all of the above.
-
-When the backend adds ambassador/commission endpoints, add hooks to `api.ts` and bring back the
-design's Students / Student payments / Commission columns.
-
-Payouts may need `MANAGE_FINANCIAL_OPERATIONS` on the backend; without it the page shows the
-backend's "no access" message.
+- **Pending Payouts** is open withdrawal requests (the overview has no "awaiting lock-in" figure).
+- **Withdrawal Queue** also lists approved requests not yet transferred, transfers in progress, and
+  failed transfers, and has **Reject**; the mock-up only had pending ones and approve.
+- The referrer page's **Process Withdrawal** button and "Avg. 19 days until release" line are gone:
+  there is no admin endpoint to start a withdrawal for someone, and no release-time data.
+- Ledger statuses are the backend's two (Paid, No Commission); lists have **Load more** for pages.
