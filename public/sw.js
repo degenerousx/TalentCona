@@ -37,7 +37,8 @@ self.addEventListener("push", (event) => {
         body: n.body || "",
         icon: "/favicon.ico",
         tag: n.id || undefined,
-        data: { id: n.id || null, url },
+        // Kept so a click can work out the record when there is no data.url (src/components/notifications/links.ts).
+        data: { id: n.id || null, url, type: n.type || payload.type || "", title: n.title || "", body: n.body || "", data },
       });
       for (const client of await windows()) client.postMessage({ type: "tc:notification" });
     })(),
@@ -46,8 +47,10 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const { id, url } = event.notification.data || {};
-  const target = new URL(url || "/dashboard", self.location.origin);
+  const info = event.notification.data || {};
+  const { id, url } = info;
+  // No link: the portal resolves the record from the notification (needs the session), so pass it the id.
+  const target = new URL(url || (id ? `/dashboard?notification=${encodeURIComponent(id)}` : "/dashboard"), self.location.origin);
   event.waitUntil(
     (async () => {
       const sameOrigin = target.origin === self.location.origin;
@@ -55,7 +58,12 @@ self.addEventListener("notificationclick", (event) => {
       if (sameOrigin && tab) {
         await tab.focus();
         // The tab navigates in-app and marks the notification read (it holds the session).
-        tab.postMessage({ type: "tc:open", id, url: target.pathname + target.search + target.hash });
+        tab.postMessage({
+          type: "tc:open",
+          id,
+          url: url ? target.pathname + target.search + target.hash : null,
+          notification: url ? null : { id, type: info.type, title: info.title, body: info.body, data: info.data || null },
+        });
         return;
       }
       await self.clients.openWindow(target.href);
