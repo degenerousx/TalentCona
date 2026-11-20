@@ -6,7 +6,24 @@ import { BellRing, X } from "lucide-react";
 import { useCurrentAdmin } from "@/lib/currentAdmin";
 import { dismissPrompt, enablePush, initPush, promptDismissed, usePush } from "@/lib/push";
 import { isMfaComplete, useSession } from "@/lib/session";
-import { useMarkRead, useRefreshNotifications } from "./api";
+import { api } from "@/lib/api";
+import { useMarkRead, useRefreshNotifications, type AppNotification } from "./api";
+import { goTo, resolveTarget } from "./links";
+
+const asNotification = (n: Partial<AppNotification>): AppNotification => ({
+  id: n.id ?? "",
+  type: n.type ?? "",
+  title: n.title ?? "",
+  body: n.body ?? null,
+  data: n.data ?? null,
+  readAt: null,
+  createdAt: new Date().toISOString(),
+});
+
+async function openNotification(n: AppNotification, router: { push: (href: string) => void }) {
+  const target = await resolveTarget(n);
+  if (target) goTo(target, router);
+}
 
 /**
  * Mounted once in the admin shell. On load it registers the service worker
@@ -33,16 +50,37 @@ export default function PushSetup() {
   useEffect(() => {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
     const onMessage = (e: MessageEvent) => {
-      const msg = e.data as { type?: string; id?: string | null; url?: string } | null;
+      const msg = e.data as { type?: string; id?: string | null; url?: string | null; notification?: Partial<AppNotification> | null } | null;
       if (msg?.type === "tc:notification") void refresh();
       if (msg?.type === "tc:open") {
         if (msg.id) markRead(msg.id);
         if (msg.url) router.push(msg.url);
+        else if (msg.notification) void openNotification(asNotification(msg.notification), router);
       }
     };
     navigator.serviceWorker.addEventListener("message", onMessage);
     return () => navigator.serviceWorker.removeEventListener("message", onMessage);
   }, [refresh, markRead, router]);
+
+  // Opened from a push with no portal tab open: /dashboard?notification=<id>.
+  useEffect(() => {
+    if (!ready) return;
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("notification");
+    if (!id) return;
+    params.delete("notification");
+    window.history.replaceState(null, "", window.location.pathname + (params.toString() ? `?${params}` : "") + window.location.hash);
+    markRead(id);
+    void (async () => {
+      try {
+        const page = await api<{ items: AppNotification[] }>("/notifications", { query: { limit: 100 } });
+        const n = page.items.find((x) => x.id === id);
+        if (n) await openNotification(n, router);
+      } catch {
+        // Stay on the dashboard; the bell still lists it.
+      }
+    })();
+  }, [ready, markRead, router]);
 
   if (!ready || dismissed || push.status !== "default") return null;
 

@@ -8,7 +8,8 @@ import { Icon } from "@/components/layout/AppIcon";
 import { cn } from "@/lib/cn";
 import { useCurrentAdmin } from "@/lib/currentAdmin";
 import { disablePush, enablePush, usePush } from "@/lib/push";
-import { ago, dateTime, kindOf, targetOf, useMarkAllRead, useMarkRead, useNotificationList, type AppNotification, type NotificationKind } from "./api";
+import { goTo, resolveTarget } from "./links";
+import { ago, dateTime, kindOf, useMarkAllRead, useMarkRead, useNotificationList, type AppNotification, type NotificationKind } from "./api";
 
 const KIND: Record<NotificationKind, { Icon: typeof Bell; tone: string }> = {
   student: { Icon: UserPlus, tone: "bg-blue-50 text-blue-600" },
@@ -36,13 +37,23 @@ export default function NotificationBell() {
     if (next) void n.refetch();
   };
 
-  const openItem = (item: AppNotification) => {
+  /** The item whose target is being looked up. */
+  const [opening, setOpening] = useState<string | null>(null);
+  const [noTarget, setNoTarget] = useState<string | null>(null);
+
+  /** Mark read, then open the record or page it's about (see links.ts). */
+  const openItem = async (item: AppNotification) => {
     if (!item.readAt) markRead.mutate(item.id);
-    const target = targetOf(item);
-    if (!target) return;
+    setNoTarget(null);
+    setOpening(item.id);
+    const target = await resolveTarget(item);
+    setOpening(null);
+    if (!target) {
+      setNoTarget(item.id);
+      return;
+    }
     setOpen(false);
-    if (target.external) window.open(target.href, "_blank", "noopener,noreferrer");
-    else router.push(target.href);
+    goTo(target, router);
   };
 
   return (
@@ -150,8 +161,10 @@ export default function NotificationBell() {
               <li key={item.id}>
                 <button
                   type="button"
-                  onClick={() => openItem(item)}
-                  className={cn("flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-slate-50", unread && "bg-primary-soft/40")}
+                  onClick={() => void openItem(item)}
+                  disabled={opening !== null}
+                  aria-busy={opening === item.id}
+                  className={cn("flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-slate-50 disabled:cursor-wait", unread && "bg-primary-soft/40")}
                   aria-label={`${unread ? "Unread: " : ""}${item.title}${item.body ? `. ${item.body}` : ""}`}
                 >
                   <span className={cn("grid size-8 shrink-0 place-items-center rounded-full", tone)}>
@@ -163,6 +176,8 @@ export default function NotificationBell() {
                     <time dateTime={item.createdAt} className="text-[11px] leading-4 text-slate-400" title={dateTime(item.createdAt)}>
                       {dateTime(item.createdAt)} · {ago(item.createdAt)}
                     </time>
+                    {opening === item.id && <span className="text-[11px] leading-4 text-primary">Opening…</span>}
+                    {noTarget === item.id && <span className="text-[11px] leading-4 text-slate-500">Nothing to open for this notification.</span>}
                   </span>
                   {unread && <span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />}
                 </button>

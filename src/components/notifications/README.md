@@ -16,8 +16,22 @@ No mock or derived data: what the bell shows is exactly what `GET /notifications
   hidden tabs) and on focus. When the count changes, the list is re-read.
 - **Item**: primary line `title`, secondary `body`, then date/time and "x ago". Unread
   (`readAt: null`) items are bold with a dot. An icon is picked from `type`.
-- **Click**: marks it read (if unread), then goes to `data.url` if present: in-app
-  paths with the router, other sites in a new tab. No `data.url` → just marks it read.
+- **Click**: marks it read (if unread), then opens what it's about (`links.ts`, `resolveTarget`):
+  1. `data.url` if present (in-app paths with the router, other sites in a new tab);
+  2. a record id in `data`: `studentId` (+ `enrollmentId`) → the student / program page,
+     `mentorId` / `applicationId` → the mentor application, `applicantId`, `laptopId`, `programId`;
+  3. "<Name> needs a mentor for <Program>" → finds the student with
+     `GET /students/admin?search=<Name>` (exact name, one match) and opens that program's page,
+     where the mentor is assigned;
+  4. otherwise the section, from the type, title and body: audit → Audit & System Logs,
+     withdrawal/payout → Referrals › Withdrawal Queue, referral/commission → Referral Ledger,
+     loan / fundraising / onboarding → Admissions & Routing, payment/wallet → Financial Ops,
+     mentor application → Mentors › Pending, mentor request → Students, talent request → Talent
+     Corner › Requests, invitation → Admin Management › Pending, community, laptop, program,
+     session → their pages.
+  Password / MFA / login notices have no page: the item says "Nothing to open for this notification."
+  Postman doesn't list notification types or their `data`, so the backend adding `data.url`
+  (or record ids) to each notification makes every click exact.
 - **Mark read / all**: the list and badge update at once (optimistic), then the count is
   re-read from the server; on failure they roll back and the panel says so.
 - **All / Unread** tabs filter what's loaded; "Load older notifications" pages on with `cursor`.
@@ -43,8 +57,9 @@ No mock or derived data: what the bell shows is exactly what `GET /notifications
   doesn't get the previous admin's pushes.
 - **sw.js** shows each push (`title`, `body`, `data.url`; a `{ notification: … }`
   wrapper is accepted too), and tells open portal tabs, which re-read the badge at
-  once. Clicking a push focuses an open portal tab, which opens `data.url` and marks
-  it read; with no tab open it opens the portal at `data.url` (or `/dashboard`).
+  once. Clicking a push focuses an open portal tab, which marks it read and opens it the same
+  way as the bell (`data.url`, or the record worked out by `links.ts`); with no tab open it opens
+  `data.url`, or `/dashboard?notification=<id>`, which the portal resolves once signed in.
 - Not available: private/incognito windows (Chrome has no push there; the footer
   says so) and iOS Safari unless the portal is installed to the home screen. The
   setting is hidden where the Push API doesn't exist.
