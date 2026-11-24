@@ -9,6 +9,8 @@ const PAGES: [path: string, heading: RegExp, shows: string][] = [
   ["/talent-corner", /talent corner/i, "New Student Usman"],
   ["/referrals", /referral/i, "Usman Soliu"],
   ["/audit-logs", /audit/i, "Kemi Okon"],
+  // Mock design (sample data, no API calls).
+  ["/csr-management", /csr management/i, "Recently created students"],
 ];
 
 for (const [path, heading, shows] of PAGES) {
