@@ -32,9 +32,8 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Manage Programs", href: "/manage-programs", icon: "mynaui:academic-hat", enabled: true, privilege: "MANAGE_PROGRAMS" },
   { label: "Talent Corner", href: "/talent-corner", icon: "mingcute:sparkles-line", enabled: true, privilege: "MANAGE_TALENT_COMPANY_REQUESTS" },
   { label: "Financial Ops", href: "/financial-ops", icon: "iconoir:wallet", enabled: true, privilege: "MANAGE_FINANCIAL_OPERATIONS" },
-  // Student Creation & Onboarding: UI mock only (sample data, no API calls yet).
-  { label: "CSR Management", href: "/csr-management", icon: "lucide:ribbon", enabled: true, privilege: "MANAGE_USERS" },
   // Coming soon: in the design, no page yet (shown greyed out, not clickable).
+  { label: "CSR Management", href: "/csr-management", icon: "lucide:ribbon", enabled: false },
   { label: "Talent Matching", href: "/talent-matching", icon: "lucide:podium", enabled: false },
   { label: "Laptops", href: "/laptops", icon: "ic:baseline-laptop", enabled: true, privilege: "MANAGE_LAPTOPS" },
   { label: "Communities", href: "/communities", icon: "fluent:people-community-24-regular", enabled: true, privilege: "MANAGE_COMMUNITIES" },
