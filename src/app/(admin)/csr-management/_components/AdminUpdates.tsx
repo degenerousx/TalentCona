@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquareText, Pencil, PencilLine, ShieldCheck } from "lucide-react";
+import { MessageSquareText, Pencil, PencilLine } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { AdminUpdate } from "./data";
 import { Btn, TextArea } from "./ui";
 
-const when = (iso: string) =>
+export const when = (iso: string) =>
   new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 const initials = (name: string) =>
   name
@@ -57,9 +57,9 @@ export function AdminUpdates({
         </label>
         <TextArea id="new-update" value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Called the sponsor to confirm the number of talents…" />
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-[#99a1af]">Posting as {me}</p>
+          <p className="text-xs text-[#99a1af]">Saving as {me}</p>
           <Btn type="submit" disabled={!text.trim()} className="px-4 py-2.5">
-            Post Update
+            Save
           </Btn>
         </div>
       </form>
@@ -69,7 +69,7 @@ export function AdminUpdates({
           Activity History <span className="rounded-full bg-[#f3f4f6] px-2 py-0.5 text-xs font-medium text-[#4a5565]">{updates.length}</span>
         </h3>
         {sorted.length === 0 ? (
-          <p className="rounded-[12px] border border-dashed border-[#e5e7eb] p-4 text-center text-sm text-[#6a7282]">No updates yet. The first one you post will appear here.</p>
+          <p className="rounded-[12px] border border-dashed border-[#e5e7eb] p-4 text-center text-sm text-[#6a7282]">No updates yet. The first one you save will appear here.</p>
         ) : (
           <ol className="relative flex flex-col gap-4 before:absolute before:top-2 before:bottom-2 before:left-4 before:w-px before:bg-[#e5e7eb]">
             {sorted.map((u) => (
@@ -85,7 +85,7 @@ export function AdminUpdates({
 function Entry({ u, mine, onEdit }: { u: AdminUpdate; mine: boolean; onEdit: (id: string, text: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(u.text);
-  const Icon = u.kind === "edit" ? PencilLine : u.kind === "decision" ? ShieldCheck : MessageSquareText;
+  const Icon = u.kind === "edit" ? PencilLine : MessageSquareText;
 
   return (
     <li className="relative flex gap-3">
@@ -102,7 +102,7 @@ function Entry({ u, mine, onEdit }: { u: AdminUpdate; mine: boolean; onEdit: (id
         <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <p className="text-sm font-semibold text-[#101828]">
             {u.author}
-            {u.kind !== "update" && <span className="ml-2 text-xs font-normal text-[#6a7282]">{u.kind === "edit" ? "edited the request" : "decision"}</span>}
+            {u.kind === "edit" && <span className="ml-2 text-xs font-normal text-[#6a7282]">edited the request</span>}
           </p>
           <div className="flex items-center gap-2">
             <time dateTime={u.at} className="text-xs text-[#99a1af]">

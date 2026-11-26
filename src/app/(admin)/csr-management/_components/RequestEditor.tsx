@@ -50,7 +50,7 @@ export function RequestEditor({ value, onCancel, onSave }: { value: Submission; 
         <Btn variant="outline" onClick={onCancel}>
           Cancel
         </Btn>
-        <Btn type="submit">Save Changes</Btn>
+        <Btn type="submit">Save</Btn>
       </div>
     </form>
   );

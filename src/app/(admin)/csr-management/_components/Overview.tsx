@@ -3,7 +3,7 @@
 import { ArrowUpRight, Award, Banknote, CircleCheck, Clock, DollarSign, Target, Timer, Users } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { cn } from "@/lib/cn";
-import { BY_CAREER_PATH, CONTRIBUTIONS, PAYMENTS, REQUESTS, SPONSORS, STATUS_SPLIT, TALENTS, usd, usdK } from "./data";
+import { BY_CAREER_PATH, CONTRIBUTIONS, PAYMENTS, REQUESTS, REQUEST_UPDATES, SPONSORS, STATUS_SPLIT, TALENTS, usd, usdK } from "./data";
 import { card } from "./ui";
 import type { CsrTab } from "./CsrView";
 
@@ -30,7 +30,7 @@ export function Overview({ onOpen }: { onOpen: (tab: CsrTab) => void }) {
   const top = [...SPONSORS].sort((a, b) => b.pledged - a.pledged).slice(0, 4);
   const recent = PAYMENTS.filter((p) => p.status === "Confirmed").slice(0, 4);
   const pendingPayments = PAYMENTS.filter((p) => p.status === "Pending").length;
-  const pendingRequests = REQUESTS.filter((r) => r.status === "Pending").length;
+  const pendingRequests = REQUESTS.filter((r) => !REQUEST_UPDATES[r.id]?.length).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -163,7 +163,7 @@ export function Overview({ onOpen }: { onOpen: (tab: CsrTab) => void }) {
           <ul className="mt-4 flex flex-col gap-3">
             {[
               { label: "Payment pending verification", n: pendingPayments, tab: "payments" as const },
-              { label: "Sponsorship requests awaiting review", n: pendingRequests, tab: "requests" as const },
+              { label: "Sponsorship requests not worked on yet", n: pendingRequests, tab: "requests" as const },
             ].map((a) => (
               <li key={a.label}>
                 <button type="button" onClick={() => onOpen(a.tab)} className="flex w-full items-center justify-between rounded-[12px] border border-[#fee685] bg-[#fffbeb] px-3 py-3.5 text-left text-xs text-[#973c00] hover:bg-[#fef3c7]">
