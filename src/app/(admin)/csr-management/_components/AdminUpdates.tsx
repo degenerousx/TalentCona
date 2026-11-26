@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquareText, Pencil, PencilLine } from "lucide-react";
+import { Clock, MessageSquareText, Pencil, PencilLine } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { AdminUpdate } from "./data";
 import { Btn, TextArea } from "./ui";
@@ -33,7 +33,11 @@ export function AdminUpdates({
   onEdit: (id: string, text: string) => void;
 }) {
   const [text, setText] = useState("");
-  const sorted = [...updates].sort((a, b) => b.at.localeCompare(a.at));
+  // Newest first; entries saved in the same second keep the order they were added in (later first).
+  const sorted = updates
+    .map((u, i) => ({ u, i }))
+    .sort((a, b) => b.u.at.localeCompare(a.u.at) || b.i - a.i)
+    .map(({ u }) => u);
 
   return (
     <section aria-labelledby="admin-updates" className="flex flex-col gap-4">
@@ -102,7 +106,7 @@ function Entry({ u, mine, onEdit }: { u: AdminUpdate; mine: boolean; onEdit: (id
         <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <p className="text-sm font-semibold text-[#101828]">
             {u.author}
-            {u.kind === "edit" && <span className="ml-2 text-xs font-normal text-[#6a7282]">edited the request</span>}
+            {u.kind === "edit" && <span className="ml-2 text-xs font-normal text-[#6a7282]">changed the details</span>}
           </p>
           <div className="flex items-center gap-2">
             <time dateTime={u.at} className="text-xs text-[#99a1af]">
@@ -153,3 +157,33 @@ function Entry({ u, mine, onEdit }: { u: AdminUpdate; mine: boolean; onEdit: (id
     </li>
   );
 }
+
+/** Local time as an ISO string without zone, the format sample entries use. */
+export const nowIso = () => {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 19);
+};
+
+/** The most recent thing an admin did on a record: an update, an edit of one, or a details edit. */
+export function lastActivity(updates: AdminUpdate[] = []) {
+  let last: { at: string; author: string } | null = null;
+  for (const u of updates) {
+    const at = u.editedAt && u.editedAt > u.at ? u.editedAt : u.at;
+    if (!last || at > last.at) last = { at, author: u.author };
+  }
+  return last;
+}
+
+/** "Last worked on 4 Oct 2026, 14:40 by Tunde Bello", or a prompt when no one has yet. */
+export function LastWorked({ last, className }: { last: ReturnType<typeof lastActivity>; className?: string }) {
+  return last ? (
+    <span className={cn("inline-flex items-center gap-1 text-xs leading-4 text-[#4a5565]", className)}>
+      <Clock className="size-3" aria-hidden /> Last worked on {when(last.at)} by <span className="font-medium text-[#101828]">{last.author}</span>
+    </span>
+  ) : (
+    <span className={cn("inline-flex items-center gap-1 rounded-full border border-[#fee685] bg-[#fffbeb] px-2.5 py-0.5 text-xs leading-4 font-medium text-[#bb4d00]", className)}>
+      Not worked on yet
+    </span>
+  );
+}
+

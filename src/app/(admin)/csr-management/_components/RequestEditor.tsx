@@ -141,7 +141,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 /** Multi-select as toggle chips (the website uses checkboxes). */
-function Pick({ label, options, value, onChange }: { label: string; options: readonly string[]; value: string[]; onChange: (v: string[]) => void }) {
+export function Pick({ label, options, value, onChange }: { label: string; options: readonly string[]; value: string[]; onChange: (v: string[]) => void }) {
   return (
     <fieldset>
       <legend className="mb-2 text-sm leading-5 font-medium text-[#364153]">{label}</legend>
