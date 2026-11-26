@@ -325,3 +325,13 @@ export const REQUEST_UPDATES: Record<string, AdminUpdate[]> = {
   ],
   "REQ-006": [{ id: "u-6", author: "Tunde Bello", at: "2026-09-07T13:20:00", kind: "update", text: "Cybersecurity cohort dates don't suit MedTech yet. Will follow up in January." }],
 };
+
+/** Admin updates on sponsors (same shape as request updates). */
+export const SPONSOR_UPDATES: Record<string, AdminUpdate[]> = {
+  "SPO-001": [
+    { id: "su-1", author: "Kemi Okon", at: "2026-07-21T11:00:00", kind: "update", text: "Quarterly review with Lydia: happy with progress, asked for talent progress reports every month." },
+    { id: "su-2", author: "Tunde Bello", at: "2026-10-03T15:45:00", kind: "update", text: "Sent the September progress report. Q4 payment of $4,500 expected by end of October." },
+  ],
+  "SPO-002": [{ id: "su-3", author: "Kemi Okon", at: "2026-06-06T10:20:00", kind: "update", text: "Ade confirmed the second instalment for Emeka and Ngozi." }],
+  "SPO-003": [{ id: "su-4", author: "Tunde Bello", at: "2026-04-02T09:30:00", kind: "update", text: "Sponsorship completed. All 5 talents graduated; sent the impact report and thank-you letter." }],
+};

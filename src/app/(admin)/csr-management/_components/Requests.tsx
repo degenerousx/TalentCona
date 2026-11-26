@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpen, Calendar, CircleDot, Clock, Handshake, Pencil } from "lucide-react";
+import { BookOpen, Calendar, CircleDot, Handshake, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/cn";
 import { useCurrentAdmin } from "@/lib/currentAdmin";
@@ -9,7 +9,7 @@ import { REQUESTS, REQUEST_UPDATES, type AdminUpdate, type Submission, type Spon
 import { Empty, InfoTile, Panel, Tag, Toolbar, card } from "./ui";
 import { Chips, SubmissionDetails } from "./Submission";
 import { RequestEditor } from "./RequestEditor";
-import { AdminUpdates, when } from "./AdminUpdates";
+import { AdminUpdates, LastWorked, lastActivity, nowIso } from "./AdminUpdates";
 
 /**
  * Sponsorship requests: what sponsors submitted on the website. Requests stay
@@ -29,17 +29,6 @@ const LABELS: Record<string, string> = {
 const changedFields = (a: Submission, b: Submission) =>
   Object.keys(LABELS).filter((k) => k in a && JSON.stringify(a[k as keyof Submission]) !== JSON.stringify(b[k as keyof Submission])).map((k) => LABELS[k]);
 let seq = 100;
-const now = () => new Date().toISOString().slice(0, 19);
-
-/** The most recent thing an admin did on a request: an update, an edit of one, or a details edit. */
-export function lastActivity(updates: AdminUpdate[] = []) {
-  let last: { at: string; author: string } | null = null;
-  for (const u of updates) {
-    const at = u.editedAt && u.editedAt > u.at ? u.editedAt : u.at;
-    if (!last || at > last.at) last = { at, author: u.author };
-  }
-  return last;
-}
 
 export function RequestsTab() {
   const [requests, setRequests] = useState(REQUESTS);
@@ -53,7 +42,7 @@ export function RequestsTab() {
   const me = admin.name ?? admin.email ?? "You";
 
   const log = (id: string, entry: Omit<AdminUpdate, "id" | "at" | "author">) =>
-    setUpdates((u) => ({ ...u, [id]: [...(u[id] ?? []), { id: `u-${++seq}`, at: now(), author: me, ...entry }] }));
+    setUpdates((u) => ({ ...u, [id]: [...(u[id] ?? []), { id: `u-${++seq}`, at: nowIso(), author: me, ...entry }] }));
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -106,7 +95,7 @@ export function RequestsTab() {
             toast.success("Update saved");
           }}
           onEditUpdate={(uid, text) => {
-            setUpdates((u) => ({ ...u, [open.id]: (u[open.id] ?? []).map((x) => (x.id === uid ? { ...x, text, editedAt: now() } : x)) }));
+            setUpdates((u) => ({ ...u, [open.id]: (u[open.id] ?? []).map((x) => (x.id === uid ? { ...x, text, editedAt: nowIso() } : x)) }));
             toast.success("Update saved");
           }}
         />
@@ -116,19 +105,6 @@ export function RequestsTab() {
 }
 
 const meta = "flex items-center gap-1 text-xs leading-4 text-[#6a7282]";
-
-/** "Last worked on 4 Oct 2026, 14:40 by Tunde Bello", or a prompt when no one has yet. */
-function LastWorked({ last, className }: { last: ReturnType<typeof lastActivity>; className?: string }) {
-  return last ? (
-    <span className={cn("inline-flex items-center gap-1 text-xs leading-4 text-[#4a5565]", className)}>
-      <Clock className="size-3" aria-hidden /> Last worked on {when(last.at)} by <span className="font-medium text-[#101828]">{last.author}</span>
-    </span>
-  ) : (
-    <span className={cn("inline-flex items-center gap-1 rounded-full border border-[#fee685] bg-[#fffbeb] px-2.5 py-0.5 text-xs leading-4 font-medium text-[#bb4d00]", className)}>
-      Not worked on yet
-    </span>
-  );
-}
 
 function RequestCard({ r, last, onOpen }: { r: SponsorshipRequest; last: ReturnType<typeof lastActivity>; onOpen: () => void }) {
   const s = r.submission;
