@@ -297,3 +297,33 @@ export const BY_CAREER_PATH = [
   { path: "Cybersecurity", talents: 6 },
   { path: "Cloud", talents: 4 },
 ];
+
+// ---- Admin updates on sponsorship requests -------------------------------------------------
+
+/** Organization Type options on the website's Full Application. */
+export const ORG_TYPES = ["Corporate Organization", "Company", "Individual"] as const;
+export const IMPACT_FOCUS = ["Women in Technology", "Youths", "Persons with Disabilities", "Underserved Communities", "Recent Graduates", "Career Switchers", "No Preference"] as const;
+export const ENGAGEMENT = ["Mentorship", "Internship Opportunities", "Employee Volunteering", "Career Talks", "Recruitment Opportunities", "Financial Sponsorship Only"] as const;
+
+/** One entry in a request's activity history. "edit" entries are written by the system when details change. */
+export type AdminUpdate = {
+  id: string;
+  author: string;
+  at: string;
+  text: string;
+  kind: "update" | "edit" | "decision";
+  editedAt?: string;
+};
+
+export const REQUEST_UPDATES: Record<string, AdminUpdate[]> = {
+  "REQ-001": [
+    { id: "u-1", author: "Kemi Okon", at: "2026-10-02T10:15:00", kind: "update", text: "Called Remi Afolabi. They want all 15 talents to start in the January cohort and asked for a partnership deck." },
+    { id: "u-2", author: "Tunde Bello", at: "2026-10-04T14:40:00", kind: "update", text: "Sent the partnership deck and pricing for Software Engineering and Data Analytics. Follow-up meeting booked for 9 Oct." },
+  ],
+  "REQ-002": [{ id: "u-3", author: "Kemi Okon", at: "2026-10-01T09:05:00", kind: "update", text: "Left a voicemail for Tunde Bakare. Will try again tomorrow." }],
+  "REQ-003": [
+    { id: "u-4", author: "Tunde Bello", at: "2026-09-22T11:30:00", kind: "update", text: "Alumni board confirmed funding for 8 talents." },
+    { id: "u-5", author: "Kemi Okon", at: "2026-09-24T16:00:00", kind: "decision", text: "Approved the request." },
+  ],
+  "REQ-006": [{ id: "u-6", author: "Tunde Bello", at: "2026-09-07T13:20:00", kind: "decision", text: "Rejected the request: mismatch in program availability for requested path." }],
+};
