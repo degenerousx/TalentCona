@@ -187,10 +187,8 @@ export const TALENTS: SponsoredTalent[] = [
 
 // ---- Sponsorship requests (website submissions) ----------------------------------------
 
-export type RequestStatus = "Pending" | "Approved" | "Rejected";
 export type SponsorshipRequest = {
   id: string;
-  status: RequestStatus;
   name: string;
   contact: string;
   email: string;
@@ -202,7 +200,7 @@ const quick = (q: Omit<QuickRequest, "form" | "areaOfInterest">): QuickRequest =
 
 export const REQUESTS: SponsorshipRequest[] = [
   {
-    id: "REQ-001", status: "Pending", name: "Zenith Capital Partners", contact: "Remi Afolabi", email: "remi.a@zenithcapital.com", orgType: "Corporate",
+    id: "REQ-001", name: "Zenith Capital Partners", contact: "Remi Afolabi", email: "remi.a@zenithcapital.com", orgType: "Corporate",
     submission: app({
       organizationType: "Corporate Organization", organizationName: "Zenith Capital Partners", contactPerson: "Remi Afolabi",
       email: "remi.a@zenithcapital.com", country: "Nigeria", phone: "+234 809 555 0112", stateCity: "Lagos",
@@ -212,11 +210,11 @@ export const REQUESTS: SponsorshipRequest[] = [
     }),
   },
   {
-    id: "REQ-002", status: "Pending", name: "Tunde Bakare", contact: "Tunde Bakare", email: "tunde.bakare@gmail.com", orgType: "Individual",
+    id: "REQ-002", name: "Tunde Bakare", contact: "Tunde Bakare", email: "tunde.bakare@gmail.com", orgType: "Individual",
     submission: quick({ firstName: "Tunde", lastName: "Bakare", email: "tunde.bakare@gmail.com", phone: "+234 802 555 3341", additionalInfo: "I'd like to sponsor two students in Product Design. Please call me to discuss.", submittedAt: "2026-09-30" }),
   },
   {
-    id: "REQ-003", status: "Approved", name: "GlobalTech Alumni Network", contact: "James Obi", email: "csr@globaltech.io", orgType: "Corporate",
+    id: "REQ-003", name: "GlobalTech Alumni Network", contact: "James Obi", email: "csr@globaltech.io", orgType: "Corporate",
     submission: app({
       organizationType: "Corporate Organization", organizationName: "GlobalTech Alumni Network", contactPerson: "James Obi",
       email: "csr@globaltech.io", country: "United Kingdom", phone: "+44 20 7946 0321", stateCity: "London",
@@ -226,7 +224,7 @@ export const REQUESTS: SponsorshipRequest[] = [
     }),
   },
   {
-    id: "REQ-004", status: "Approved", name: "DigiAfrica Foundation", contact: "Amina Bello", email: "info@digiafrica.org", orgType: "Corporate",
+    id: "REQ-004", name: "DigiAfrica Foundation", contact: "Amina Bello", email: "info@digiafrica.org", orgType: "Corporate",
     submission: app({
       organizationType: "Corporate Organization", organizationName: "DigiAfrica Foundation", contactPerson: "Amina Bello",
       email: "info@digiafrica.org", country: "Kenya", phone: "+254 712 555 018", stateCity: "Nairobi",
@@ -236,11 +234,11 @@ export const REQUESTS: SponsorshipRequest[] = [
     }),
   },
   {
-    id: "REQ-005", status: "Pending", name: "Chiamaka Obi", contact: "Chiamaka Obi", email: "chiamaka.obi@outlook.com", orgType: "Individual",
+    id: "REQ-005", name: "Chiamaka Obi", contact: "Chiamaka Obi", email: "chiamaka.obi@outlook.com", orgType: "Individual",
     submission: quick({ firstName: "Chiamaka", lastName: "Obi", email: "chiamaka.obi@outlook.com", phone: "+234 817 555 9020", additionalInfo: "", submittedAt: "2026-09-10" }),
   },
   {
-    id: "REQ-006", status: "Rejected", name: "MedTech Corp", contact: "Tosin Ajayi", email: "hr@medtech.ng", orgType: "Corporate",
+    id: "REQ-006", name: "MedTech Corp", contact: "Tosin Ajayi", email: "hr@medtech.ng", orgType: "Corporate",
     submission: app({
       organizationType: "Company", organizationName: "MedTech Corp", contactPerson: "Tosin Ajayi",
       email: "hr@medtech.ng", country: "Nigeria", phone: "+234 701 555 7782", stateCity: "Abuja",
@@ -305,13 +303,13 @@ export const ORG_TYPES = ["Corporate Organization", "Company", "Individual"] as 
 export const IMPACT_FOCUS = ["Women in Technology", "Youths", "Persons with Disabilities", "Underserved Communities", "Recent Graduates", "Career Switchers", "No Preference"] as const;
 export const ENGAGEMENT = ["Mentorship", "Internship Opportunities", "Employee Volunteering", "Career Talks", "Recruitment Opportunities", "Financial Sponsorship Only"] as const;
 
-/** One entry in a request's activity history. "edit" entries are written by the system when details change. */
+/** One entry in a request's activity history. "edit" entries are written automatically when details are saved. */
 export type AdminUpdate = {
   id: string;
   author: string;
   at: string;
   text: string;
-  kind: "update" | "edit" | "decision";
+  kind: "update" | "edit";
   editedAt?: string;
 };
 
@@ -323,7 +321,7 @@ export const REQUEST_UPDATES: Record<string, AdminUpdate[]> = {
   "REQ-002": [{ id: "u-3", author: "Kemi Okon", at: "2026-10-01T09:05:00", kind: "update", text: "Left a voicemail for Tunde Bakare. Will try again tomorrow." }],
   "REQ-003": [
     { id: "u-4", author: "Tunde Bello", at: "2026-09-22T11:30:00", kind: "update", text: "Alumni board confirmed funding for 8 talents." },
-    { id: "u-5", author: "Kemi Okon", at: "2026-09-24T16:00:00", kind: "decision", text: "Approved the request." },
+    { id: "u-5", author: "Kemi Okon", at: "2026-09-24T16:00:00", kind: "update", text: "Agreed a January start with James. Sending the sponsorship agreement next." },
   ],
-  "REQ-006": [{ id: "u-6", author: "Tunde Bello", at: "2026-09-07T13:20:00", kind: "decision", text: "Rejected the request: mismatch in program availability for requested path." }],
+  "REQ-006": [{ id: "u-6", author: "Tunde Bello", at: "2026-09-07T13:20:00", kind: "update", text: "Cybersecurity cohort dates don't suit MedTech yet. Will follow up in January." }],
 };

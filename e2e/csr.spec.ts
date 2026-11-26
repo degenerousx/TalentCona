@@ -17,7 +17,7 @@ test("edit information: everything but the company name can change, and the edit
 
   await panel(page).getByLabel("Phone Number").fill("+234 809 000 1111");
   await panel(page).getByRole("button", { name: "Cloud Computing" }).click();
-  await panel(page).getByRole("button", { name: "Save Changes" }).click();
+  await panel(page).getByRole("button", { name: "Save", exact: true }).click();
 
   await expect(panel(page).getByText("Updated Phone Number, Career Path Interest.")).toBeVisible();
   await expect(panel(page).getByText("Cloud Computing").first()).toBeVisible();
@@ -26,7 +26,7 @@ test("edit information: everything but the company name can change, and the edit
 test("an invalid email is refused", async ({ page }) => {
   await panel(page).getByRole("button", { name: "Edit Information" }).click();
   await panel(page).getByLabel("Email Address").fill("not-an-email");
-  await panel(page).getByRole("button", { name: "Save Changes" }).click();
+  await panel(page).getByRole("button", { name: "Save", exact: true }).click();
   await expect(panel(page).getByRole("alert")).toHaveText("Enter a valid email address.");
 });
 
@@ -37,7 +37,7 @@ test("admin updates: post, keep history, edit only your own", async ({ page }) =
   await expect(history.getByRole("button", { name: "Edit this update" })).toHaveCount(0);
 
   await panel(page).getByLabel("New update").fill("Met Remi; contract draft to follow.");
-  await panel(page).getByRole("button", { name: "Post Update" }).click();
+  await panel(page).getByRole("button", { name: "Save", exact: true }).click();
   await expect(history.getByRole("listitem")).toHaveCount(3);
   const mine = history.getByRole("listitem").first();
   await expect(mine).toContainText("Ada Admin");
@@ -51,4 +51,19 @@ test("admin updates: post, keep history, edit only your own", async ({ page }) =
   await expect(mine).toContainText("Met Remi; contract draft sent on Friday.");
   await expect(mine).toContainText(/Edited /);
   await expect(history.getByRole("listitem")).toHaveCount(3);
+});
+
+test("requests have no approve / reject, stay on the tab and show when they were last worked on", async ({ page }) => {
+  await expect(panel(page).getByRole("button", { name: /approve|reject/i })).toHaveCount(0);
+  await expect(panel(page).getByText(/Last worked on .* by Tunde Bello/)).toBeVisible();
+
+  await panel(page).getByLabel("New update").fill("Followed up by email.");
+  await panel(page).getByRole("button", { name: "Save", exact: true }).click();
+  await expect(panel(page).getByText(/Last worked on .* by Ada Admin/)).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  const card = page.getByRole("button", { name: /REQ-001/ });
+  await expect(card).toContainText(/Last worked on .* by Ada Admin/);
+  // Untouched requests say so.
+  await expect(page.getByRole("button", { name: /REQ-005/ })).toContainText("Not worked on yet");
 });
