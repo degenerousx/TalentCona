@@ -97,9 +97,12 @@ export function Panel({
   badge,
   children,
   footer,
+  wide,
 }: {
   open: boolean;
   onClose: () => void;
+  /** Wider panel for tables (bulk review). */
+  wide?: boolean;
   title: string;
   eyebrow?: React.ReactNode;
   lead?: React.ReactNode;
@@ -111,7 +114,7 @@ export function Panel({
     <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40" />
-        <Dialog.Content className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[672px] flex-col bg-white shadow-2xl outline-none">
+        <Dialog.Content className={cn("fixed inset-y-0 right-0 z-50 flex w-full flex-col bg-white shadow-2xl outline-none", wide ? "max-w-[960px]" : "max-w-[672px]")}>
           <header className="flex items-center justify-between gap-4 border-b border-[#f3f4f6] px-6 py-4">
             <div className="flex min-w-0 items-center gap-3">
               {lead}

@@ -166,7 +166,7 @@ test.describe("sponsored talent", () => {
     await page.keyboard.press("Escape");
     await page.getByRole("tab", { name: "Sponsored Talent" }).click();
 
-    await page.getByRole("button", { name: "Add Students" }).click();
+    await page.getByRole("button", { name: "Add Students", exact: true }).click();
     const d = page.getByRole("dialog", { name: "Add Students" });
     await d.getByRole("button", { name: "Add Student" }).click();
     await expect(d.getByRole("alert")).toHaveText("Full name is required.");
@@ -207,5 +207,59 @@ test.describe("sponsored talent", () => {
     await expect(d.getByText("Assigned to TechBridge Foundation")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("row", { name: /Chisom Okeke .* Afrique Futures Initiative/ })).toBeVisible();
+  });
+});
+
+test.describe("add students in bulk", () => {
+  const HEAD = ["Full Name *", "Email *", "Phone", "Program *", "Cohort *", "Sponsorship Type", "Start Date *", "Sponsor"];
+  const xlsx = async (rows: (string | null)[][]) => {
+    const { default: write } = await import("write-excel-file/node");
+    return { name: "students.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: await write([HEAD, ...rows]).toBuffer() };
+  };
+
+  test.beforeEach(async ({ page }) => {
+    await page.keyboard.press("Escape");
+    await page.getByRole("tab", { name: "Sponsored Talent" }).click();
+    await page.getByRole("button", { name: "Add Students in Bulk" }).click();
+  });
+
+  test("template downloads, and a wrong file is refused", async ({ page }) => {
+    const d = page.getByRole("dialog", { name: "Add Students in Bulk" });
+    const download = page.waitForEvent("download");
+    await d.getByRole("button", { name: "Download template" }).click();
+    expect((await download).suggestedFilename()).toBe("talentcona-sponsored-students-template.xlsx");
+
+    await d.getByLabel("Upload Excel file").setInputFiles({ name: "students.csv", mimeType: "text/csv", buffer: Buffer.from("a,b") });
+    await expect(d.getByRole("alert")).toContainText("Upload an Excel file (.xlsx)");
+  });
+
+  test("upload, review problems, assign sponsor and mentor, add", async ({ page }) => {
+    const d = page.getByRole("dialog", { name: "Add Students in Bulk" });
+    await d.getByLabel("Upload Excel file").setInputFiles(
+      await xlsx([
+        ["Ada Okafor", "ada.okafor@example.com", "+234 803 555 0101", "Software Engineering", "Cohort 5", "Full", "2027-01-15", "TechBridge Foundation"],
+        ["Bayo Ojo", "bayo.ojo@example.com", null, "data analytics", "Cohort 5", "Partial", "15/01/2027", null],
+        ["Bad Row", "chisom.o@email.com", null, "Underwater Basket Weaving", "Cohort 5", null, "2027-01-15", null],
+      ]),
+    );
+    await expect(d.getByText("students.xlsx")).toBeVisible();
+    // Problems in the file are listed on the row.
+    await expect(d.getByText("chisom.o@email.com is already a sponsored student or appears twice")).toBeVisible();
+    await expect(d.getByText("“Underwater Basket Weaving” isn't a TalentCona program")).toBeVisible();
+    await d.getByRole("button", { name: "Remove Bad Row" }).click();
+
+    // Ada's sponsor came from the sheet; Bayo needs one; both need a mentor.
+    await expect(d.getByLabel("Sponsor for Ada Okafor")).toHaveValue("SPO-001");
+    await d.getByRole("button", { name: "Add 2 Students" }).click();
+    await expect(d.getByRole("alert")).toContainText("2 students still need a sponsor and mentor.");
+
+    await d.getByLabel("Mentor for all students").selectOption({ label: "Bola Tito · Data Analytics, Data Science, Artificial Intelligence" });
+    await d.getByRole("button", { name: "Apply mentor" }).click();
+    await d.getByLabel("Mentor for Ada Okafor").selectOption({ label: "Usman Soliu (6/10)" });
+    await d.getByLabel("Sponsor for Bayo Ojo").selectOption({ label: "Ade Williams" });
+    await d.getByRole("button", { name: "Add 2 Students" }).click();
+
+    await expect(page.getByRole("row", { name: /TLT-009 Ada Okafor .* TechBridge Foundation Usman Soliu/ })).toBeVisible();
+    await expect(page.getByRole("row", { name: /TLT-010 Bayo Ojo .* Data Analytics Ade Williams Bola Tito/ })).toBeVisible();
   });
 });
