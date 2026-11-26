@@ -3,30 +3,34 @@
 import { ArrowUpRight, Award, Banknote, CircleCheck, Clock, DollarSign, Target, Timer, Users } from "lucide-react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { cn } from "@/lib/cn";
-import { BY_CAREER_PATH, CONTRIBUTIONS, PAYMENTS, REQUESTS, REQUEST_UPDATES, SPONSORS, STATUS_SPLIT, TALENTS, usd, usdK } from "./data";
+import { BY_CAREER_PATH, CONTRIBUTIONS, PAYMENTS, REQUESTS, REQUEST_UPDATES, SPONSORS, STATUS_SPLIT, usd, usdK, type SponsoredTalent } from "./data";
 import { card } from "./ui";
 import type { CsrTab } from "./CsrView";
 
 const pledged = SPONSORS.reduce((t, s) => t + s.pledged, 0);
 const received = PAYMENTS.filter((p) => p.status === "Confirmed").reduce((t, p) => t + p.amount, 0);
-const count = (f: (t: (typeof TALENTS)[number]) => boolean) => TALENTS.filter(f).length;
-
-const KPIS = [
-  { label: "Total Sponsored", value: String(TALENTS.length), note: "all statuses", icon: Users, tint: "rgba(114,47,255,0.09)", color: "#722fff" },
-  { label: "Fully Sponsored", value: String(count((t) => t.type === "Full")), icon: CircleCheck, tint: "rgba(0,200,83,0.09)", color: "#00c853" },
-  { label: "Partially Sponsored", value: String(count((t) => t.type === "Partial")), icon: Target, tint: "rgba(255,143,0,0.09)", color: "#ff8f00" },
-  { label: "Total Funds Pledged", value: usdK(pledged), note: "across all sponsors", icon: DollarSign, tint: "rgba(0,145,234,0.09)", color: "#0091ea" },
-  { label: "Funds Received", value: usdK(received), note: "verified only", icon: Banknote, tint: "rgba(0,200,83,0.09)", color: "#00c853" },
-  { label: "Pending", value: String(count((t) => t.status === "Pending")), note: "awaiting activation", icon: Clock, tint: "rgba(255,107,53,0.09)", color: "#ff6b35" },
-  { label: "Ongoing", value: String(count((t) => t.status === "Active")), note: "Students in programs", icon: Timer, tint: "rgba(255,107,53,0.09)", color: "#ff6b35" },
-  { label: "Completed", value: String(count((t) => t.status === "Completed")), note: "graduated & funded", icon: Award, tint: "rgba(114,47,255,0.09)", color: "#722fff" },
-];
 
 const h2 = "text-sm leading-5 font-bold tracking-[-0.15px] text-[#101828]";
 const link = "flex items-center gap-1 text-xs leading-4 font-medium text-primary hover:underline";
 const axis = { fontSize: 11, fill: "#6a7282" };
 
-export function Overview({ onOpen }: { onOpen: (tab: CsrTab) => void }) {
+/** Key figures, counted from the live student list so added students are included. */
+const kpis = (talents: SponsoredTalent[]) => {
+  const count = (f: (t: SponsoredTalent) => boolean) => talents.filter(f).length;
+  return [
+    { label: "Total Sponsored", value: String(talents.length), note: "all statuses", icon: Users, tint: "rgba(114,47,255,0.09)", color: "#722fff" },
+    { label: "Fully Sponsored", value: String(count((t) => t.type === "Full")), icon: CircleCheck, tint: "rgba(0,200,83,0.09)", color: "#00c853" },
+    { label: "Partially Sponsored", value: String(count((t) => t.type === "Partial")), icon: Target, tint: "rgba(255,143,0,0.09)", color: "#ff8f00" },
+    { label: "Total Funds Pledged", value: usdK(pledged), note: "across all sponsors", icon: DollarSign, tint: "rgba(0,145,234,0.09)", color: "#0091ea" },
+    { label: "Funds Received", value: usdK(received), note: "verified only", icon: Banknote, tint: "rgba(0,200,83,0.09)", color: "#00c853" },
+    { label: "Pending", value: String(count((t) => t.status === "Pending")), note: "awaiting activation", icon: Clock, tint: "rgba(255,107,53,0.09)", color: "#ff6b35" },
+    { label: "Ongoing", value: String(count((t) => t.status === "Active")), note: "Students in programs", icon: Timer, tint: "rgba(255,107,53,0.09)", color: "#ff6b35" },
+    { label: "Completed", value: String(count((t) => t.status === "Completed")), note: "graduated & funded", icon: Award, tint: "rgba(114,47,255,0.09)", color: "#722fff" },
+  ];
+};
+
+export function Overview({ onOpen, talents }: { onOpen: (tab: CsrTab) => void; talents: SponsoredTalent[] }) {
+  const KPIS = kpis(talents);
   const top = [...SPONSORS].sort((a, b) => b.pledged - a.pledged).slice(0, 4);
   const recent = PAYMENTS.filter((p) => p.status === "Confirmed").slice(0, 4);
   const pendingPayments = PAYMENTS.filter((p) => p.status === "Pending").length;

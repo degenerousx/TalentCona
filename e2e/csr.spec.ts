@@ -132,3 +132,80 @@ test.describe("sponsors", () => {
     await expect(history).toContainText("Sent the September progress report");
   });
 });
+
+test.describe("sponsored talent", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.keyboard.press("Escape");
+    await page.getByRole("tab", { name: "Sponsored Talent" }).click();
+  });
+
+  test("no money anywhere in the section", async ({ page }) => {
+    const panel = page.getByRole("tabpanel");
+    await expect(panel.getByRole("columnheader", { name: /pledged|received/i })).toHaveCount(0);
+    await expect(panel).not.toContainText("$");
+    await page.getByRole("button", { name: "View Chisom Okeke" }).click();
+    const d = page.getByRole("dialog", { name: "Chisom Okeke" });
+    await expect(d).not.toContainText(/\$|pledged|received|funding|outstanding|cost|payment/i);
+  });
+
+  test("add students assigned to a sponsor, including one created on the Sponsors tab", async ({ page }) => {
+    // A brand-new sponsor shows up in the picker.
+    await page.getByRole("tab", { name: "Sponsors", exact: true }).click();
+    await page.getByRole("button", { name: "Add Sponsor" }).click();
+    const f = page.getByRole("dialog", { name: "Add Sponsor" });
+    await f.getByLabel("Sponsor Name *").fill("Lagos Tech Trust");
+    await f.getByLabel("Contact Person *").fill("Ifeoma Nnaji");
+    await f.getByLabel("Email *").fill("ifeoma@lagostechtrust.org");
+    await f.getByLabel("Phone *").fill("+234 803 555 0101");
+    await f.getByLabel("Country *").fill("Nigeria");
+    await f.getByLabel("Start Date *").fill("2027-01-10");
+    await f.getByLabel("End Date *").fill("2027-12-31");
+    await f.getByLabel("Amount Pledged (USD) *").fill("9000");
+    await f.getByRole("button", { name: "Software Engineering" }).click();
+    await f.getByRole("button", { name: "Add Sponsor" }).click();
+    await page.keyboard.press("Escape");
+    await page.getByRole("tab", { name: "Sponsored Talent" }).click();
+
+    await page.getByRole("button", { name: "Add Students" }).click();
+    const d = page.getByRole("dialog", { name: "Add Students" });
+    await d.getByRole("button", { name: "Add Student" }).click();
+    await expect(d.getByRole("alert")).toHaveText("Full name is required.");
+
+    const first = d.getByRole("group", { name: /Student 1/ });
+    await first.getByLabel("Full Name *").fill("Ada Okafor");
+    await first.getByLabel("Email *").fill("ada.okafor@example.com");
+    await first.getByLabel("Sponsor *").selectOption({ label: "Lagos Tech Trust (Corporate)" });
+    await first.getByLabel("Start Date *").fill("2027-01-15");
+    await d.getByRole("button", { name: "Add another student" }).click();
+    const second = d.getByRole("group", { name: /Student 2/ });
+    await second.getByLabel("Full Name *").fill("Bayo Ojo");
+    await second.getByLabel("Email *").fill("chisom.o@email.com");
+    await second.getByLabel("Start Date *").fill("2027-01-15");
+    await d.getByRole("button", { name: "Add 2 Students" }).click();
+    await expect(d.getByRole("alert")).toHaveText("Student 2: chisom.o@email.com is already a sponsored student.");
+    await second.getByLabel("Email *").fill("bayo.ojo@example.com");
+    await second.getByLabel("Sponsor *").selectOption({ label: "TechBridge Foundation (Corporate)" });
+    await d.getByRole("button", { name: "Add 2 Students" }).click();
+
+    await expect(page.getByRole("row", { name: /TLT-009 Ada Okafor .* Lagos Tech Trust/ })).toBeVisible();
+    await expect(page.getByRole("row", { name: /TLT-010 Bayo Ojo .* TechBridge Foundation/ })).toBeVisible();
+  });
+
+  test("edit a student, change and reassign their sponsor, with history", async ({ page }) => {
+    await page.getByRole("button", { name: "View Chisom Okeke" }).click();
+    const d = page.getByRole("dialog", { name: "Chisom Okeke" });
+    await d.getByRole("button", { name: "Edit Information" }).click();
+    await d.getByLabel("Phone").fill("+234 809 000 2222");
+    await d.getByLabel("Sponsor *").selectOption({ label: "Ade Williams (Individual)" });
+    await d.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(d).toContainText("+234 809 000 2222");
+    await expect(d.getByText("Moved from TechBridge Foundation to Ade Williams")).toBeVisible();
+
+    await d.getByLabel("Reassign to").selectOption({ label: "Afrique Futures Initiative (Corporate)" });
+    await d.getByRole("button", { name: "Reassign" }).click();
+    await expect(d.getByText("Moved from Ade Williams to Afrique Futures Initiative")).toBeVisible();
+    await expect(d.getByText("Assigned to TechBridge Foundation")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("row", { name: /Chisom Okeke .* Afrique Futures Initiative/ })).toBeVisible();
+  });
+});
