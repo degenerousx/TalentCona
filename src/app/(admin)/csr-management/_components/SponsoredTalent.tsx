@@ -1,13 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowRightLeft, Building2, Eye, Pencil, Plus, UserPlus } from "lucide-react";
+import { ArrowRightLeft, Building2, Eye, FileSpreadsheet, Pencil, Plus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/cn";
 import { useCurrentAdmin } from "@/lib/currentAdmin";
-import { COHORTS, PROGRAMS, type Sponsor, type SponsoredTalent, type SponsorshipType, type TalentStatus } from "./data";
+import { COHORTS, MENTORS, PROGRAMS, type Sponsor, type SponsoredTalent, type SponsorshipType, type TalentStatus } from "./data";
 import { Badge, Bar, Btn, Empty, Field, InfoTile, Input, Panel, Select, Toolbar, card } from "./ui";
 import { nowIso, when } from "./AdminUpdates";
+import { BulkStudents } from "./BulkStudents";
+
+const mentorName = (id?: string) => MENTORS.find((m) => m.id === id)?.name ?? "Not assigned";
 
 /**
  * Sponsored Talent: students assigned to a sponsor. Admins add students, pick
@@ -33,6 +36,7 @@ export function SponsoredTalentTab({ talents, setTalents, sponsors }: Props) {
   const [type, setType] = useState<(typeof TYPE)[number]>("All");
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [bulk, setBulk] = useState(false);
   const admin = useCurrentAdmin();
   const me = admin.name ?? admin.email ?? "You";
   const sponsorName = (id: string) => sponsors.find((s) => s.id === id)?.name ?? "Unknown sponsor";
@@ -64,17 +68,22 @@ export function SponsoredTalentTab({ talents, setTalents, sponsors }: Props) {
           { label: "Filter by sponsorship type", options: TYPE, value: type, onChange: setType },
         ]}
       />
-      <Btn className="flex items-center gap-2 self-end px-4 py-2.5" onClick={() => setAdding(true)}>
-        <Plus className="size-4" /> Add Students
-      </Btn>
+      <div className="flex flex-wrap justify-end gap-3">
+        <Btn variant="outline" className="flex items-center gap-2 px-4 py-2.5" onClick={() => setBulk(true)}>
+          <FileSpreadsheet className="size-4" /> Add Students in Bulk
+        </Btn>
+        <Btn className="flex items-center gap-2 px-4 py-2.5" onClick={() => setAdding(true)}>
+          <Plus className="size-4" /> Add Students
+        </Btn>
+      </div>
       {rows.length === 0 ? (
         <Empty />
       ) : (
         <div className={cn(card, "overflow-x-auto")}>
-          <table className="w-full min-w-[900px] text-sm">
+          <table className="w-full min-w-[1000px] text-sm">
             <thead className="border-b border-[#f3f4f6]">
               <tr>
-                {["ID", "Student", "Program", "Sponsor", "Type", "Cohort", "Status"].map((h) => (
+                {["ID", "Student", "Program", "Sponsor", "Mentor", "Type", "Cohort", "Status"].map((h) => (
                   <th key={h} className={th}>
                     {h}
                   </th>
@@ -94,6 +103,7 @@ export function SponsoredTalentTab({ talents, setTalents, sponsors }: Props) {
                   </td>
                   <td className={cn(td, "text-[#364153]")}>{t.program}</td>
                   <td className={cn(td, "text-[#4a5565]")}>{sponsorName(t.sponsorId)}</td>
+                  <td className={cn(td, t.mentorId ? "text-[#4a5565]" : "text-[#99a1af]")}>{mentorName(t.mentorId)}</td>
                   <td className={td}>
                     <Badge>{t.type}</Badge>
                   </td>
@@ -140,6 +150,34 @@ export function SponsoredTalentTab({ talents, setTalents, sponsors }: Props) {
         </Panel>
       )}
 
+      {bulk && (
+        <Panel
+          open
+          wide
+          onClose={() => setBulk(false)}
+          lead={
+            <span className="flex size-10 items-center justify-center rounded-[12px] bg-[#722fff] text-white">
+              <FileSpreadsheet className="size-[18px]" />
+            </span>
+          }
+          eyebrow="Sponsored Talent"
+          title="Add Students in Bulk"
+        >
+          <BulkStudents
+            sponsors={sponsors}
+            existingEmails={takenEmails()}
+            nextNumber={Math.max(0, ...talents.map((t) => Number(t.id.slice(4)) || 0)) + 1}
+            me={me}
+            onCancel={() => setBulk(false)}
+            onDone={(added) => {
+              setTalents((ts) => [...added, ...ts]);
+              setBulk(false);
+              toast.success(`${added.length} ${added.length === 1 ? "student" : "students"} added from the file (design preview: nothing is stored)`);
+            }}
+          />
+        </Panel>
+      )}
+
       {open && (
         <TalentPanel
           t={open}
@@ -163,7 +201,7 @@ export function SponsoredTalentTab({ talents, setTalents, sponsors }: Props) {
 
 // ---- Student form ---------------------------------------------------------------
 
-type StudentDraft = Pick<SponsoredTalent, "name" | "email" | "phone" | "program" | "sponsorId" | "type" | "status" | "cohort" | "startDate">;
+type StudentDraft = Pick<SponsoredTalent, "name" | "email" | "phone" | "program" | "sponsorId" | "mentorId" | "type" | "status" | "cohort" | "startDate">;
 
 const blank = (sponsorId: string): StudentDraft => ({
   name: "", email: "", phone: "", program: PROGRAMS[2], sponsorId, type: "Full", status: "Pending", cohort: COHORTS[3], startDate: "",
@@ -192,6 +230,22 @@ function StudentFields({ d, set, sponsors }: { d: StudentDraft; set: (p: Partial
       </Field>
       <Field label="Sponsor *">
         <SponsorSelect sponsors={sponsors} value={d.sponsorId} onChange={(sponsorId) => set({ sponsorId })} />
+      </Field>
+      <Field label="Mentor">
+        <span className="relative">
+          <select
+            value={d.mentorId ?? ""}
+            onChange={(e) => set({ mentorId: e.target.value || undefined })}
+            className="w-full appearance-none rounded-[8px] border border-[#d1d5dc] bg-white px-3 py-2.5 text-sm text-[#3a3a3a] outline-none focus:border-primary"
+          >
+            <option value="">Not assigned</option>
+            {MENTORS.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} · {m.programs.join(", ")}
+              </option>
+            ))}
+          </select>
+        </span>
       </Field>
       <Field label="Program *">
         <Select value={d.program} onChange={(e) => set({ program: e.target.value })} options={[...PROGRAMS]} />
@@ -400,6 +454,7 @@ function TalentPanel({
             <InfoTile label="Phone">{t.phone || "Not provided"}</InfoTile>
             <InfoTile label="Program">{t.program}</InfoTile>
             <InfoTile label="Cohort">{t.cohort}</InfoTile>
+            <InfoTile label="Mentor">{mentorName(t.mentorId)}</InfoTile>
             <InfoTile label="Sponsorship Type">{t.type}</InfoTile>
             <InfoTile label="Start Date">{t.startDate}</InfoTile>
             <InfoTile label="Certifications">{t.certifications}</InfoTile>

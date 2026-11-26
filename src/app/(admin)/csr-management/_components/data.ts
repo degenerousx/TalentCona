@@ -164,6 +164,8 @@ export type SponsoredTalent = {
   progress: number;
   certifications: string;
   internship: string;
+  /** Assigned mentor (see MENTORS), if any. */
+  mentorId?: string;
   /** Every sponsor change, oldest first. */
   sponsorHistory: { from: string | null; to: string; at: string; by: string }[];
 };
@@ -172,15 +174,26 @@ export type SponsoredTalent = {
 export const PROGRAMS = CAREER_PATHS.filter((p) => p !== "Others");
 export const COHORTS = ["Cohort 2", "Cohort 3", "Cohort 4", "Cohort 5"] as const;
 
+/** Mentors who can be assigned to sponsored students (sample). */
+export type Mentor = { id: string; name: string; programs: string[]; students: number; capacity: number };
+export const MENTORS: Mentor[] = [
+  { id: "MEN-01", name: "Usman Soliu", programs: ["Software Engineering"], students: 6, capacity: 10 },
+  { id: "MEN-02", name: "Grace Okafor", programs: ["UI/UX Design", "Product Design"], students: 4, capacity: 8 },
+  { id: "MEN-03", name: "Bola Tito", programs: ["Data Analytics", "Data Science", "Artificial Intelligence"], students: 7, capacity: 10 },
+  { id: "MEN-04", name: "Funke Adebayo", programs: ["Product Management", "Business Analysis"], students: 3, capacity: 8 },
+  { id: "MEN-05", name: "Chidi Nnamdi", programs: ["Cybersecurity", "Cloud Computing", "Software Engineering"], students: 5, capacity: 10 },
+  { id: "MEN-06", name: "Ronke Bello", programs: ["Digital Marketing"], students: 2, capacity: 6 },
+];
+
 export const TALENTS: SponsoredTalent[] = [
-  { id: "TLT-001", name: "Chisom Okeke", email: "chisom.o@email.com", phone: "+234 803 111 2201", program: "Software Engineering", sponsorId: "SPO-001", type: "Full", status: "Active", cohort: "Cohort 4", startDate: "2026-01-20", progress: 72, certifications: "0 earned", internship: "Not Started", sponsorHistory: [{ from: null, to: "SPO-001", at: "2026-01-20T09:00:00", by: "Kemi Okon" }] },
-  { id: "TLT-002", name: "Bola Adeyemi", email: "bola.a@email.com", phone: "+234 803 111 2202", program: "Data Analytics", sponsorId: "SPO-001", type: "Full", status: "Completed", cohort: "Cohort 3", startDate: "2025-10-06", progress: 100, certifications: "1 earned", internship: "Placed", sponsorHistory: [{ from: null, to: "SPO-001", at: "2025-10-06T09:00:00", by: "Kemi Okon" }] },
-  { id: "TLT-003", name: "Emeka Nwosu", email: "emeka.n@email.com", phone: "+234 803 111 2203", program: "Software Engineering", sponsorId: "SPO-002", type: "Partial", status: "Active", cohort: "Cohort 4", startDate: "2026-03-05", progress: 48, certifications: "0 earned", internship: "Not Started", sponsorHistory: [{ from: null, to: "SPO-002", at: "2026-03-05T09:00:00", by: "Kemi Okon" }] },
-  { id: "TLT-004", name: "Ngozi Eze", email: "ngozi.e@email.com", phone: "+234 803 111 2204", program: "Data Analytics", sponsorId: "SPO-002", type: "Partial", status: "Active", cohort: "Cohort 4", startDate: "2026-03-05", progress: 55, certifications: "0 earned", internship: "Not Started", sponsorHistory: [{ from: null, to: "SPO-002", at: "2026-03-05T09:00:00", by: "Kemi Okon" }] },
-  { id: "TLT-005", name: "Amara Diallo", email: "amara.d@email.com", phone: "+234 803 111 2205", program: "Software Engineering", sponsorId: "SPO-003", type: "Full", status: "Completed", cohort: "Cohort 2", startDate: "2025-09-05", progress: 100, certifications: "1 earned", internship: "Placed", sponsorHistory: [{ from: null, to: "SPO-003", at: "2025-09-05T09:00:00", by: "Kemi Okon" }] },
+  { id: "TLT-001", name: "Chisom Okeke", email: "chisom.o@email.com", phone: "+234 803 111 2201", program: "Software Engineering", sponsorId: "SPO-001", type: "Full", status: "Active", cohort: "Cohort 4", startDate: "2026-01-20", progress: 72, certifications: "0 earned", internship: "Not Started", mentorId: "MEN-01", sponsorHistory: [{ from: null, to: "SPO-001", at: "2026-01-20T09:00:00", by: "Kemi Okon" }] },
+  { id: "TLT-002", name: "Bola Adeyemi", email: "bola.a@email.com", phone: "+234 803 111 2202", program: "Data Analytics", sponsorId: "SPO-001", type: "Full", status: "Completed", cohort: "Cohort 3", startDate: "2025-10-06", progress: 100, certifications: "1 earned", internship: "Placed", mentorId: "MEN-03", sponsorHistory: [{ from: null, to: "SPO-001", at: "2025-10-06T09:00:00", by: "Kemi Okon" }] },
+  { id: "TLT-003", name: "Emeka Nwosu", email: "emeka.n@email.com", phone: "+234 803 111 2203", program: "Software Engineering", sponsorId: "SPO-002", type: "Partial", status: "Active", cohort: "Cohort 4", startDate: "2026-03-05", progress: 48, certifications: "0 earned", internship: "Not Started", mentorId: "MEN-01", sponsorHistory: [{ from: null, to: "SPO-002", at: "2026-03-05T09:00:00", by: "Kemi Okon" }] },
+  { id: "TLT-004", name: "Ngozi Eze", email: "ngozi.e@email.com", phone: "+234 803 111 2204", program: "Data Analytics", sponsorId: "SPO-002", type: "Partial", status: "Active", cohort: "Cohort 4", startDate: "2026-03-05", progress: 55, certifications: "0 earned", internship: "Not Started", mentorId: "MEN-03", sponsorHistory: [{ from: null, to: "SPO-002", at: "2026-03-05T09:00:00", by: "Kemi Okon" }] },
+  { id: "TLT-005", name: "Amara Diallo", email: "amara.d@email.com", phone: "+234 803 111 2205", program: "Software Engineering", sponsorId: "SPO-003", type: "Full", status: "Completed", cohort: "Cohort 2", startDate: "2025-09-05", progress: 100, certifications: "1 earned", internship: "Placed", mentorId: "MEN-01", sponsorHistory: [{ from: null, to: "SPO-003", at: "2025-09-05T09:00:00", by: "Kemi Okon" }] },
   { id: "TLT-006", name: "John Uche", email: "john.u@email.com", phone: "+234 803 111 2206", program: "Software Engineering", sponsorId: "SPO-004", type: "Partial", status: "Pending", cohort: "Cohort 5", startDate: "2026-09-15", progress: 0, certifications: "0 earned", internship: "Not Started", sponsorHistory: [{ from: null, to: "SPO-004", at: "2026-09-15T09:00:00", by: "Kemi Okon" }] },
-  { id: "TLT-007", name: "Kemi Okonkwo", email: "kemi.o@email.com", phone: "+234 803 111 2207", program: "Product Design", sponsorId: "SPO-001", type: "Full", status: "Active", cohort: "Cohort 4", startDate: "2026-01-20", progress: 64, certifications: "0 earned", internship: "Not Started", sponsorHistory: [{ from: null, to: "SPO-001", at: "2026-01-20T09:00:00", by: "Kemi Okon" }] },
-  { id: "TLT-008", name: "Tola Hassan", email: "tola.h@email.com", phone: "+234 803 111 2208", program: "Product Management", sponsorId: "SPO-001", type: "Full", status: "Completed", cohort: "Cohort 3", startDate: "2025-10-06", progress: 100, certifications: "1 earned", internship: "Applied", sponsorHistory: [{ from: null, to: "SPO-001", at: "2025-10-06T09:00:00", by: "Kemi Okon" }] },
+  { id: "TLT-007", name: "Kemi Okonkwo", email: "kemi.o@email.com", phone: "+234 803 111 2207", program: "Product Design", sponsorId: "SPO-001", type: "Full", status: "Active", cohort: "Cohort 4", startDate: "2026-01-20", progress: 64, certifications: "0 earned", internship: "Not Started", mentorId: "MEN-02", sponsorHistory: [{ from: null, to: "SPO-001", at: "2026-01-20T09:00:00", by: "Kemi Okon" }] },
+  { id: "TLT-008", name: "Tola Hassan", email: "tola.h@email.com", phone: "+234 803 111 2208", program: "Product Management", sponsorId: "SPO-001", type: "Full", status: "Completed", cohort: "Cohort 3", startDate: "2025-10-06", progress: 100, certifications: "1 earned", internship: "Applied", mentorId: "MEN-04", sponsorHistory: [{ from: null, to: "SPO-001", at: "2025-10-06T09:00:00", by: "Kemi Okon" }] },
 ];
 
 // ---- Sponsorship requests (website submissions) ----------------------------------------
