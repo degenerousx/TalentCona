@@ -5,7 +5,7 @@ import { Building2, Calendar, Globe, Heart, Mail, Pencil, Phone, Plus, User } fr
 import { toast } from "sonner";
 import { cn } from "@/lib/cn";
 import { useCurrentAdmin } from "@/lib/currentAdmin";
-import { SPONSORS, SPONSOR_UPDATES, usd, type AdminUpdate, type Sponsor } from "./data";
+import { SPONSOR_UPDATES, usd, type AdminUpdate, type Sponsor } from "./data";
 import { Badge, Btn, Empty, InfoTile, Panel, PathChip, StatBox, Tag, Toolbar, card } from "./ui";
 import { SubmissionDetails } from "./Submission";
 import { AdminUpdates, LastWorked, lastActivity, nowIso } from "./AdminUpdates";
@@ -15,8 +15,8 @@ let seq = 500;
 
 const TYPE = ["All", "Corporate", "Individual"] as const;
 
-export function SponsorsTab() {
-  const [sponsors, setSponsors] = useState<Sponsor[]>(SPONSORS);
+/** Sponsors are owned by the page (CsrView) so Sponsored Talent sees new and edited sponsors. */
+export function SponsorsTab({ sponsors, setSponsors }: { sponsors: Sponsor[]; setSponsors: React.Dispatch<React.SetStateAction<Sponsor[]>> }) {
   const [updates, setUpdates] = useState<Record<string, AdminUpdate[]>>(SPONSOR_UPDATES);
   const [search, setSearch] = useState("");
   const [type, setType] = useState<(typeof TYPE)[number]>("All");

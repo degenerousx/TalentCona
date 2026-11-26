@@ -8,6 +8,7 @@ import { SponsoredTalentTab } from "./SponsoredTalent";
 import { SponsorsTab } from "./Sponsors";
 import { RequestsTab } from "./Requests";
 import { PaymentsTab } from "./Payments";
+import { SPONSORS, TALENTS, type Sponsor, type SponsoredTalent } from "./data";
 
 /**
  * CSR & Sponsorship Management (Figma "CSR" section).
@@ -24,14 +25,17 @@ export type CsrTab = (typeof TABS)[number]["id"];
 
 export function CsrView() {
   const [tab, setTab] = useState<CsrTab>("overview");
+  // Shared by tabs: students are assigned to sponsors from the Sponsors list.
+  const [sponsors, setSponsors] = useState<Sponsor[]>(SPONSORS);
+  const [talents, setTalents] = useState<SponsoredTalent[]>(TALENTS);
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="CSR & Sponsorship Management" description="Manage sponsorships, track funded talents, monitor contributions, and measure social impact." />
       <Tabs idBase="csr" label="CSR sections" tabs={[...TABS]} value={tab} onChange={setTab} />
       <TabPanel idBase="csr" id={tab}>
-        {tab === "overview" && <Overview onOpen={setTab} />}
-        {tab === "talent" && <SponsoredTalentTab />}
-        {tab === "sponsors" && <SponsorsTab />}
+        {tab === "overview" && <Overview onOpen={setTab} talents={talents} />}
+        {tab === "talent" && <SponsoredTalentTab talents={talents} setTalents={setTalents} sponsors={sponsors} />}
+        {tab === "sponsors" && <SponsorsTab sponsors={sponsors} setSponsors={setSponsors} />}
         {tab === "requests" && <RequestsTab />}
         {tab === "payments" && <PaymentsTab />}
       </TabPanel>
